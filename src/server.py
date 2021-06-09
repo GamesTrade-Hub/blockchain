@@ -13,6 +13,7 @@ app = Flask(__name__)
 
 # Generate a globally unique address for this node
 node_identifier = str(uuid4()).replace('-', '')
+print("Identifier :", node_identifier)
 
 # Instantiate the Blockchain
 blockchain = Blockchain()
@@ -75,7 +76,6 @@ def consensus():
             'message': 'Our chain is authoritative',
             'chain': blockchain.chain
         }
-
     return jsonify(response), 200
 
 
@@ -105,3 +105,4 @@ def mine():
         'previous_hash': block['previous_hash'],
     }
     return jsonify(response), 200
+
