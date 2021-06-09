@@ -1,0 +1,20 @@
+name: blockchain-tests
+
+on: [push]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Prepare repo
+        uses: actions/checkout@master
+      - name: Set up Python 3.9.1
+        uses: actions/setup-python@v2
+        with:
+          - python-version: '3.9.1'
+      - name: Install dependencies
+        run: |
+             python -m pip install --upgrade pip
+             pip install -r requirements.txt
+      - name: Test with unittest
+        run: python -m unittest tests.test_chain_creation
