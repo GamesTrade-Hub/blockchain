@@ -16,7 +16,7 @@ node_identifier = str(uuid4()).replace('-', '')
 print("Identifier :", node_identifier)
 
 # Instantiate the Blockchain
-blockchain = Blockchain()
+blockchain = Blockchain(verbose=True)
 
 
 @app.route('/transactions/new', methods=['POST'])
