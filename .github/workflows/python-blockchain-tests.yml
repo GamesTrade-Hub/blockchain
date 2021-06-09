@@ -3,7 +3,7 @@ name: blockchain-tests
 on: [push]
 
 jobs:
-  test:
+  test_blockchain_coin_python:
     runs-on: ubuntu-latest
     steps:
       - name: Prepare repo
