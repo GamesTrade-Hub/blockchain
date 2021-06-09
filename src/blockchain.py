@@ -9,14 +9,15 @@ from flask import Flask, jsonify, request
 
 
 class Blockchain:
-    def __init__(self):
+    def __init__(self, verbose=False):
         self.current_transactions = []
         self.chain = []
         self.nodes = set()
+        self.print_v = print if verbose else lambda *a, **k: None
 
         # Create the genesis block
         self.new_block(previous_hash='1', proof=100)
-        print("Blockchain coin created")
+        self.print_v("Blockchain coin created")
 
     def register_node(self, address):
         """
