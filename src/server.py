@@ -26,7 +26,7 @@ def new_transaction():
     # Check that the required fields are in the POST'ed data
     required = ['sender', 'recipient', 'amount']
     if not all(k in values for k in required):
-        return 'Missing values', 400
+        return 'Missing value', 400
 
     # Create a new Transaction
     index = blockchain.new_transaction(values['sender'], values['recipient'], values['amount'])
@@ -53,7 +53,24 @@ def register_nodes():
         return "Error: Please supply a valid list of nodes", 400
 
     for node in nodes:
-        blockchain.register_node(node)
+        blockchain.register_node(node, register_back=True, host=request.host)
+
+    response = {
+        'message': 'New nodes have been added',
+        'total_nodes': list(blockchain.nodes),
+    }
+    return jsonify(response), 201
+
+
+@app.route('/nodes/register_back', methods=['POST'])
+def register_back_node():
+    values = request.get_json()
+
+    node = values.get('node')
+    if node is None:
+        return "Error: Please supply a valid node", 400
+
+    blockchain.register_node(node)
 
     response = {
         'message': 'New nodes have been added',

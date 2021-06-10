@@ -19,20 +19,26 @@ class Blockchain:
         self.new_block(previous_hash='1', proof=100)
         self.print_v("Blockchain coin created")
 
-    def register_node(self, address):
+    def register_node(self, address, register_back=False, host=''):
         """
         Add a new node to the list of nodes
+        :param host: ip and port of the current api instance
+        :param register_back: tell whether or not the node just registered received a call back to register the current node
         :param address: Address of node. Eg. 'http://192.168.0.5:5000'
         """
 
         parsed_url = urlparse(address)
+
         if parsed_url.netloc:
-            self.nodes.add(parsed_url.netloc)
+            new_node = parsed_url.netloc
         elif parsed_url.path:
-            # Accepts an URL without scheme like '192.168.0.5:5000'.
-            self.nodes.add(parsed_url.path)
+            new_node = parsed_url.scheme + ':' + parsed_url.path
         else:
             raise ValueError('Invalid URL')
+
+        self.nodes.add(new_node)
+        if register_back:
+            requests.post(f'http://{new_node}/nodes/register_back', json={"node": host})
 
     def valid_chain(self, chain):
         """
@@ -78,6 +84,7 @@ class Blockchain:
 
         # Grab and verify the chains from all the nodes in our network
         for node in neighbours:
+            print("resolve", f'http://{node}/chain')
             response = requests.get(f'http://{node}/chain')
 
             if response.status_code == 200:
