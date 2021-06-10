@@ -1,0 +1,2 @@
+-r common.txt
+celery==5.1.0

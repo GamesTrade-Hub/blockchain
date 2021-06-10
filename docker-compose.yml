@@ -1,17 +1,38 @@
 version: '3.8'
 
 services:
-  blockchain:
+  dev_blockchain_node_1:
     build:
       context: .
       dockerfile: Dockerfile
-      target: base
+      target: dev
     restart: on-failure
-    command: python3 src/main.py
+    command: python3 src/main.py -p 5001
     ports:
-      - 5000:5000
+      - 5001:5001
     volumes:
       - ./src:/blockchain/src
+
+  dev_blockchain_node_2:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: dev
+    restart: on-failure
+    command: python3 src/main.py -p 5002
+    ports:
+      - 5002:5002
+    volumes:
+      - ./src:/blockchain/src
+
+  prod:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: prod
+    restart: on-failure
+    ports:
+      - 5000:5000
 
   tests:
     build:
@@ -19,7 +40,7 @@ services:
       dockerfile: Dockerfile
       target: test
     restart: on-failure
-    command: python3 -m unittest tests.test_chain_creation
+    command: python3 -m unittest discover -s tests -p 'test_*.py'
     volumes:
       - .:/blockchain
     container_name: blockchain_coin_tests
