@@ -1,12 +1,11 @@
 import flask
-from flask import Flask, request
 
 from urllib.parse import urlparse
 from uuid import uuid4
 
 import requests
 from flask import Flask, jsonify, request
-from blockchain import Blockchain
+from .blockchain import Blockchain
 
 # Instantiate the Node
 app = Flask(__name__)
