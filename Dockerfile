@@ -1,34 +1,47 @@
 FROM python:3.9.1 as base
 
-MAINTAINER "Cyprien Ricque" "cyprien.ricque@epitech.eu"
-
-COPY . /blockchain
-WORKDIR /blockchain
+MAINTAINER Cyprien Ricque "cyprien.ricque@epitech.eu"
 
 RUN apt-get clean \
     && apt-get -y update
 
-RUN pip3 install --upgrade pip \
+COPY requirements /tmp/requirements
+
+RUN export DEBIAN_FRONTEND=noninteractive \
     && apt-get -y install python3-dev \
     && apt-get -y install build-essential
+
+RUN useradd --create-home appuser
+WORKDIR /home/appuser
+USER appuser
+
+ENV PATH="/home/appuser/.local/bin:${PATH}"
+
+RUN /usr/local/bin/python -m pip install --upgrade pip \
+    && /usr/local/bin/python -m pip install -r /tmp/requirements/common.txt --user
+
+COPY . /home/appuser
 
 
 FROM base as dev
 
-RUN pip install -r requirements/dev.txt
+RUN /usr/local/bin/python -m pip install -r /tmp/requirements/dev.txt --user
 
 
 FROM dev as test
 
-RUN pip install unittest2
+RUN /usr/local/bin/python -m pip install -r /tmp/requirements/test.txt --user
 
 
 FROM base as prod
 
 EXPOSE 5000
 
-RUN apt-get -y install nginx \
-    && pip install -r requirements/prod.txt
+USER root
+RUN apt-get -y install nginx
+USER appuser
+
+RUN /usr/local/bin/python -m pip install -r /tmp/requirements/prod.txt --user
 
 #COPY nginx.conf /etc/nginx
 
