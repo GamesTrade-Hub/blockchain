@@ -3,10 +3,10 @@ name: blockchain-tests
 on:
   push:
     branches:
-      - master
+      - main
   pull_request:
     branches:
-      - master
+      - main
 
 jobs:
   test_blockchain_coin_python:
