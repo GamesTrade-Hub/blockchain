@@ -4,6 +4,12 @@ on:
   # Build and push Docker images *only* for releases.
   release:
     types: [published] # , created, edited
+  push: # remove me
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
 
 jobs:
   push_to_registry:
@@ -11,7 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out the repo
-        uses: actions/checkout@v1
+        uses: actions/checkout@master
 
       - name: Push to Docker Hub
         uses: docker/build-push-action@v1 # Info: https://github.com/docker/build-push-action/tree/releases/v1#tags
