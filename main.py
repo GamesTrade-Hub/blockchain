@@ -1,5 +1,7 @@
 from argparse import ArgumentParser
-from src.server import app
+from src import app
+
+# FIXME regrouper ça et wsgi en mettant en place config
 
 if __name__ == '__main__':
 

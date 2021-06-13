@@ -1,8 +1,8 @@
 import flask
-
+import sys
 from urllib.parse import urlparse
 from uuid import uuid4
-
+import time
 import requests
 from flask import Flask, jsonify, request
 from .blockchain import Blockchain
@@ -28,9 +28,14 @@ def new_transaction():
         return 'Missing value', 400
 
     # Create a new Transaction
-    index = blockchain.new_transaction(values['sender'], values['recipient'], values['amount'])
+    index = blockchain.new_transaction(values['id'] if 'id' in values else None,
+                                       values['sender'],
+                                       values['recipient'],
+                                       values['amount'],
+                                       values['time'] if 'id' in values else None
+                                       )
 
-    response = {'message': f'Transaction will be added to Block {index}'}
+    response = {'message': f'Transaction will be added to Block {index} or the next one'}
     return jsonify(response), 201
 
 
@@ -38,9 +43,27 @@ def new_transaction():
 def full_chain():
     response = {
         'chain': blockchain.chain,
-        'length': len(blockchain.chain),
+        'length': blockchain.chain_size,
     }
     return jsonify(response), 200
+
+
+@app.route('/wait', methods=['POST'])
+def wait():
+    values = request.get_json()
+
+    blockchain.setTmpState(12)
+    if values and 'seconds' in values:
+        time.sleep(int(values['seconds']))
+    else:
+        time.sleep(20)
+    return jsonify({}), 200
+
+
+@app.route('/ping', methods=['GET'])
+def ping():
+    print("PING", blockchain.getTmpState(), file=sys.stderr)
+    return jsonify({'pong': blockchain.getTmpState()}), 200
 
 
 @app.route('/nodes/register', methods=['POST'])
@@ -97,28 +120,68 @@ def consensus():
 
 @app.route('/mine', methods=['GET'])
 def mine():
+    # Select transactions
+    if blockchain.isReadyForTxsSelection() is False:
+        if blockchain.isMining() is True:
+            return 'Node already mining', 400
+        return 'Node not ready to mine : Block bounds not found', 400
+
+    blockchain.select_Txs()
+
     # We run the proof of work algorithm to get the next proof...
-    last_block = blockchain.last_block
-    proof = blockchain.proof_of_work(last_block)
+    blockchain.new_block()
 
     # We must receive a reward for finding the proof.
     # The sender is "0" to signify that this node has mined a new coin.
-    blockchain.new_transaction(
-        sender="0",
-        recipient=node_identifier,
-        amount=1,
-    )
+    # blockchain.new_transaction(
+    #     sender="0",
+    #     recipient=node_identifier,
+    #     amount=1,
+    # ) FIXME reward is for the fastest miner
 
     # Forge the new Block by adding it to the chain
-    previous_hash = blockchain.hash(last_block)
-    block = blockchain.new_block(proof, previous_hash)
+
+    response = blockchain.last_block
+    return jsonify(response), 200
+
+
+@app.route('/create_block', methods=['POST'])
+def create_block():
+    values = request.get_json() or {}
+
+    time_limit, block = blockchain.setupBlock(values['time_limit'] if 'time_limit' in values else None,
+                                              values['block'] if 'block' in values else None)
+
+    return jsonify({'time_limit': time_limit, 'block': block}), 200
+
+
+@app.route('/get_Txs', methods=['POST'])
+def get_Txs():
+    values = request.get_json()
+
+    time_limit = int(values.get('time_limit'))
+    if time_limit is None or time_limit <= 0:
+        return "Error: Please supply a valid time limit", 400
 
     response = {
-        'message': "New Block Forged",
-        'index': block['index'],
-        'transactions': block['transactions'],
-        'proof': block['proof'],
-        'previous_hash': block['previous_hash'],
+        'Txs': blockchain.get_Txs(time_limit),
     }
     return jsonify(response), 200
+
+
+@app.route("/get_balance", methods=['GET'])
+def get_balance():
+    values = request.get_json()
+
+    if 'user_id' not in values:
+        return 'Invalid request please specify user id', 400
+
+    balance = blockchain.get_balance(values['user_id'])
+    return jsonify({'balance': balance}), 200
+
+
+@app.route("/testcd", methods=['get'])
+def test__():
+    return 'ah oui oui oui', 200
+
 
