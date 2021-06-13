@@ -84,7 +84,6 @@ class Blockchain:
 
         # Grab and verify the chains from all the nodes in our network
         for node in neighbours:
-            print("resolve", f'http://{node}/chain')
             response = requests.get(f'http://{node}/chain')
 
             if response.status_code == 200:
@@ -125,19 +124,32 @@ class Blockchain:
         self.chain.append(block)
         return block
 
-    def new_transaction(self, sender, recipient, amount):
+    def new_transaction(self, transaction_id, sender, recipient, amount, time):
         """
         Creates a new transaction to go into the next mined Block
+        :param transaction_id: id of the transaction. If None, this node initiate the transaction and send it to others.
         :param sender: Address of the Sender
         :param recipient: Address of the Recipient
         :param amount: Amount
+        :param time: When the transaction was sent
         :return: The index of the Block that will hold this transaction
         """
-        self.current_transactions.append({
+
+        transaction = {
+            'id': transaction_id or uuid4(),
             'sender': sender,
             'recipient': recipient,
             'amount': amount,
-        })
+            'time': time or time.time_ns()
+        }
+        self.current_transactions.append(transaction)
+
+        if transaction_id is None:
+            for node in self.nodes:
+                response = requests.post(f'http://{node}/nodes/register_back', json=transaction)
+
+                if response.status_code != 200:
+                    print(f"Transaction sent to {node} received error code {response.status_code}")
 
         return self.last_block['index'] + 1
 
@@ -188,5 +200,3 @@ class Blockchain:
         guess = f'{last_proof}{proof}{last_hash}'.encode()
         guess_hash = hashlib.sha256(guess).hexdigest()
         return guess_hash[:4] == "0000"
-
-
