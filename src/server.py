@@ -167,3 +167,14 @@ def get_Txs():
         'Txs': blockchain.get_Txs(time_limit),
     }
     return jsonify(response), 200
+
+
+@app.route("/get_balance", methods=['GET'])
+def get_balance():
+    values = request.get_json()
+
+    if 'user_id' not in values:
+        return 'Invalid request please specify user id', 400
+
+    balance = blockchain.get_balance(values['user_id'])
+    return jsonify({'balance': balance}), 200

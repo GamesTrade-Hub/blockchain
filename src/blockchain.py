@@ -152,15 +152,16 @@ class Blockchain:
         block['hash'] = self.hash(block)
 
         # Reset the current list of transactions
-        self.Txs = [tx for tx in self.selected_Txs if tx['']]
+        self.Txs = [tx for tx in self.selected_Txs if tx['id'] not in self.selected_Txs]
         self.time_limit_Txs = None
+        self.selected_Txs = []
+        self.step = Step.IDLE
 
         self.chain.append(block)
-        self.step = Step.IDLE
         print('add block', file=sys.stderr)
         return block
 
-    def new_transaction(self, transaction_id, sender, recipient, amount, time):
+    def new_transaction(self, transaction_id, sender, recipient, amount, time_):
         """
         Creates a new transaction to go into the next mined Block
         :param transaction_id: id of the transaction. If None, this node initiate the transaction and send it to others.
@@ -172,11 +173,11 @@ class Blockchain:
         """
 
         transaction = {
-            'id': transaction_id or uuid4(),
+            'id': transaction_id or str(uuid4()),
             'sender': sender,
             'recipient': recipient,
             'amount': amount,
-            'time': time or time.time_ns()
+            'time': time_ or time.time_ns()
         }
         self.Txs.append(transaction)
 
@@ -310,3 +311,15 @@ class Blockchain:
 
     def get_Txs(self, time_limit):
         return [tx for tx in self.Txs if tx['time'] < time_limit]
+
+    def get_balance(self, user_id):
+        balance = 0
+
+        for block in self.chain:
+            for tx in block['transactions']:
+                if tx['recipient'] == user_id:
+                    balance += tx['amount']
+                if tx['sender'] == user_id:
+                    balance -= tx['amount']
+
+        return balance
