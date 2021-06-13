@@ -180,7 +180,7 @@ def get_balance():
     return jsonify({'balance': balance}), 200
 
 
-@app.route("/testcd", methods=['get'])
+@app.route("/testcd", methods=['GET'])
 def test__():
     return 'ah oui oui oui', 200
 
