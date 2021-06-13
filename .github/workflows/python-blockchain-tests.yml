@@ -1,12 +1,16 @@
-name: blockchain-tests
+name: Blockchain tests
 
 on:
   push:
     branches:
       - main
+      - prod
+      - dev
   pull_request:
     branches:
       - main
+      - prod
+      - dev
 
 jobs:
   test_blockchain_coin_python:
