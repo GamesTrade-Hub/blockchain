@@ -200,3 +200,10 @@ class Blockchain:
         guess = f'{last_proof}{proof}{last_hash}'.encode()
         guess_hash = hashlib.sha256(guess).hexdigest()
         return guess_hash[:4] == "0000"
+
+    def select_Txs(self, root):
+        """
+        :param root: if True, this is the node that has to start
+        """
+
+
