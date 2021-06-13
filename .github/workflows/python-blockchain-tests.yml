@@ -1,4 +1,4 @@
-name: blockchain-tests
+name: Blockchain tests
 
 on:
   push:
