@@ -1,22 +1,39 @@
 import hashlib
 import json
-from time import time
+import sys
 from urllib.parse import urlparse
 from uuid import uuid4
+import time
 
 import requests
 from flask import Flask, jsonify, request
 
+from enum import Enum
+
+
+class Step(Enum):
+    IDLE = 0
+    SETUP_BLOCK_BOUNDS = 1
+    WAITING_FOR_TXS_SELECTION = 2
+    SELECT_TXS = 3
+    MINING = 4
+
 
 class Blockchain:
     def __init__(self, verbose=False):
-        self.current_transactions = []
+        self.tmp_state = 0
+        self.step = Step.IDLE
+
+        self.Txs = []
+        self.selected_Txs = set()
+        self.time_limit_Txs = None
+
         self.chain = []
         self.nodes = set()
         self.print_v = print if verbose else lambda *a, **k: None
 
         # Create the genesis block
-        self.new_block(previous_hash='1', proof=100)
+        self.new_block(previous_hash='1', nonce=100)
         self.print_v("Blockchain coin created")
 
     def register_node(self, address, register_back=False, host=''):
@@ -61,7 +78,7 @@ class Blockchain:
                 return False
 
             # Check that the Proof of Work is correct
-            if not self.valid_proof(last_block['proof'], block['proof'], last_block_hash):
+            if (not self.valid_proof(block['hash'], block['nonce'])) and block['previous_hash'] == block['hash']:
                 return False
 
             last_block = block
@@ -75,6 +92,8 @@ class Blockchain:
         by replacing our chain with the longest one in the network.
         :return: True if our chain was replaced, False if not
         """
+
+        self.step = Step.IDLE
 
         neighbours = self.nodes
         new_chain = None
@@ -91,6 +110,10 @@ class Blockchain:
                 chain = response.json()['chain']
 
                 # Check if the length is longer and the chain is valid
+                if length == max_length and self.valid_chain(chain) and chain[-1]['pow_time'] < self.last_block['pow_time']:
+                    max_length = length
+                    new_chain = chain
+
                 if length > max_length and self.valid_chain(chain):
                     max_length = length
                     new_chain = chain
@@ -102,26 +125,39 @@ class Blockchain:
 
         return False
 
-    def new_block(self, proof, previous_hash):
+    def new_block(self, nonce=None, previous_hash=None):
         """
         Create a new Block in the Blockchain
-        :param proof: The proof given by the Proof of Work algorithm
+        :param nonce: The proof given by the Proof of Work algorithm
         :param previous_hash: Hash of previous Block
         :return: New Block
         """
 
+        print('prepare to add block', file=sys.stderr)
+
+        if self.step == Step.SELECT_TXS:
+            self.step = Step.MINING
+
+        if self.step != Step.MINING and nonce is None:
+            return None
+
         block = {
-            'index': len(self.chain) + 1,
-            'timestamp': time(),
-            'transactions': self.current_transactions,
-            'proof': proof,
-            'previous_hash': previous_hash or self.hash(self.chain[-1]),
+            'index': self.chain_size + 1,
+            'transactions_timestamp': self.time_limit_Txs,
+            'transactions': list(self.selected_Txs),
+            'previous_hash': previous_hash or self.last_block['hash'],
         }
+        block['proof'] = nonce or self.proof_of_work(self.hash(block))
+        block['pow_time'] = time.time_ns()
+        block['hash'] = self.hash(block)
 
         # Reset the current list of transactions
-        self.current_transactions = []
+        self.Txs = [tx for tx in self.selected_Txs if tx['']]
+        self.time_limit_Txs = None
 
         self.chain.append(block)
+        self.step = Step.IDLE
+        print('add block', file=sys.stderr)
         return block
 
     def new_transaction(self, transaction_id, sender, recipient, amount, time):
@@ -142,11 +178,11 @@ class Blockchain:
             'amount': amount,
             'time': time or time.time_ns()
         }
-        self.current_transactions.append(transaction)
+        self.Txs.append(transaction)
 
         if transaction_id is None:
             for node in self.nodes:
-                response = requests.post(f'http://{node}/nodes/register_back', json=transaction)
+                response = requests.post(f'http://{node}/transactions/new', json=transaction)
 
                 if response.status_code != 200:
                     print(f"Transaction sent to {node} received error code {response.status_code}")
@@ -164,46 +200,113 @@ class Blockchain:
         :param block: Block
         """
 
+        do_not_use = ['hash', 'nonce']
+        block = {a: block[a] for a in block if a not in do_not_use}
         # We must make sure that the Dictionary is Ordered, or we'll have inconsistent hashes
+        print("ici", block)
+        print(json.dumps(block))
         block_string = json.dumps(block, sort_keys=True).encode()
         return hashlib.sha256(block_string).hexdigest()
 
-    def proof_of_work(self, last_block):
+    def proof_of_work(self, block_hash):
         """
         Simple Proof of Work Algorithm:
          - Find a number p' such that hash(pp') contains leading 4 zeroes
-         - Where p is the previous proof, and p' is the new proof
+         - Where p is the previous nonce, and p' is the new nonce
 
-        :param last_block: <dict> last Block
         :return: <int>
         """
 
-        last_proof = last_block['proof']
-        last_hash = self.hash(last_block)
+        nonce = 0
+        while self.valid_proof(block_hash, nonce) is False:
+            nonce += 1
 
-        proof = 0
-        while self.valid_proof(last_proof, proof, last_hash) is False:
-            proof += 1
-
-        return proof
+        # TODO tout reset pour le prochain block
+        return nonce
 
     @staticmethod
-    def valid_proof(last_proof, proof, last_hash):
+    def valid_proof(block_hash, nonce):
         """
         Validates the Proof
-        :param last_proof: <int> Previous Proof
-        :param proof: <int> Current Proof
-        :param last_hash: <str> The hash of the Previous Block
         :return: <bool> True if correct, False if not.
         """
 
-        guess = f'{last_proof}{proof}{last_hash}'.encode()
+        guess = f'{block_hash}{nonce}'.encode()
         guess_hash = hashlib.sha256(guess).hexdigest()
         return guess_hash[:4] == "0000"
 
-    def select_Txs(self, root):
+    def select_Txs(self):
         """
-        :param root: if True, this is the node that has to start
         """
 
+        if self.step == Step.WAITING_FOR_TXS_SELECTION:
+            self.step = Step.SELECT_TXS
 
+        if self.step != Step.SELECT_TXS:
+            print(f'Wrong step for selecting Txs, current step is {self.step}', file=sys.stderr)
+            return
+
+        self.selected_Txs = self.Txs
+
+        for node in self.nodes:
+            response = requests.post(f'http://{node}/get_Txs', json={"time_limit": self.time_limit_Txs})
+
+            if response.status_code == 200:
+                self.selected_Txs = self.selected_Txs.union(set(response.json()['Txs']))
+
+        self.selected_Txs = [tx for tx in self.selected_Txs if self.transactionIsValid(tx)]
+        self.step = Step.MINING
+
+    def setTmpState(self, state=1):
+        self.tmp_state = state
+
+    def getTmpState(self):
+        return self.tmp_state
+
+    def transactionIsValid(self, transaction):
+        return transaction['time'] < self.time_limit_Txs
+
+    def setupBlock(self, time_limit, block):
+        if self.step == Step.IDLE:
+            self.step = Step.SETUP_BLOCK_BOUNDS
+
+        if self.step != Step.SETUP_BLOCK_BOUNDS:
+            print(f'Wrong step for setup block bounds, current step is {self.step}', file=sys.stderr)
+            return
+
+        if self.time_limit_Txs is None or time.time_ns() < self.time_limit_Txs:
+            self.time_limit_Txs = time.time_ns()
+
+        # FIXME bad node can add bad time limit
+        if time_limit and time_limit < self.time_limit_Txs and block == self.chain_size + 1:
+            self.time_limit_Txs = time_limit
+
+        if time_limit is None:
+            for node in self.nodes:
+                response = requests.post(f'http://{node}/create_block', json={"time_limit": self.time_limit_Txs,
+                                                                              "block": self.chain_size + 1})
+                if response.status_code == 200:
+                    time_limit = response.json()['time_limit']  # FIXME this can be missing
+                    block = response.json()['block']
+
+                    if time_limit and time_limit < self.time_limit_Txs and block == self.chain_size + 1:
+                        self.time_limit_Txs = time_limit
+
+        self.step = Step.WAITING_FOR_TXS_SELECTION
+        return self.time_limit_Txs, self.chain_size + 1
+
+    @property
+    def chain_size(self):
+        return len(self.chain)
+
+    def isReadyForTxsSelection(self):
+        return self.step == Step.WAITING_FOR_TXS_SELECTION
+
+    def isMining(self):
+        return self.step == Step.MINING
+
+    def getStep(self):
+        return self.step
+
+    def get_Txs(self, time_limit):
+        return [tx for tx in self.Txs if tx['time'] < time_limit]

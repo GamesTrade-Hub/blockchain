@@ -7,7 +7,7 @@ services:
       dockerfile: Dockerfile
       target: dev
     restart: on-failure
-    command: python3 src/main.py -p 5001
+    command: python3 main.py -p 5001
     ports:
       - 5001:5001
 
@@ -17,7 +17,7 @@ services:
       dockerfile: Dockerfile
       target: dev
     restart: on-failure
-    command: python3 src/main.py -p 5002
+    command: python3 main.py -p 5002
     ports:
       - 5002:5002
 
@@ -38,3 +38,4 @@ services:
     restart: on-failure
     command: python3 -m unittest discover -s tests -p 'test_*.py'
     container_name: blockchain_coin_tests
+
