@@ -178,3 +178,10 @@ def get_balance():
 
     balance = blockchain.get_balance(values['user_id'])
     return jsonify({'balance': balance}), 200
+
+
+@app.route("/testcd", methods=['get'])
+def test__():
+    return 'ah oui oui oui', 200
+
+
