@@ -182,6 +182,6 @@ def get_balance():
 
 @app.route("/testcd", methods=['GET'])
 def test__():
-    return 'ah oui oui oui', 200
+    return 'ah oui oui oui 2', 200
 
 
