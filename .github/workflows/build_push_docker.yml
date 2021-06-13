@@ -4,7 +4,9 @@ on:
   # Build and push Docker images *only* for releases.
   release:
     types: [ published ] # , created, edited
-
+  push:
+    branches:
+      - prod
 
 jobs:
   push_to_registry_v2:
