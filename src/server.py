@@ -149,9 +149,13 @@ def mine():
 def create_block():
     values = request.get_json() or {}
 
-    time_limit, block = blockchain.setupBlock(values['time_limit'] if 'time_limit' in values else None,
-                                              values['block'] if 'block' in values else None)
+    response = blockchain.setupBlock(values['time_limit'] if 'time_limit' in values else None,
+                                     values['block'] if 'block' in values else None)
 
+    if response is None:
+        return 'Can\'t create block', 400
+
+    time_limit, block = response
     return jsonify({'time_limit': time_limit, 'block': block}), 200
 
 
@@ -183,5 +187,3 @@ def get_balance():
 @app.route("/testcd", methods=['GET'])
 def test__():
     return 'ah oui oui oui 2', 200
-
-

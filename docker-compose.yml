@@ -4,6 +4,7 @@ services:
   dev_blockchain_node_1:
     build:
       context: .
+      network: host
       dockerfile: Dockerfile
       target: dev
     restart: on-failure
@@ -11,15 +12,18 @@ services:
     ports:
       - 5001:5001
 
+
   dev_blockchain_node_2:
     build:
       context: .
+      network: host
       dockerfile: Dockerfile
       target: dev
     restart: on-failure
     command: python3 main.py -p 5002
     ports:
       - 5002:5002
+
 
   prod:
     build:
@@ -39,3 +43,5 @@ services:
     command: python3 -m unittest discover -s tests -p 'test_*.py'
     container_name: blockchain_coin_tests
 
+networks:
+  bc:

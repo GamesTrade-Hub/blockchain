@@ -55,7 +55,10 @@ class Blockchain:
 
         self.nodes.add(new_node)
         if register_back:
-            print("call back node", f'http://{new_node}/nodes/register_back', file=sys.stderr)
+            print("call back node", f'http://{new_node}/nodes/register_back', {"node": host}, file=sys.stderr)
+            print(f'http://{new_node}/ping', file=sys.stderr)
+            requests.get(f'http://{new_node}/ping')
+            print("get ok", file=sys.stderr)
             requests.post(f'http://{new_node}/nodes/register_back', json={"node": host})
 
     def valid_chain(self, chain):
