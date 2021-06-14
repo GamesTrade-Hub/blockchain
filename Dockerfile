@@ -45,5 +45,7 @@ RUN /usr/local/bin/python -m pip install -r /tmp/requirements/prod.txt --user
 
 #COPY nginx.conf /etc/nginx
 
+RUN echo test
+
 ENTRYPOINT ["gunicorn"]
 CMD ["--bind", "0.0.0.0:5000", "wsgi:app"]
