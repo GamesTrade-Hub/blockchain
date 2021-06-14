@@ -16,7 +16,7 @@ class TestChainCreation(unittest.TestCase):
         self.assertEqual(len(self.blockchain.last_block['transactions']), 0)
 
     def test_blockchain_correctly_created_first_block_proof(self):
-        self.assertEqual(self.blockchain.last_block['proof'], 100)
+        self.assertEqual(self.blockchain.last_block['nonce'], 100)
 
     def test_blockchain_correctly_created_first_block_previous_hash(self):
         self.assertEqual(self.blockchain.last_block['previous_hash'], "1")

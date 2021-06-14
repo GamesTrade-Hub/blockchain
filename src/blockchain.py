@@ -19,17 +19,21 @@ class Step(Enum):
     MINING = 4
 
 
+def dropDuplicates(l_):
+    return [dict(t) for t in {tuple(d.items()) for d in l_}]
+
+
 class Blockchain:
     def __init__(self, verbose=False):
         self.tmp_state = 0
         self.step = Step.IDLE
 
-        self.Txs = set()
-        self.selected_Txs = set()
+        self.Txs = list()
+        self.selected_Txs = list()
         self.time_limit_Txs = None
 
         self.chain = []
-        self.nodes = set()
+        self.nodes = list()
         self.print_v = print if verbose else lambda *a, **k: None
 
         # Create the genesis block
@@ -53,12 +57,8 @@ class Blockchain:
         else:
             raise ValueError('Invalid URL')
 
-        self.nodes.add(new_node)
+        self.nodes.append(new_node)
         if register_back:
-            print("call back node", f'http://{new_node}/nodes/register_back', {"node": host}, file=sys.stderr)
-            print(f'http://{new_node}/ping', file=sys.stderr)
-            requests.get(f'http://{new_node}/ping')
-            print("get ok", file=sys.stderr)
             requests.post(f'http://{new_node}/nodes/register_back', json={"node": host})
 
     def valid_chain(self, chain):
@@ -73,9 +73,9 @@ class Blockchain:
 
         while current_index < len(chain):
             block = chain[current_index]
-            print(f'{last_block}')
-            print(f'{block}')
-            print("\n-----------\n")
+            # print(f'{last_block}')
+            # print(f'{block}')
+            # print("\n-----------\n")
             # Check that the hash of the block is correct
             last_block_hash = self.hash(last_block)
             if block['previous_hash'] != last_block_hash:
@@ -114,7 +114,8 @@ class Blockchain:
                 chain = response.json()['chain']
 
                 # Check if the length is longer and the chain is valid
-                if length == max_length and self.valid_chain(chain) and chain[-1]['pow_time'] < self.last_block['pow_time']:
+                if length == max_length and self.valid_chain(chain) and chain[-1]['pow_time'] < self.last_block[
+                    'pow_time']:
                     max_length = length
                     new_chain = chain
 
@@ -137,8 +138,6 @@ class Blockchain:
         :return: New Block
         """
 
-        print('prepare to add block', file=sys.stderr)
-
         if self.step == Step.SELECT_TXS:
             self.step = Step.MINING
 
@@ -148,7 +147,7 @@ class Blockchain:
         block = {
             'index': self.chain_size + 1,
             'transactions_timestamp': self.time_limit_Txs,
-            'transactions': list(self.selected_Txs),
+            'transactions': dropDuplicates(self.selected_Txs),
             'previous_hash': previous_hash or self.last_block['hash'],
         }
         block['nonce'] = nonce or self.proof_of_work(self.hash(block))
@@ -156,13 +155,12 @@ class Blockchain:
         block['hash'] = self.hash(block)
 
         # Reset the current list of transactions
-        self.Txs = set([tx for tx in self.selected_Txs if tx['id'] not in self.selected_Txs])
+        self.Txs = list([tx for tx in self.selected_Txs if tx['id'] not in self.selected_Txs])
         self.time_limit_Txs = None
-        self.selected_Txs = set()
+        self.selected_Txs = list()
         self.step = Step.IDLE
 
         self.chain.append(block)
-        print('add block', file=sys.stderr)
         return block
 
     def new_transaction(self, transaction_id, sender, recipient, amount, time_):
@@ -183,7 +181,7 @@ class Blockchain:
             'amount': amount,
             'time': time_ or time.time_ns()
         }
-        self.Txs.add(transaction)
+        self.Txs.append(transaction)
 
         if transaction_id is None:
             for node in self.nodes:
@@ -208,8 +206,6 @@ class Blockchain:
         do_not_use = ['hash', 'nonce']
         block = {a: block[a] for a in block if a not in do_not_use}
         # We must make sure that the Dictionary is Ordered, or we'll have inconsistent hashes
-        print("ici", block)
-        print(json.dumps(block))
         block_string = json.dumps(block, sort_keys=True).encode()
         return hashlib.sha256(block_string).hexdigest()
 
@@ -257,9 +253,9 @@ class Blockchain:
             response = requests.post(f'http://{node}/get_Txs', json={"time_limit": self.time_limit_Txs})
 
             if response.status_code == 200:
-                self.selected_Txs = self.selected_Txs.union(set(response.json()['Txs']))
+                self.selected_Txs = self.selected_Txs.union(list(response.json()['Txs']))
 
-        self.selected_Txs = set([tx for tx in self.selected_Txs if self.transactionIsValid(tx)])
+        self.selected_Txs = list([tx for tx in self.selected_Txs if self.transactionIsValid(tx)])
         self.step = Step.MINING
 
     def setTmpState(self, state=1):
@@ -320,10 +316,13 @@ class Blockchain:
         balance = 0
 
         for block in self.chain:
+            print("NEXT BLOCK", block['hash'], file=sys.stderr)
             for tx in block['transactions']:
+                print("1 balance", balance, tx, file=sys.stderr)
                 if tx['recipient'] == user_id:
                     balance += tx['amount']
                 if tx['sender'] == user_id:
                     balance -= tx['amount']
+                print("2 balance", balance, tx, file=sys.stderr)
 
         return balance

@@ -24,7 +24,7 @@ class TestMining(unittest.TestCase):
         response = self.app.get('/chain')
         bc_len = json.loads(response.get_data())['length']
 
-        response = self.app.post('/transactions/new', json={"sender": "Cyprien", "recipient": "William", "amount": 50})
+        response = self.app.post('/transactions/new', json={"sender": "e", "recipient": "r", "amount": 50})
         self.assertEqual(response.status_code, 201)
         response = self.app.post('/transactions/new', json={"sender": "a", "recipient": "b", "amount": 30})
         self.assertEqual(response.status_code, 201)
