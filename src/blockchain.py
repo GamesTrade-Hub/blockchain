@@ -24,7 +24,7 @@ class Blockchain:
         self.tmp_state = 0
         self.step = Step.IDLE
 
-        self.Txs = []
+        self.Txs = set()
         self.selected_Txs = set()
         self.time_limit_Txs = None
 
@@ -151,14 +151,14 @@ class Blockchain:
             'transactions': list(self.selected_Txs),
             'previous_hash': previous_hash or self.last_block['hash'],
         }
-        block['proof'] = nonce or self.proof_of_work(self.hash(block))
+        block['nonce'] = nonce or self.proof_of_work(self.hash(block))
         block['pow_time'] = time.time_ns()
         block['hash'] = self.hash(block)
 
         # Reset the current list of transactions
-        self.Txs = [tx for tx in self.selected_Txs if tx['id'] not in self.selected_Txs]
+        self.Txs = set([tx for tx in self.selected_Txs if tx['id'] not in self.selected_Txs])
         self.time_limit_Txs = None
-        self.selected_Txs = []
+        self.selected_Txs = set()
         self.step = Step.IDLE
 
         self.chain.append(block)
@@ -183,7 +183,7 @@ class Blockchain:
             'amount': amount,
             'time': time_ or time.time_ns()
         }
-        self.Txs.append(transaction)
+        self.Txs.add(transaction)
 
         if transaction_id is None:
             for node in self.nodes:
@@ -259,7 +259,7 @@ class Blockchain:
             if response.status_code == 200:
                 self.selected_Txs = self.selected_Txs.union(set(response.json()['Txs']))
 
-        self.selected_Txs = [tx for tx in self.selected_Txs if self.transactionIsValid(tx)]
+        self.selected_Txs = set([tx for tx in self.selected_Txs if self.transactionIsValid(tx)])
         self.step = Step.MINING
 
     def setTmpState(self, state=1):

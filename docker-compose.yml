@@ -11,6 +11,8 @@ services:
     command: python3 main.py -p 5001
     ports:
       - 5001:5001
+    networks:
+      - bc
 
 
   dev_blockchain_node_2:
@@ -23,6 +25,8 @@ services:
     command: python3 main.py -p 5002
     ports:
       - 5002:5002
+    networks:
+      - bc
 
 
   prod:
@@ -45,3 +49,4 @@ services:
 
 networks:
   bc:
+    driver: bridge
