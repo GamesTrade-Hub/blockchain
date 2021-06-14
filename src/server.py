@@ -186,6 +186,6 @@ def get_balance():
 
 @app.route("/testcd", methods=['GET'])
 def test__():
-    return 'test cd 4', 200
+    return 'test cd 5', 200
 
 
