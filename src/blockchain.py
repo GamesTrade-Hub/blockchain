@@ -155,7 +155,7 @@ class Blockchain:
         block['hash'] = self.hash(block)
 
         # Reset the current list of transactions
-        self.Txs = list([tx for tx in self.selected_Txs if tx['id'] not in self.selected_Txs])
+        self.Txs = list([tx for tx in self.Txs if tx['id'] not in [tx_['id'] for tx_ in self.selected_Txs]])
         self.time_limit_Txs = None
         self.selected_Txs = list()
         self.step = Step.IDLE
@@ -222,7 +222,6 @@ class Blockchain:
         while self.valid_proof(block_hash, nonce) is False:
             nonce += 1
 
-        # TODO tout reset pour le prochain block
         return nonce
 
     @staticmethod
