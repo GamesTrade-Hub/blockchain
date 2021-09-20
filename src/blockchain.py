@@ -40,7 +40,10 @@ class Blockchain:
         self.new_block(previous_hash='1', nonce=100)
         self.print_v("Blockchain coin created")
 
-    def register_node(self, address, register_back=False, host=''):
+    def getConnectedNodes(self):
+        return self.nodes
+
+    def registerNode(self, address, register_back=False, host=''):
         """
         Add a new node to the list of nodes
         :param host: ip and port of the current api instance
@@ -48,6 +51,7 @@ class Blockchain:
         :param address: Address of node. Eg. 'http://192.168.0.5:5000'
         """
 
+        print('Register node', address, file=sys.stderr)
         parsed_url = urlparse(address)
 
         if parsed_url.netloc:
@@ -61,7 +65,7 @@ class Blockchain:
         if register_back:
             requests.post(f'http://{new_node}/nodes/register_back', json={"node": host})
 
-    def valid_chain(self, chain):
+    def validChain(self, chain):
         """
         Determine if a given blockchain is valid
         :param chain: A blockchain
@@ -90,7 +94,7 @@ class Blockchain:
 
         return True
 
-    def resolve_conflicts(self):
+    def resolveConflicts(self):
         """
         This is our consensus algorithm, it resolves conflicts
         by replacing our chain with the longest one in the network.
@@ -107,21 +111,26 @@ class Blockchain:
 
         # Grab and verify the chains from all the nodes in our network
         for node in neighbours:
-            response = requests.get(f'http://{node}/chain')
+            print("TRY TO CONNECT", file=sys.stderr)
+            try:
+                response = requests.get(f'http://{node}/chain')
 
-            if response.status_code == 200:
-                length = response.json()['length']
-                chain = response.json()['chain']
+                if response.status_code == 200:
+                    length = response.json()['length']
+                    chain = response.json()['chain']
 
-                # Check if the length is longer and the chain is valid
-                if length == max_length and self.valid_chain(chain) and chain[-1]['pow_time'] < self.last_block[
-                    'pow_time']:
-                    max_length = length
-                    new_chain = chain
+                    # Check if the length is longer and the chain is valid
+                    if length == max_length and self.validChain(chain) and chain[-1]['pow_time'] < self.last_block['pow_time']:
+                        max_length = length
+                        new_chain = chain
 
-                if length > max_length and self.valid_chain(chain):
-                    max_length = length
-                    new_chain = chain
+                    if length > max_length and self.validChain(chain):
+                        max_length = length
+                        new_chain = chain
+
+            except ConnectionRefusedError:
+                print("[ConnectionRefusedError] Connection to", f"http://{node}", "refused", file=sys.stderr)
+            print("TRY TO CONNECT END", file=sys.stderr)
 
         # Replace our chain if we discovered a new, valid chain longer than ours
         if new_chain:

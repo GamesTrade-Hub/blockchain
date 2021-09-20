@@ -75,7 +75,7 @@ def register_nodes():
         return "Error: Please supply a valid list of nodes", 400
 
     for node in nodes:
-        blockchain.register_node(node, register_back=True, host=request.host)
+        blockchain.registerNode(node, register_back=True, host=request.host)
 
     response = {
         'message': 'New nodes have been added',
@@ -92,7 +92,7 @@ def register_back_node():
     if node is None:
         return "Error: Please supply a valid node", 400
 
-    blockchain.register_node(node)
+    blockchain.registerNode(node)
 
     response = {
         'message': 'New nodes have been added',
@@ -103,7 +103,7 @@ def register_back_node():
 
 @app.route('/nodes/resolve', methods=['GET'])
 def consensus():
-    replaced = blockchain.resolve_conflicts()
+    replaced = blockchain.resolveConflicts()
 
     if replaced:
         response = {
@@ -116,6 +116,12 @@ def consensus():
             'chain': blockchain.chain
         }
     return jsonify(response), 200
+
+
+@app.route("/nodes/list", methods=['GET'])
+def get_nodes_list():
+    balance = blockchain.getConnectedNodes()
+    return jsonify({'nodes': balance}), 200
 
 
 @app.route('/mine', methods=['GET'])
@@ -189,3 +195,4 @@ def test__():
     return 'test cd 8', 200
 
 
+# TODO check pairs details
