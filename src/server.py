@@ -34,6 +34,15 @@ def stop():
     return jsonify(response), 201
 
 
+@app.route('/status', methods=['GET'])
+def status():
+    if blockchain is None:
+        response = {'message': f'Node isn\'t initialized'}
+    else:
+        response = {'message': f'Node is initialized'}
+    return jsonify(response), 201
+
+
 @app.route('/transactions/new', methods=['POST'])
 def new_transaction():
     if blockchain is None:
