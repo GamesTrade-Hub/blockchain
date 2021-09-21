@@ -6,6 +6,7 @@ import json
 class TestMining(unittest.TestCase):
     def setUp(self):
         self.app = app.test_client()
+        self.app.get('/start')
 
     def test_first_node(self):
         response = self.app.get('/chain')
