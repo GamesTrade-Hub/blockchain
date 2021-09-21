@@ -14,12 +14,31 @@ app = Flask(__name__)
 node_identifier = str(uuid4()).replace('-', '')
 print("Identifier :", node_identifier)
 
-# Instantiate the Blockchain
-blockchain = Blockchain(verbose=True)
+blockchain = None
+
+
+@app.route('/start', methods=['GET'])
+def launch():
+    global blockchain
+    if blockchain is None:
+        blockchain = Blockchain(verbose=True)
+    response = {'message': f'node initialized'}
+    return jsonify(response), 201
+
+
+@app.route('/stop', methods=['GET'])
+def stop():
+    global blockchain
+    blockchain = None
+    response = {'message': f'node stopped'}
+    return jsonify(response), 201
 
 
 @app.route('/transactions/new', methods=['POST'])
 def new_transaction():
+    if blockchain is None:
+        response = {'message': f'Failed: node not initialized'}
+        return jsonify(response), 401
     values = request.get_json()
 
     # Check that the required fields are in the POST'ed data
@@ -41,6 +60,9 @@ def new_transaction():
 
 @app.route('/chain', methods=['GET'])
 def full_chain():
+    if blockchain is None:
+        response = {'message': f'Failed: node not initialized'}
+        return jsonify(response), 401
     response = {
         'chain': blockchain.chain,
         'length': blockchain.chain_size,
@@ -50,6 +72,9 @@ def full_chain():
 
 @app.route('/wait', methods=['POST'])
 def wait():
+    if blockchain is None:
+        response = {'message': f'Failed: node not initialized'}
+        return jsonify(response), 401
     values = request.get_json()
 
     blockchain.setTmpState(12)
@@ -62,12 +87,18 @@ def wait():
 
 @app.route('/ping', methods=['GET'])
 def ping():
+    if blockchain is None:
+        response = {'message': f'Failed: node not initialized'}
+        return jsonify(response), 401
     print("PING", blockchain.getTmpState(), file=sys.stderr)
     return jsonify({'pong': blockchain.getTmpState()}), 200
 
 
 @app.route('/nodes/register', methods=['POST'])
 def register_nodes():
+    if blockchain is None:
+        response = {'message': f'Failed: node not initialized'}
+        return jsonify(response), 401
     values = request.get_json()
 
     nodes = values.get('nodes')
@@ -86,6 +117,9 @@ def register_nodes():
 
 @app.route('/nodes/register_back', methods=['POST'])
 def register_back_node():
+    if blockchain is None:
+        response = {'message': f'Failed: node not initialized'}
+        return jsonify(response), 401
     values = request.get_json()
 
     node = values.get('node')
@@ -103,6 +137,9 @@ def register_back_node():
 
 @app.route('/nodes/resolve', methods=['GET'])
 def consensus():
+    if blockchain is None:
+        response = {'message': f'Failed: node not initialized'}
+        return jsonify(response), 401
     replaced = blockchain.resolveConflicts()
 
     if replaced:
@@ -120,12 +157,18 @@ def consensus():
 
 @app.route("/nodes/list", methods=['GET'])
 def get_nodes_list():
+    if blockchain is None:
+        response = {'message': f'Failed: node not initialized'}
+        return jsonify(response), 401
     balance = blockchain.getConnectedNodes()
     return jsonify({'nodes': balance}), 200
 
 
 @app.route('/mine', methods=['GET'])
 def mine():
+    if blockchain is None:
+        response = {'message': f'Failed: node not initialized'}
+        return jsonify(response), 401
     # Select transactions
     if blockchain.isReadyForTxsSelection() is False:
         if blockchain.isMining() is True:
@@ -153,6 +196,9 @@ def mine():
 
 @app.route('/create_block', methods=['POST'])
 def create_block():
+    if blockchain is None:
+        response = {'message': f'Failed: node not initialized'}
+        return jsonify(response), 401
     values = request.get_json() or {}
 
     response = blockchain.setupBlock(values['time_limit'] if 'time_limit' in values else None,
@@ -167,6 +213,9 @@ def create_block():
 
 @app.route('/get_Txs', methods=['POST'])
 def get_Txs():
+    if blockchain is None:
+        response = {'message': f'Failed: node not initialized'}
+        return jsonify(response), 401
     values = request.get_json()
 
     time_limit = int(values.get('time_limit'))
@@ -181,6 +230,9 @@ def get_Txs():
 
 @app.route("/get_balance", methods=['GET'])
 def get_balance():
+    if blockchain is None:
+        response = {'message': f'Failed: node not initialized'}
+        return jsonify(response), 401
     values = request.get_json()
 
     if 'user_id' not in values:
@@ -193,6 +245,5 @@ def get_balance():
 @app.route("/testcd", methods=['GET'])
 def test__():
     return 'test cd 8', 200
-
 
 # TODO check pairs details
