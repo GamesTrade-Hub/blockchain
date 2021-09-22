@@ -6,6 +6,7 @@ import time
 import requests
 from flask import Flask, jsonify, request
 from .blockchain import Blockchain
+import docker
 
 # Instantiate the Node
 app = Flask(__name__)
@@ -13,6 +14,11 @@ app = Flask(__name__)
 # Generate a globally unique address for this node
 node_identifier = str(uuid4()).replace('-', '')
 print("Identifier :", node_identifier)
+
+# client = docker.DockerClient()
+# container = client.containers.get("magical_meitner")
+# ip_add = container.attrs['NetworkSettings']['IPAddress']
+# print("ip_add", ip_add)
 
 # Instantiate the Blockchain
 blockchain = Blockchain(verbose=True)
@@ -69,36 +75,44 @@ def ping():
 @app.route('/nodes/register', methods=['POST'])
 def register_nodes():
     values = request.get_json()
+    code = 201
+    message = 'New nodes have been added'
 
     nodes = values.get('nodes')
     if nodes is None:
         return "Error: Please supply a valid list of nodes", 400
 
     for node in nodes:
-        blockchain.registerNode(node, register_back=True, host=request.host)
+        code = blockchain.registerNode(node, register_back=True, host=request.host) if code == 201 else code
+
+    if code == 401:
+        message = "Error while adding nodes"
 
     response = {
-        'message': 'New nodes have been added',
+        'message': message,
         'total_nodes': list(blockchain.nodes),
     }
-    return jsonify(response), 201
+    return jsonify(response), code
 
 
 @app.route('/nodes/register_back', methods=['POST'])
 def register_back_node():
     values = request.get_json()
+    message = 'New node have been added'
 
     node = values.get('node')
     if node is None:
         return "Error: Please supply a valid node", 400
 
-    blockchain.registerNode(node)
+    code = blockchain.registerNode(node)
+    if code == 401:
+        message = "Error while adding node"
 
     response = {
-        'message': 'New nodes have been added',
+        'message': message,
         'total_nodes': list(blockchain.nodes),
     }
-    return jsonify(response), 201
+    return jsonify(response), code
 
 
 @app.route('/nodes/resolve', methods=['GET'])
@@ -132,10 +146,10 @@ def mine():
             return 'Node already mining', 400
         return 'Node not ready to mine : Block bounds not found', 400
 
-    blockchain.select_Txs()
+    blockchain.selectTxs()
 
     # We run the proof of work algorithm to get the next proof...
-    blockchain.new_block()
+    blockchain.newBlock()
 
     # We must receive a reward for finding the proof.
     # The sender is "0" to signify that this node has mined a new coin.
@@ -193,6 +207,5 @@ def get_balance():
 @app.route("/testcd", methods=['GET'])
 def test__():
     return 'test cd 8', 200
-
 
 # TODO check pairs details

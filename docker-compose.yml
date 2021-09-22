@@ -1,5 +1,9 @@
 version: '3.8'
 
+# Tests :
+# docker build --target dev -t bc --network host .
+# docker run -p 5001:5001 bc python3 main.py -p 5001
+
 services:
   dev_blockchain_node_1:
     build:

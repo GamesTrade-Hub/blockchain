@@ -37,7 +37,7 @@ class Blockchain:
         self.print_v = print if verbose else lambda *a, **k: None
 
         # Create the genesis block
-        self.new_block(previous_hash='1', nonce=100)
+        self.newBlock(previous_hash='1', nonce=100)
         self.print_v("Blockchain coin created")
 
     def getConnectedNodes(self):
@@ -51,7 +51,6 @@ class Blockchain:
         :param address: Address of node. Eg. 'http://192.168.0.5:5000'
         """
 
-        print('Register node', address, file=sys.stderr)
         parsed_url = urlparse(address)
 
         if parsed_url.netloc:
@@ -62,8 +61,16 @@ class Blockchain:
             raise ValueError('Invalid URL')
 
         self.nodes.append(new_node)
-        if register_back:
+
+        if not register_back:
+            return 201
+
+        try:
             requests.post(f'http://{new_node}/nodes/register_back', json={"node": host})
+        except requests.exceptions.RequestException as e:
+            print("ERROR", e, file=sys.stderr)
+            return 401
+        return 201
 
     def validChain(self, chain):
         """
@@ -111,7 +118,6 @@ class Blockchain:
 
         # Grab and verify the chains from all the nodes in our network
         for node in neighbours:
-            print("TRY TO CONNECT", file=sys.stderr)
             try:
                 response = requests.get(f'http://{node}/chain')
 
@@ -130,7 +136,6 @@ class Blockchain:
 
             except ConnectionRefusedError:
                 print("[ConnectionRefusedError] Connection to", f"http://{node}", "refused", file=sys.stderr)
-            print("TRY TO CONNECT END", file=sys.stderr)
 
         # Replace our chain if we discovered a new, valid chain longer than ours
         if new_chain:
@@ -139,7 +144,7 @@ class Blockchain:
 
         return False
 
-    def new_block(self, nonce=None, previous_hash=None):
+    def newBlock(self, nonce=None, previous_hash=None):
         """
         Create a new Block in the Blockchain
         :param nonce: The proof given by the Proof of Work algorithm
@@ -172,14 +177,14 @@ class Blockchain:
         self.chain.append(block)
         return block
 
-    def new_transaction(self, transaction_id, sender, recipient, amount, time_):
+    def new_transaction(self, transaction_id, sender, recipient, amount, time_stamp):
         """
         Creates a new transaction to go into the next mined Block
         :param transaction_id: id of the transaction. If None, this node initiate the transaction and send it to others.
         :param sender: Address of the Sender
         :param recipient: Address of the Recipient
         :param amount: Amount
-        :param time: When the transaction was sent
+        :param time_stamp: When the transaction was sent
         :return: The index of the Block that will hold this transaction
         """
 
@@ -188,16 +193,16 @@ class Blockchain:
             'sender': sender,
             'recipient': recipient,
             'amount': amount,
-            'time': time_ or time.time_ns()
+            'time': time_stamp or time.time_ns()
         }
         self.Txs.append(transaction)
 
-        if transaction_id is None:
-            for node in self.nodes:
-                response = requests.post(f'http://{node}/transactions/new', json=transaction)
-
-                if response.status_code != 200:
-                    print(f"Transaction sent to {node} received error code {response.status_code}")
+        # if transaction_id is None:
+        #     for node in self.nodes:
+        #         response = requests.post(f'http://{node}/transactions/new', json=transaction)
+        #
+        #         if response.status_code != 200:
+        #             print(f"Transaction sent to {node} received error code {response.status_code}")
 
         return self.last_block['index'] + 1
 
@@ -244,7 +249,7 @@ class Blockchain:
         guess_hash = hashlib.sha256(guess).hexdigest()
         return guess_hash[:4] == "0000"
 
-    def select_Txs(self):
+    def selectTxs(self):
         """
         """
 
@@ -261,7 +266,7 @@ class Blockchain:
             response = requests.post(f'http://{node}/get_Txs', json={"time_limit": self.time_limit_Txs})
 
             if response.status_code == 200:
-                self.selected_Txs = self.selected_Txs.union(list(response.json()['Txs']))
+                self.selected_Txs += list(response.json()['Txs'])
 
         self.selected_Txs = list([tx for tx in self.selected_Txs if self.transactionIsValid(tx)])
         self.step = Step.MINING
@@ -290,6 +295,7 @@ class Blockchain:
         if time_limit and time_limit < self.time_limit_Txs and block == self.chain_size + 1:
             self.time_limit_Txs = time_limit
 
+        # Research lowest time limit from each node.
         if time_limit is None:
             for node in self.nodes:
                 response = requests.post(f'http://{node}/create_block', json={"time_limit": self.time_limit_Txs,
