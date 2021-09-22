@@ -197,7 +197,7 @@ def get_Txs():
 def get_balance():
     values = request.get_json()
 
-    if 'user_id' not in values:
+    if values is None or 'user_id' not in values:
         return 'Invalid request please specify user id', 400
 
     balance = blockchain.get_balance(values['user_id'])
