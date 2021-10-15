@@ -1,3 +1,5 @@
+import uuid
+
 import flask
 import sys
 from urllib.parse import urlparse
@@ -15,6 +17,12 @@ node_identifier = str(uuid4()).replace('-', '')
 print("Identifier :", node_identifier)
 
 blockchain = None
+
+
+@app.route('/get_new_private_key', methods=['GET'])
+def get_new_private_key():
+    response = {'message': f'{uuid.uuid4()}'}
+    return jsonify(response), 201
 
 
 @app.route('/start', methods=['GET'])
