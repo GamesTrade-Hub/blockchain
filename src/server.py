@@ -20,7 +20,7 @@ blockchain = None
 
 
 @app.route('/get_new_private_key', methods=['GET'])
-def get_new_private_key():
+def get_private_key():
     response = {'message': f'{uuid.uuid4()}'}
     return jsonify(response), 201
 
