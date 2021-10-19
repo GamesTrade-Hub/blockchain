@@ -1,6 +1,4 @@
 import uuid
-
-import flask
 import sys
 from urllib.parse import urlparse
 from uuid import uuid4
@@ -16,12 +14,24 @@ app = Flask(__name__)
 node_identifier = str(uuid4()).replace('-', '')
 print("Identifier :", node_identifier)
 
-blockchain = None
+blockchain = Blockchain(verbose=True)
 
 
 @app.route('/get_new_private_key', methods=['GET'])
 def get_private_key():
-    response = {'message': f'{uuid.uuid4()}'}
+    private_key = blockchain.generate_private_key()
+    response = {'message': f'{private_key}'}
+    return jsonify(response), 201
+
+
+@app.route('/get_new_public_key', methods=['GET'])
+def get_public_key():
+    values = request.get_json()
+    private_key = values.get('private_key')
+    if private_key is None:
+        return "Error: Please supply a private key", 400
+    public_key = blockchain.generate_public_key(private_key)
+    response = {'message': f'{public_key}'}
     return jsonify(response), 201
 
 
@@ -72,6 +82,35 @@ def new_transaction():
                                        )
 
     response = {'message': f'Transaction will be added to Block {index} or the next one'}
+    return jsonify(response), 201
+
+
+@app.route('/new_transactions/new', methods=['POST'])
+def new_transactions():
+    if blockchain is None:
+        response = {'message': f'Failed: node not initialized'}
+        return jsonify(response), 401
+    values = request.get_json()
+
+    # Check that the required fields are in the POST'ed data
+    required = ['sender', 'recipient', 'amount', 'private_key']
+    if not all(k in values for k in required):
+        return 'Missing value', 400
+
+    # Create a new Transaction
+    transaction = blockchain.create_transaction(values['id'] if 'id' in values else None,
+                                                values['sender'],
+                                                values['recipient'],
+                                                values['amount'],
+                                                values['time'] if 'id' in values else None)
+    signature = blockchain.get_signature(transaction, values['private_key'])
+    if 'id' in values:
+        blockchain.add_transaction_pool(transaction, blockchain.generate_public_key(values['private_key']), signature,
+                                        False)
+    else:
+        blockchain.add_transaction_pool(transaction, blockchain.generate_public_key(values['private_key']), signature,
+                                        True)
+    response = {'message': f'Transaction will be added'}
     return jsonify(response), 201
 
 
