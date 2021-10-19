@@ -4,10 +4,9 @@ import sys
 from urllib.parse import urlparse
 from uuid import uuid4
 import time
-
+from fastecdsa import curve, ecdsa, keys
 import requests
-from flask import Flask, jsonify, request
-
+from datetime import datetime
 from enum import Enum
 
 
@@ -56,7 +55,10 @@ class Blockchain:
         if parsed_url.netloc:
             new_node = parsed_url.netloc
         elif parsed_url.path:
-            new_node = parsed_url.scheme + ':' + parsed_url.path
+            if parsed_url.scheme:
+                new_node = parsed_url.scheme + ':' + parsed_url.path
+            else:
+                new_node = parsed_url.path
         else:
             raise ValueError('Invalid URL')
 
@@ -340,3 +342,40 @@ class Blockchain:
                 print("2 balance", balance, tx, file=sys.stderr)
 
         return balance
+
+    def generate_private_key(self):
+        private_key = keys.gen_private_key(curve.secp256k1)
+        return private_key
+
+    def generate_public_key(self, private_key):
+        public_key = keys.get_public_key(private_key, curve.secp256k1)
+        return public_key
+
+    def create_transaction(self, transaction_id, sender, recipient, amount, time_):
+        transaction = {
+            'id': transaction_id or str(uuid4()),
+            'sender': sender,
+            'recipient': recipient,
+            'amount': amount,
+            'time': time_ or time.time_ns()
+        }
+        return transaction
+
+    def get_signature(self, transaction, private):
+        encoded_transaction = json.dumps(transaction, sort_keys=True).encode()
+        signature = ecdsa.sign(encoded_transaction, private, curve.secp256k1, ecdsa.sha256)
+        return signature
+
+    def add_transaction_pool(self, transaction, public_key, signature, transmission):
+        encoded_transaction = json.dumps(transaction, sort_keys=True).encode()
+        is_valid = ecdsa.verify(signature, encoded_transaction, public_key, curve.secp256k1, ecdsa.sha256)
+        if is_valid:
+            self.Txs.append(transaction)
+        if transmission is True:
+            for node in self.nodes:
+                response = requests.post(f'http://{node}/transactions/new', json=transaction)
+
+                if response.status_code != 200:
+                    print(f"Transaction sent to {node} received error code {response.status_code}")
+
+        return self.last_block['index'] + 1

@@ -7,8 +7,11 @@ import time
 class TestMining(unittest.TestCase):
     def setUp(self):
         self.app = app.test_client()
+        self.app.get('/start')
 
     def test_balance(self):
+        response = self.app.get('/status')
+        self.assertEqual(response.status_code, 201)
         response = self.app.post('/transactions/new', json={"sender": "Cyprien", "recipient": "William", "amount": 50})
         self.assertEqual(response.status_code, 201)
         response = self.app.post('/transactions/new', json={"sender": "William", "recipient": "Cyprien", "amount": 30})

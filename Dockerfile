@@ -47,5 +47,5 @@ RUN /usr/local/bin/python -m pip install -r /tmp/requirements/prod.txt --user
 
 RUN echo test
 
-ENTRYPOINT ["gunicorn"]
-CMD ["--bind", "0.0.0.0:5000", "wsgi:app"]
+ENV PORT=$PORT
+CMD gunicorn --bind 0.0.0.0:$PORT wsgi:app

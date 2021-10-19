@@ -30,14 +30,38 @@ services:
 
 
   prod:
+    environment:
+      PORT: 5002
     build:
       context: .
       dockerfile: Dockerfile
       target: prod
     restart: on-failure
     ports:
-      - 5000:5000
+      - "5002:5002"
 
+  prod_2:
+    environment:
+      PORT: 5001
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: prod
+    restart: on-failure
+    ports:
+      - "5001:5001"
+
+  prod_docker:
+    image: "gamestradehub/blockchain-coin_prod:latest"
+    restart: on-failure
+    ports:
+      - "5000:5000"
+
+  prod_docker_2:
+    image: "gamestradehub/blockchain-coin_prod:latest"
+    restart: on-failure
+    ports:
+      - 5001:5001
 
   tests:
     build:
