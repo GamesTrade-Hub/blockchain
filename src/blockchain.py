@@ -352,6 +352,9 @@ class Blockchain:
         return public_key
 
     def create_transaction(self, transaction_id, sender, recipient, amount, time_):
+        balance = self.get_balance(sender)
+        if balance < amount and sender != '000':
+            return None
         transaction = {
             'id': transaction_id or str(uuid4()),
             'sender': sender,

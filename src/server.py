@@ -6,7 +6,7 @@ import time
 import requests
 from flask import Flask, jsonify, request
 from .blockchain import Blockchain
-import docker
+#import docker
 
 # Instantiate the Node
 app = Flask(__name__)
@@ -68,30 +68,6 @@ def status():
     return jsonify(response), 201
 
 
-@app.route('/transactions/new', methods=['POST'])
-def new_transaction():
-    if blockchain is None:
-        response = {'message': f'Failed: node not initialized'}
-        return jsonify(response), 401
-    values = request.get_json()
-
-    # Check that the required fields are in the POST'ed data
-    required = ['sender', 'recipient', 'amount']
-    if not all(k in values for k in required):
-        return 'Missing value', 400
-
-    # Create a new Transaction
-    index = blockchain.new_transaction(values['id'] if 'id' in values else None,
-                                       values['sender'],
-                                       values['recipient'],
-                                       values['amount'],
-                                       values['time'] if 'id' in values else None
-                                       )
-
-    response = {'message': f'Transaction will be added to Block {index} or the next one'}
-    return jsonify(response), 201
-
-
 @app.route('/new_transactions/new', methods=['POST'])
 def new_transactions():
     if blockchain is None:
@@ -110,6 +86,9 @@ def new_transactions():
                                                 values['recipient'],
                                                 values['amount'],
                                                 values['time'] if 'id' in values else None)
+    if transaction is None:
+        response = {'message': f"Transation can't be added"}
+        return jsonify(response), 401
     signature = blockchain.get_signature(transaction, values['private_key'])
     if 'id' in values:
         blockchain.add_transaction_pool(transaction, blockchain.generate_public_key(values['private_key']), signature,
