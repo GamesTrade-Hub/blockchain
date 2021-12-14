@@ -68,6 +68,22 @@ def status():
     return jsonify(response), 201
 
 
+@app.route('/new_transactions/new_nft', methods=['POST'])
+def new_transactions_nft():
+    values = request.get_json()
+    if blockchain is None:
+        return jsonify({"message": "Failed: node not initialized"}), 401
+    required = ["recipient", "private_key"]
+    if not all(i in values for i in required):
+        return "Missing value", 400
+    transaction = blockchain.create_nft(values["recipient"])
+    if transaction is None:
+        return jsonify({"message": "Transaction can't be added"}), 401
+    signature = blockchain.get_signature(transaction, values["private_key"])
+    blockchain.add_transaction_pool(transaction, blockchain.generate_public_key(values["private_key"]), signature, True)
+    return jsonify({"message": "Transaction will be added"}), 201
+
+
 @app.route('/new_transactions/new', methods=['POST'])
 def new_transactions():
     if blockchain is None:

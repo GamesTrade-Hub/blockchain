@@ -1,6 +1,7 @@
 import hashlib
 import json
 import sys
+import uuid
 from urllib.parse import urlparse
 from uuid import uuid4
 import time
@@ -385,3 +386,13 @@ class Blockchain:
                     print(f"Transaction sent to {node} received error code {response.status_code}")
 
         return self.last_block['index'] + 1
+
+    def create_nft(self, recipient):
+        transaction = {
+            "id": None,
+            "sender": "000",
+            "recipient": recipient,
+            "nft": str(uuid.uuid4()),
+            "time": time.time_ns()
+        }
+        return transaction
