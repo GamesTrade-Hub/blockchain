@@ -76,12 +76,14 @@ def new_transactions():
     values = request.get_json()
 
     # Check that the required fields are in the POST'ed data
-    required = ['sender', 'recipient', 'amount', 'private_key']
+    required = ['sender', 'recipient', 'amount', 'private_key', 'token']
     if not all(k in values for k in required):
         return 'Missing value', 400
 
+    values['private_key'] = int(values['private_key'])
     # Create a new Transaction
     transaction = blockchain.create_transaction(values['id'] if 'id' in values else None,
+                                                values['token'],
                                                 values['sender'],
                                                 values['recipient'],
                                                 values['amount'],
@@ -289,6 +291,20 @@ def get_balance():
         return 'Invalid request please specify user id', 400
 
     balance = blockchain.get_balance(values['user_id'])
+    return jsonify(balance), 200
+
+
+@app.route("/get_balance_by_token", methods=['POST'])
+def get_balance_by_token():
+    if blockchain is None:
+        response = {'message': f'Failed: node not initialized'}
+        return jsonify(response), 401
+    values = request.get_json()
+
+    if values is None or 'user_id' not in values or 'token' not in values:
+        return 'Invalid request please specify user id', 400
+
+    balance = blockchain.get_balance_by_token(values['user_id'], values['token'])
     return jsonify({'balance': balance}), 200
 
 

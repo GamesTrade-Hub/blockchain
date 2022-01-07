@@ -329,15 +329,34 @@ class Blockchain:
         return [tx for tx in self.Txs if tx['time'] < time_limit]
 
     def get_balance(self, user_id):
-        balance = 0
+        balance = {}
 
         for block in self.chain:
             print("NEXT BLOCK", block['hash'], file=sys.stderr)
             for tx in block['transactions']:
                 print("1 balance", balance, tx, file=sys.stderr)
                 if tx['recipient'] == user_id:
-                    balance += tx['amount']
+                    if tx['token'] not in balance:
+                        balance[tx['token']] = 0
+                    balance[tx['token']] += tx['amount']
                 if tx['sender'] == user_id:
+                    if tx['token'] not in balance:
+                        balance[tx['token']] = 0
+                    balance[tx['token']] -= tx['amount']
+                print("2 balance", balance, tx, file=sys.stderr)
+
+        return balance
+
+    def get_balance_by_token(self, user_id, token):
+        balance = 0
+
+        for block in self.chain:
+            print("NEXT BLOCK", block['hash'], file=sys.stderr)
+            for tx in block['transactions']:
+                print("1 balance", balance, tx, file=sys.stderr)
+                if tx['recipient'] == user_id and tx['token'] == token:
+                    balance += tx['amount']
+                if tx['sender'] == user_id and tx['token'] == token:
                     balance -= tx['amount']
                 print("2 balance", balance, tx, file=sys.stderr)
 
@@ -351,12 +370,13 @@ class Blockchain:
         public_key = keys.get_public_key(private_key, curve.secp256k1)
         return public_key
 
-    def create_transaction(self, transaction_id, sender, recipient, amount, time_):
-        balance = self.get_balance(sender)
+    def create_transaction(self, transaction_id, token, sender, recipient, amount, time_):
+        balance = self.get_balance_by_token(sender, token)
         if balance < amount and sender != '000':
             return None
         transaction = {
             'id': transaction_id or str(uuid4()),
+            'token': token,
             'sender': sender,
             'recipient': recipient,
             'amount': amount,
