@@ -4,10 +4,22 @@ import sys
 from urllib.parse import urlparse
 from uuid import uuid4
 import time
-from fastecdsa import curve, ecdsa, keys
+from fastecdsa import curve, ecdsa, keys, point
 import requests
 from datetime import datetime
 from enum import Enum
+from src.smart_contracts import SmartContract, Type
+
+
+class BcEncoder(json.JSONEncoder):
+    def default(self, o):
+        # print("start", o)
+        # print(o.__dict__)
+        # for i in o.__dict__:
+            # print(':', i, o.__dict__[i])
+            # if o.__dict__[i].__class__.__module__ != '__builtin__':
+            #     print(json.dumps(o.__dict__[i], cls=BcEncoder))
+        return {i: (json.dumps(o.__dict__[i], cls=BcEncoder) if o.__dict__[i].__class__.__module__ != '__builtin__' else o.__dict__[i]) for i in o.__dict__}
 
 
 class Step(Enum):
@@ -39,6 +51,14 @@ class Blockchain:
         self.newBlock(previous_hash='1', nonce=100)
         self.print_v("Blockchain coin created")
 
+    @property
+    def chain_size(self):
+        return len(self.chain)
+
+    @property
+    def last_block(self):
+        return self.chain[-1]
+
     def getConnectedNodes(self):
         return self.nodes
 
@@ -62,7 +82,11 @@ class Blockchain:
         else:
             raise ValueError('Invalid URL')
 
+        if new_node in self.nodes:
+            return 202
+
         self.nodes.append(new_node)
+        print("add node", new_node)
 
         if not register_back:
             return 201
@@ -166,7 +190,7 @@ class Blockchain:
             'transactions': dropDuplicates(self.selected_Txs),
             'previous_hash': previous_hash or self.last_block['hash'],
         }
-        block['nonce'] = nonce or self.proof_of_work(self.hash(block))
+        block['nonce'] = nonce or self.proofOfWork(self.hash(block))
         block['pow_time'] = time.time_ns()
         block['hash'] = self.hash(block)
 
@@ -179,53 +203,36 @@ class Blockchain:
         self.chain.append(block)
         return block
 
-    def new_transaction(self, transaction_id, sender, recipient, amount, time_stamp):
-        """
-        Creates a new transaction to go into the next mined Block
-        :param transaction_id: id of the transaction. If None, this node initiate the transaction and send it to others.
-        :param sender: Address of the Sender
-        :param recipient: Address of the Recipient
-        :param amount: Amount
-        :param time_stamp: When the transaction was sent
-        :return: The index of the Block that will hold this transaction
-        """
+    # def newTransaction(self, transaction_id, sender, recipient, amount, time_stamp):
+    #     """
+    #     Creates a new transaction to go into the next mined Block
+    #     :param transaction_id: id of the transaction. If None, this node initiate the transaction and send it to others.
+    #     :param sender: Address of the Sender
+    #     :param recipient: Address of the Recipient
+    #     :param amount: Amount
+    #     :param time_stamp: When the transaction was sent
+    #     :return: The index of the Block that will hold this transaction
+    #     """
+    #
+    #     transaction = {
+    #         'id': transaction_id or str(uuid4()),
+    #         'sender': sender,
+    #         'recipient': recipient,
+    #         'amount': amount,
+    #         'time': time_stamp or time.time_ns()
+    #     }
+    #     self.Txs.append(transaction)
+    #
+    #     # if transaction_id is None:
+    #     #     for node in self.nodes:
+    #     #         response = requests.post(f'http://{node}/transaction/new', json=transaction)
+    #     #
+    #     #         if response.status_code != 200:
+    #     #             print(f"Transaction sent to {node} received error code {response.status_code}")
+    #
+    #     return self.last_block['index'] + 1
 
-        transaction = {
-            'id': transaction_id or str(uuid4()),
-            'sender': sender,
-            'recipient': recipient,
-            'amount': amount,
-            'time': time_stamp or time.time_ns()
-        }
-        self.Txs.append(transaction)
-
-        # if transaction_id is None:
-        #     for node in self.nodes:
-        #         response = requests.post(f'http://{node}/transactions/new', json=transaction)
-        #
-        #         if response.status_code != 200:
-        #             print(f"Transaction sent to {node} received error code {response.status_code}")
-
-        return self.last_block['index'] + 1
-
-    @property
-    def last_block(self):
-        return self.chain[-1]
-
-    @staticmethod
-    def hash(block):
-        """
-        Creates a SHA-256 hash of a Block
-        :param block: Block
-        """
-
-        do_not_use = ['hash', 'nonce']
-        block = {a: block[a] for a in block if a not in do_not_use}
-        # We must make sure that the Dictionary is Ordered, or we'll have inconsistent hashes
-        block_string = json.dumps(block, sort_keys=True).encode()
-        return hashlib.sha256(block_string).hexdigest()
-
-    def proof_of_work(self, block_hash):
+    def proofOfWork(self, block_hash):
         """
         Simple Proof of Work Algorithm:
          - Find a number p' such that hash(pp') contains leading 4 zeroes
@@ -240,17 +247,6 @@ class Blockchain:
 
         return nonce
 
-    @staticmethod
-    def valid_proof(block_hash, nonce):
-        """
-        Validates the Proof
-        :return: <bool> True if correct, False if not.
-        """
-
-        guess = f'{block_hash}{nonce}'.encode()
-        guess_hash = hashlib.sha256(guess).hexdigest()
-        return guess_hash[:4] == "0000"
-
     def selectTxs(self):
         """
         """
@@ -263,14 +259,19 @@ class Blockchain:
             return
 
         self.selected_Txs = self.Txs
+        # print("self.Txs", self.Txs)
 
-        for node in self.nodes:
-            response = requests.post(f'http://{node}/get_Txs', json={"time_limit": self.time_limit_Txs})
+        # print("nodes", self.nodes)
 
-            if response.status_code == 200:
-                self.selected_Txs += list(response.json()['Txs'])
+        # for node in self.nodes:
+        #     response = requests.post(f'http://{node}/get_Txs', json={"time_limit": self.time_limit_Txs})
+        #
+        #     print('found', response.json()['Txs'])
+        #     if response.status_code == 200:
+        #         self.selected_Txs += list(response.json()['Txs'])
 
-        self.selected_Txs = list([tx for tx in self.selected_Txs if self.transactionIsValid(tx)])
+        # print("self.selected_Txs", self.selected_Txs)  FIXME to remove
+        self.selected_Txs = list([tx for tx in self.selected_Txs if self.transactionCanBeAdded(tx)])
         self.step = Step.MINING
 
     def setTmpState(self, state=1):
@@ -279,8 +280,8 @@ class Blockchain:
     def getTmpState(self):
         return self.tmp_state
 
-    def transactionIsValid(self, transaction):
-        return transaction['time'] < self.time_limit_Txs
+    def transactionCanBeAdded(self, transaction):
+        return transaction['time'] < self.time_limit_Txs and transaction['sc'].run()
 
     def setupBlock(self, time_limit, block):
         if self.step == Step.IDLE:
@@ -312,10 +313,6 @@ class Blockchain:
         self.step = Step.WAITING_FOR_TXS_SELECTION
         return self.time_limit_Txs, self.chain_size + 1
 
-    @property
-    def chain_size(self):
-        return len(self.chain)
-
     def isReadyForTxsSelection(self):
         return self.step == Step.WAITING_FOR_TXS_SELECTION
 
@@ -325,80 +322,156 @@ class Blockchain:
     def getStep(self):
         return self.step
 
-    def get_Txs(self, time_limit):
+    def getTxs(self, time_limit):
         return [tx for tx in self.Txs if tx['time'] < time_limit]
 
-    def get_balance(self, user_id):
+    def getBalance(self, public_key):
         balance = {}
 
+        if Blockchain.is_GTH(public_key):
+            return -1
+
         for block in self.chain:
-            print("NEXT BLOCK", block['hash'], file=sys.stderr)
+            # print("DEBUG NEXT BLOCK", block['hash'], file=sys.stderr)
             for tx in block['transactions']:
-                print("1 balance", balance, tx, file=sys.stderr)
-                if tx['recipient'] == user_id:
+                # print("DEBUG 1 balance", balance, tx, file=sys.stderr)
+                if tx['recipient'] == public_key:
                     if tx['token'] not in balance:
                         balance[tx['token']] = 0
                     balance[tx['token']] += tx['amount']
-                if tx['sender'] == user_id:
+                if tx['sender'] == public_key:
                     if tx['token'] not in balance:
                         balance[tx['token']] = 0
                     balance[tx['token']] -= tx['amount']
-                print("2 balance", balance, tx, file=sys.stderr)
+                # print("DEBUG 2 balance", balance, tx, file=sys.stderr)
 
         return balance
 
-    def get_balance_by_token(self, user_id, token):
+    def getBalanceByToken(self, public_key, token):
         balance = 0
 
+        if Blockchain.is_GTH(public_key):
+            return -1
+
         for block in self.chain:
-            print("NEXT BLOCK", block['hash'], file=sys.stderr)
+            print("DEBUG NEXT BLOCK", block['hash'], file=sys.stderr)
             for tx in block['transactions']:
-                print("1 balance", balance, tx, file=sys.stderr)
-                if tx['recipient'] == user_id and tx['token'] == token:
+                print("DEBUG 1 balance", balance, tx, file=sys.stderr)
+                if tx['recipient'] == public_key and tx['token'] == token:
                     balance += tx['amount']
-                if tx['sender'] == user_id and tx['token'] == token:
+                if tx['sender'] == public_key and tx['token'] == token:
                     balance -= tx['amount']
-                print("2 balance", balance, tx, file=sys.stderr)
+                print("DEBUG 2 balance", balance, tx, file=sys.stderr)
 
         return balance
 
-    def generate_private_key(self):
-        private_key = keys.gen_private_key(curve.secp256k1)
-        return private_key
+    def createTransaction(self, transaction_id, token, sender, recipient, amount, time_, smart_contract=None):
+        if sender == recipient:
+            return None, 'Sender and recipient can\'t be the same'
+        if self.is_GTH(sender) is False and self.getBalanceByToken(sender, token) < amount:
+            return None, 'User does not have enough money to proceed the transaction'
 
-    def generate_public_key(self, private_key):
-        public_key = keys.get_public_key(private_key, curve.secp256k1)
-        return public_key
-
-    def create_transaction(self, transaction_id, token, sender, recipient, amount, time_):
-        balance = self.get_balance_by_token(sender, token)
-        if balance < amount and sender != '000':
-            return None
-        transaction = {
+        transaction = {  # TODO create a class for this object
             'id': transaction_id or str(uuid4()),
             'token': token,
             'sender': sender,
             'recipient': recipient,
             'amount': amount,
-            'time': time_ or time.time_ns()
+            'time': time_ or time.time_ns(),
+            'sc': SmartContract(self.chain, self.Txs, smart_contract)
         }
-        return transaction
 
-    def get_signature(self, transaction, private):
-        encoded_transaction = json.dumps(transaction, sort_keys=True).encode()
-        signature = ecdsa.sign(encoded_transaction, private, curve.secp256k1, ecdsa.sha256)
-        return signature
+        if transaction['sc'] is not None and transaction['sc'].contractType == Type.INVALID:
+            return None, 'Invalid smart contract'
+        return transaction, "ok"
 
-    def add_transaction_pool(self, transaction, public_key, signature, transmission):
-        encoded_transaction = json.dumps(transaction, sort_keys=True).encode()
+    def addTransactionPool(self, transaction, private_key, public_key, transmission):
+        """
+        Add transaction to waiting transactions list, spread the transaction to other nodes it transmission is True
+        :param transaction:
+        :param private_key:
+        :param transmission: spread out the transaction to other nodes it transmission is True
+        :return:
+        """
+        # serializable_transaction = transaction.copy()
+        # serializable_transaction['sc'] = serializable_transaction['sc'].__str__()
+
+        signature = Blockchain.getSignature(transaction, private_key)
+        public_key = Blockchain.public_key_to_point(public_key)
+        encoded_transaction = json.dumps(transaction, sort_keys=True, cls=BcEncoder).encode()
         is_valid = ecdsa.verify(signature, encoded_transaction, public_key, curve.secp256k1, ecdsa.sha256)
-        if is_valid:
-            self.Txs.append(transaction)
+
+        if not is_valid:
+            print(f'Warning: transaction {transaction} is not valid, signature check failed.')
+            return self.last_block['index']
+
+        print('append in Txs', transaction)
+        self.Txs.append(transaction)
         if transmission is True:
             for node in self.nodes:
-                response = requests.post(f'http://{node}/transactions/new', json=transaction)
+                json_transaction = json.loads(json.dumps(transaction, cls=BcEncoder))
+                response = requests.post(f'http://{node}/transaction/new', json=json_transaction)
 
                 if response.status_code != 200:
                     print(f"Transaction sent to {node} received error code {response.status_code}")
 
         return self.last_block['index'] + 1
+
+    @staticmethod
+    def generate_private_key():
+        private_key = keys.gen_private_key(curve.secp256k1)
+        return private_key
+
+    @staticmethod
+    def generate_public_key(private_key, string=False):
+        public_key = keys.get_public_key(private_key, curve.secp256k1)
+        if string:
+            return Blockchain.point_to_public_key(public_key)
+        return public_key
+
+    @staticmethod
+    def getSignature(transaction, private_key):
+        encoded_transaction = json.dumps(transaction, sort_keys=True, cls=BcEncoder).encode()
+        signature = ecdsa.sign(encoded_transaction, private_key, curve.secp256k1, ecdsa.sha256)
+        return signature
+
+    @staticmethod
+    def hash(block):
+        """
+        Creates a SHA-256 hash of a Block
+        :param block: Block
+        """
+
+        do_not_use = ['hash', 'nonce']
+        block = {a: block[a] for a in block if a not in do_not_use}
+        # We must make sure that the Dictionary is Ordered, or we'll have inconsistent hashes
+        # print("block to encode", block)  FIXME to remove
+        block_string = json.dumps(block, sort_keys=True, cls=BcEncoder).encode()
+        return hashlib.sha256(block_string).hexdigest()
+
+    @staticmethod
+    def valid_proof(block_hash, nonce):
+        """
+        Validates the Proof
+        :return: <bool> True if correct, False if not.
+        """
+
+        guess = f'{block_hash}{nonce}'.encode()
+        guess_hash = hashlib.sha256(guess).hexdigest()
+        return guess_hash[:4] == "0000"
+
+    @staticmethod
+    def is_GTH(public_key):
+        return str(public_key) == '10758617696907311121413818662138847289616614995880589249879725143883620135189774644521699183317518461259885566371696845701675874024848140772236522116872470'
+
+    @staticmethod
+    def public_key_to_point(public_key):
+        return point.Point(int(str(public_key)[:78]), int(str(public_key)[78:]), curve.secp256k1)
+
+    @staticmethod
+    def point_to_public_key(key_as_point):
+        return str(key_as_point.x) + str(key_as_point.y)
+
+    # @staticmethod
+    # def is_GTH(private_key):
+    #     return hashlib.sha224(str.encode(str(private_key))).hexdigest() == '16e32b6f4cede45149e02a0f81499f97fe7e6e79ee337492ff131bcf'
