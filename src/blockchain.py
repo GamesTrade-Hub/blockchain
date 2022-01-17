@@ -258,20 +258,9 @@ class Blockchain:
             print(f'Wrong step for selecting Txs, current step is {self.step}', file=sys.stderr)
             return
 
-        # print("self.Txs", self.Txs)
-
-        # print("nodes", self.nodes)
-
-        # for node in self.nodes:
-        #     response = requests.post(f'http://{node}/get_Txs', json={"time_limit": self.time_limit_Txs})
-        #
-        #     print('found', response.json()['Txs'])
-        #     if response.status_code == 200:
-        #         self.selected_Txs += list(response.json()['Txs'])
-
-        print("self.Txs", self.Txs)  # FIXME to remove
+        print("DEBUG self.Txs", self.Txs)  # FIXME to remove
         self.selected_Txs = list([tx for tx in self.Txs if self.transactionCanBeAdded(tx)])
-        print("self.selected_Txs", self.selected_Txs)  # FIXME to remove
+        print("DEBUG self.selected_Txs", self.selected_Txs)  # FIXME to remove
         self.step = Step.MINING
 
     def setTmpState(self, state=1):
@@ -281,7 +270,7 @@ class Blockchain:
         return self.tmp_state
 
     def transactionCanBeAdded(self, transaction):
-        print('transactionCanBeAdded', transaction['time'], self.time_limit_Txs, transaction['time'] < self.time_limit_Txs, transaction['sc'].run())
+        # print('transactionCanBeAdded', transaction['time'], self.time_limit_Txs, transaction['time'] < self.time_limit_Txs, transaction['sc'].run())
         return transaction['time'] < self.time_limit_Txs and transaction['sc'].run()
 
     def setupBlock(self, time_limit, block):
@@ -292,15 +281,10 @@ class Blockchain:
             print(f'Wrong step for setup block bounds, current step is {self.step}', file=sys.stderr)
             return
 
-        # print('receive', time_limit)
-        # print("before", Blockchain.get_time() < self.time_limit_Txs if self.time_limit_Txs is not None else "non", Blockchain.get_time(), self.time_limit_Txs)
-
         self.time_limit_Txs = Blockchain.get_time()
 
         if time_limit and self.time_limit_Txs > time_limit:  # Don't accept a time higher than your current
             self.time_limit_Txs = time_limit
-
-        # print("block time", self.time_limit_Txs, Blockchain.get_time())
 
         if time_limit is None:
             for node in self.nodes:
@@ -308,7 +292,7 @@ class Blockchain:
                                                                    "block": self.chain_size + 1})
 
         self.step = Step.WAITING_FOR_TXS_SELECTION
-        print('final', self.time_limit_Txs)
+        # print('final', self.time_limit_Txs)
         return self.time_limit_Txs, self.chain_size + 1
 
     def isReadyForTxsSelection(self):
@@ -380,7 +364,7 @@ class Blockchain:
             'time': time_ or Blockchain.get_time(),
             'sc': SmartContract(self.chain, self.Txs, smart_contract, tx_id)
         }
-        print("create transaction at time", transaction['time'], "id", transaction["id"])
+        # print("create transaction at time", transaction['time'], "id", transaction["id"])
 
         if transaction['sc'].contractType == Type.INVALID:
             return None, 'Invalid smart contract'
@@ -408,7 +392,7 @@ class Blockchain:
             print(f'Warning: transaction {transaction} is not valid, signature check failed.')
             return self.last_block['index']
 
-        print('append in Txs', transaction)
+        # print('append in Txs', transaction)
         self.Txs.append(transaction)
 
         if not transmission:
