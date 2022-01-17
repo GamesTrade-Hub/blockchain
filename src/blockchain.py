@@ -191,7 +191,7 @@ class Blockchain:
             'previous_hash': previous_hash or self.last_block['hash'],
         }
         block['nonce'] = nonce or self.proofOfWork(self.hash(block))  # TODO this task can be canceled if an other node has found
-        block['pow_time'] = time.time_ns()
+        block['pow_time'] = Blockchain.get_time()
         block['hash'] = self.hash(block)
 
         # Reset the current list of transactions
@@ -281,7 +281,7 @@ class Blockchain:
         return self.tmp_state
 
     def transactionCanBeAdded(self, transaction):
-        print('transactionCanBeAdded', transaction['time'] < self.time_limit_Txs, transaction['sc'].run())
+        print('transactionCanBeAdded', transaction['time'], self.time_limit_Txs, transaction['time'] < self.time_limit_Txs, transaction['sc'].run())
         return transaction['time'] < self.time_limit_Txs and transaction['sc'].run()
 
     def setupBlock(self, time_limit, block):
@@ -292,26 +292,23 @@ class Blockchain:
             print(f'Wrong step for setup block bounds, current step is {self.step}', file=sys.stderr)
             return
 
-        if self.time_limit_Txs is None or time.time_ns() < self.time_limit_Txs:
-            self.time_limit_Txs = time.time_ns()
+        # print('receive', time_limit)
+        # print("before", Blockchain.get_time() < self.time_limit_Txs if self.time_limit_Txs is not None else "non", Blockchain.get_time(), self.time_limit_Txs)
 
-        # FIXME bad node can add bad time limit
-        if time_limit and time_limit < self.time_limit_Txs and block == self.chain_size + 1:
+        self.time_limit_Txs = Blockchain.get_time()
+
+        if time_limit and self.time_limit_Txs > time_limit:  # Don't accept a time higher than your current
             self.time_limit_Txs = time_limit
 
-        # Research lowest time limit from each node.
+        # print("block time", self.time_limit_Txs, Blockchain.get_time())
+
         if time_limit is None:
             for node in self.nodes:
-                response = requests.post(f'http://{node}/create_block', json={"time_limit": self.time_limit_Txs,
-                                                                              "block": self.chain_size + 1})
-                if response.status_code == 200:
-                    time_limit = response.json()['time_limit']  # FIXME this can be missing
-                    block = response.json()['block']
-
-                    if time_limit and time_limit < self.time_limit_Txs and block == self.chain_size + 1:
-                        self.time_limit_Txs = time_limit
+                requests.post(f'http://{node}/create_block', json={"time_limit": self.time_limit_Txs,
+                                                                   "block": self.chain_size + 1})
 
         self.step = Step.WAITING_FOR_TXS_SELECTION
+        print('final', self.time_limit_Txs)
         return self.time_limit_Txs, self.chain_size + 1
 
     def isReadyForTxsSelection(self):
@@ -369,18 +366,21 @@ class Blockchain:
     def createTransaction(self, transaction_id, token, sender, recipient, amount, time_, smart_contract=None):
         if sender == recipient:
             return None, 'Sender and recipient can\'t be the same'
+        # FIXME also have to check that other transactions doesn't change this statement. Maybe this check has to be done at the transactions selection step
         if self.is_GTH(sender) is False and self.getBalanceByToken(sender, token) < amount:
             return None, 'User does not have enough money to proceed the transaction'
 
+        tx_id = transaction_id or str(uuid4())
         transaction = {  # TODO create a class for this object
-            'id': transaction_id or str(uuid4()),
+            'id': tx_id,
             'token': token,
             'sender': sender,
             'recipient': recipient,
             'amount': amount,
-            'time': time_ or time.time_ns(),
-            'sc': SmartContract(self.chain, self.Txs, smart_contract)
+            'time': time_ or Blockchain.get_time(),
+            'sc': SmartContract(self.chain, self.Txs, smart_contract, tx_id)
         }
+        print("create transaction at time", transaction['time'], "id", transaction["id"])
 
         if transaction['sc'].contractType == Type.INVALID:
             return None, 'Invalid smart contract'
@@ -416,13 +416,13 @@ class Blockchain:
 
         # Transmission to other nodes
         for node in self.nodes:
-            print("dump with bcencoder")
+            # print("dump with bcencoder")
             tmp = json.dumps(transaction, cls=BcEncoder)
-            print("result", tmp)
-            print('re load')
+            # print("result", tmp)
+            # print('re load')
             json_transaction = json.loads(tmp)
             json_transaction['private_key'] = private_key  # TODO as explained above
-            print("send transaction dict\n", json_transaction, "\nfor transaction dict\n", transaction)
+            # print("send transaction dict\n", json_transaction, "\nfor transaction dict\n", transaction)
             response = requests.post(f'http://{node}/transaction/new', json=json_transaction)
 
             if response.status_code != 201:
@@ -485,6 +485,10 @@ class Blockchain:
     @staticmethod
     def point_to_public_key(key_as_point):
         return str(key_as_point.x) + 'A' + str(key_as_point.y)
+
+    @staticmethod
+    def get_time():
+        return time.time_ns()
 
     # @staticmethod
     # def is_GTH(private_key):
