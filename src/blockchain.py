@@ -17,10 +17,10 @@ class BcEncoder(json.JSONEncoder):
         # print("start", o)
         # print(o.__dict__)
         # for i in o.__dict__:
-            # print(':', i, o.__dict__[i])
-            # if o.__dict__[i].__class__.__module__ != '__builtin__':
-            #     print(json.dumps(o.__dict__[i], cls=BcEncoder))
-        return {i: (json.dumps(o.__dict__[i], cls=BcEncoder) if o.__dict__[i].__class__.__module__ != '__builtin__' else o.__dict__[i]) for i in o.__dict__}
+        #     print(':', i, o.__dict__[i])
+        #     if o.__dict__[i].__class__.__module__ != 'builtins':
+        #         print("no builtin result", o.__dict__[i].__class__.__module__,  json.dumps(o.__dict__[i], cls=BcEncoder))
+        return {i: (o.__dict__[i].__str__() if o.__dict__[i].__class__.__module__ != '__builtin__' else o.__dict__[i]) for i in o.__dict__}
 
 
 class Step(Enum):
@@ -87,7 +87,7 @@ class Blockchain:
             return 202
 
         self.nodes.append(new_node)
-        print("add node", new_node)
+        # print("add node", new_node)
 
         if not register_back:
             return 201
@@ -191,7 +191,7 @@ class Blockchain:
             'transactions': dropDuplicates(self.selected_Txs),
             'previous_hash': previous_hash or self.last_block['hash'],
         }
-        block['nonce'] = nonce or self.proofOfWork(self.hash(block))
+        block['nonce'] = nonce or self.proofOfWork(self.hash(block))  # TODO this task can be canceled if an other node has found
         block['pow_time'] = time.time_ns()
         block['hash'] = self.hash(block)
 
@@ -259,7 +259,6 @@ class Blockchain:
             print(f'Wrong step for selecting Txs, current step is {self.step}', file=sys.stderr)
             return
 
-        self.selected_Txs = self.Txs
         # print("self.Txs", self.Txs)
 
         # print("nodes", self.nodes)
@@ -271,8 +270,9 @@ class Blockchain:
         #     if response.status_code == 200:
         #         self.selected_Txs += list(response.json()['Txs'])
 
-        # print("self.selected_Txs", self.selected_Txs)  FIXME to remove
-        self.selected_Txs = list([tx for tx in self.selected_Txs if self.transactionCanBeAdded(tx)])
+        print("self.Txs", self.Txs)  # FIXME to remove
+        self.selected_Txs = list([tx for tx in self.Txs if self.transactionCanBeAdded(tx)])
+        print("self.selected_Txs", self.selected_Txs)  # FIXME to remove
         self.step = Step.MINING
 
     def setTmpState(self, state=1):
@@ -282,6 +282,7 @@ class Blockchain:
         return self.tmp_state
 
     def transactionCanBeAdded(self, transaction):
+        print('transactionCanBeAdded', transaction['time'] < self.time_limit_Txs, transaction['sc'].run())
         return transaction['time'] < self.time_limit_Txs and transaction['sc'].run()
 
     def setupBlock(self, time_limit, block):
@@ -355,7 +356,7 @@ class Blockchain:
             return -1
 
         for block in self.chain:
-            print("DEBUG NEXT BLOCK", block['hash'], file=sys.stderr)
+            # print("DEBUG NEXT BLOCK", block['hash'], file=sys.stderr)
             for tx in block['transactions']:
                 print("DEBUG 1 balance", balance, tx, file=sys.stderr)
                 if tx['recipient'] == public_key and tx['token'] == token:
@@ -382,21 +383,23 @@ class Blockchain:
             'sc': SmartContract(self.chain, self.Txs, smart_contract)
         }
 
-        if transaction['sc'] is not None and transaction['sc'].contractType == Type.INVALID:
+        if transaction['sc'].contractType == Type.INVALID:
             return None, 'Invalid smart contract'
         return transaction, "ok"
 
     def addTransactionPool(self, transaction, private_key, public_key, transmission):
         """
         Add transaction to waiting transactions list, spread the transaction to other nodes it transmission is True
-        :param transaction:
-        :param private_key:
+        :param public_key: public key of the sender
+        :param transaction: transaction content
+        :param private_key: private key of the sender
         :param transmission: spread out the transaction to other nodes it transmission is True
-        :return:
+        :return: index of the last block in the chain [useless]
         """
         # serializable_transaction = transaction.copy()
         # serializable_transaction['sc'] = serializable_transaction['sc'].__str__()
 
+        # TODO you are not supposed to send private key, instead the node have to create the transaction then send it back to the guy who want the transaction to get the encrypted version
         signature = Blockchain.getSignature(transaction, private_key)
         public_key = Blockchain.public_key_to_point(public_key)
         encoded_transaction = json.dumps(transaction, sort_keys=True, cls=BcEncoder).encode()
@@ -408,13 +411,23 @@ class Blockchain:
 
         print('append in Txs', transaction)
         self.Txs.append(transaction)
-        if transmission is True:
-            for node in self.nodes:
-                json_transaction = json.loads(json.dumps(transaction, cls=BcEncoder))
-                response = requests.post(f'http://{node}/transaction/new', json=json_transaction)
 
-                if response.status_code != 200:
-                    print(f"Transaction sent to {node} received error code {response.status_code}")
+        if not transmission:
+            return self.last_block['index'] + 1
+
+        # Transmission to other nodes
+        for node in self.nodes:
+            print("dump with bcencoder")
+            tmp = json.dumps(transaction, cls=BcEncoder)
+            print("result", tmp)
+            print('re load')
+            json_transaction = json.loads(tmp)
+            json_transaction['private_key'] = private_key  # TODO as explained above
+            print("send transaction dict\n", json_transaction, "\nfor transaction dict\n", transaction)
+            response = requests.post(f'http://{node}/transaction/new', json=json_transaction)
+
+            if response.status_code != 201:
+                print(f"Transaction sent to {node} received error code {response.status_code}, Reason: {response.reason}, {response.content}")
 
         return self.last_block['index'] + 1
 
@@ -473,16 +486,21 @@ class Blockchain:
 
     @staticmethod
     def is_GTH(public_key):
-        return str(public_key) == '10758617696907311121413818662138847289616614995880589249879725143883620135189774644521699183317518461259885566371696845701675874024848140772236522116872470'
+        return str(public_key) == '107586176969073111214138186621388472896166149958805892498797251438836201351897A74644521699183317518461259885566371696845701675874024848140772236522116872470'
 
     @staticmethod
     def public_key_to_point(public_key):
-        return point.Point(int(str(public_key)[:78]), int(str(public_key)[78:]), curve.secp256k1)
+        pk = str(public_key).split('A')
+        return point.Point(int(pk[0]), int(pk[1]), curve.secp256k1)
 
     @staticmethod
     def point_to_public_key(key_as_point):
-        return str(key_as_point.x) + str(key_as_point.y)
+        return str(key_as_point.x) + 'A' + str(key_as_point.y)
 
     # @staticmethod
     # def is_GTH(private_key):
     #     return hashlib.sha224(str.encode(str(private_key))).hexdigest() == '16e32b6f4cede45149e02a0f81499f97fe7e6e79ee337492ff131bcf'
+
+
+# 2081444576893621343727462635361680480016528058863000989987875154810052104272519241468249812662668563130259817649756265743308017717653468619451285872265293
+# 2081444576893621343727462635361680480016528058863000989987875154810052104272519241468249812662668563130259817649756265743308017717653468619451285872265293
