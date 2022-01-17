@@ -38,13 +38,19 @@ class BinIdxDict(dict):
         super().__init__()
         self.d = d
 
-    def __get__(self, item):
+    def __getitem__(self, item):
         to_get = get2Pow(item)
-        res = [self.d[i] for i in to_get]
+        res = [self.d[i] for i in to_get if i in self.d]
         if len(res) == 1:
             return res[0]
         print(f"Warning: BinIdxDict return {len(res)} different results")
         return res  # Is not supposed to happen
+
+    def __str__(self):
+        return self.d.__str__()
+
+    def __repr__(self):
+        return self.__str__()
 
 
 class SmartContract:
@@ -52,18 +58,16 @@ class SmartContract:
         Type.OTHER_TX_CHECK: ['recipient', 'sender', 'amount', 'token'],
     })
 
-    def __init__(self, blockchain, Txs, raw_contract):
+    def __init__(self, blockchain, Txs, contract):
         # For contract execution purpose
         self.blockchain = blockchain
         self.Txs = Txs
         # Content
-        self.raw_contract = raw_contract
+        self.smartContract = contract
         if self.contractType == Type.INVALID:
             print("Invalid contract sent to SmartContract class __init__()", file=sys.stderr)
-        if self.contractType != Type.EMPTY and self.contractType != Type.INVALID:
-            self.smartContract = json.load(raw_contract)
 
-    def run(self):
+    def run(self):  # TODO add timeout to transaction never confirmed
         if self.contractType == Type.INVALID:
             print('ERROR This contract should not be run', file=sys.stderr)
         if self.contractType & Type.EMPTY:
@@ -74,11 +78,15 @@ class SmartContract:
             return self.check()
         return False
 
-    def checkTXs(self):
+    def checkTXs(self):  # TODO this system might validate multiple transactions wanting the same thing although there is only one of "the other thing"
+        print("current sc", self.smartContract)
         for waitingTx in self.Txs:  # Search the corresponding transaction
+            print('other tx', waitingTx)
+            print("test", [waitingTx[i] == self.smartContract[i] for i in SmartContract.requirements[self.contractType]], waitingTx['sc'].run())
             if all([waitingTx[i] == self.smartContract[i] for i in SmartContract.requirements[self.contractType]])\
                and waitingTx['sc'].run():
                 return True
+        return False
 
     def check(self):
         if self.contractType & Type.TX_CHECK:
@@ -92,11 +100,11 @@ class SmartContract:
         # return True
 
     def __str__(self):
-        return self.raw_contract or ""
+        return self.smartContract.__str__() if self.smartContract is not None else ""
 
     @property
     def __dict__(self):
-        return self.raw_contract or {}
+        return self.smartContract or {}
 
     @property
     def contractType(self):
@@ -116,17 +124,16 @@ class SmartContract:
         :return: True if contract is valid, false otherwise
         """
 
-        if self.raw_contract is None:
+        print("parse contract", self.smartContract)
+        if self.smartContract is None or self.smartContract == {}:
             return Type.EMPTY
-        try:
-            result = json.load(self.raw_contract)
-        except json.decoder.JSONDecodeError:
+        if 'type' not in self.smartContract:
             return Type.INVALID
-        if 'type' not in result:
-            return Type.INVALID
-        if result['type'].upper().replace(' ', '_') == 'OTHER_TX_CHECK':
+        if self.smartContract['type'].upper().replace(' ', '_') == 'OTHER_TX_CHECK':
             type_ = Type.OTHER_TX_CHECK | Type.CHECK | Type.TX_CHECK
-            if any([i not in result for i in SmartContract.requirements[type_]]):  # Check if all requirements fields are present
+            print('type_', type_)
+            print("SmartContract.requirements[type_]", SmartContract.requirements[type_])
+            if any([i not in self.smartContract for i in SmartContract.requirements[type_]]):  # Check if all requirements fields are present
                 return Type.INVALID
             return type_
 

@@ -90,7 +90,7 @@ def new_transactions():
                                                     values['recipient'],
                                                     values['amount'],
                                                     values['time'] if 'id' in values else None,
-                                                    values['condition'] if 'condition' in values else None)
+                                                    values['sc'] if 'sc' in values else None)
     if transaction is None:
         response = {'message': f"Transaction can't be created, Reason: {msg}"}
         return jsonify(response), 401
@@ -132,8 +132,8 @@ def ping():
     if blockchain is None:
         response = {'message': f'Failed: node not initialized'}
         return jsonify(response), 401
-    print("PING", blockchain.getTmpState(), file=sys.stderr)
-    return jsonify({'pong': blockchain.getTmpState()}), 200
+    return json.dumps({'pong': blockchain.getTmpState(),
+                       'waitingTxs': blockchain.Txs}, cls=BcEncoder), 200
 
 
 @app.route('/nodes/register', methods=['POST'])
@@ -225,6 +225,7 @@ def mine():
             return 'Node already mining', 400
         return 'Node not ready to mine : Block bounds not found', 400
 
+    # TODO spread the mining process to other nodes
     blockchain.selectTxs()
 
     # We run the proof of work algorithm to get the next proof...
