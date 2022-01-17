@@ -12,11 +12,11 @@ class TestMining(unittest.TestCase):
     def test_balance(self):
         response = self.app.get('/status')
         self.assertEqual(response.status_code, 201)
-        response = self.app.post('/transactions/new', json={"sender": "Cyprien", "recipient": "William", "amount": 50})
+        response = self.app.post('/transaction/new', json={"sender": "Cyprien", "recipient": "William", "amount": 50})
         self.assertEqual(response.status_code, 201)
-        response = self.app.post('/transactions/new', json={"sender": "William", "recipient": "Cyprien", "amount": 30})
+        response = self.app.post('/transaction/new', json={"sender": "William", "recipient": "Cyprien", "amount": 30})
         self.assertEqual(response.status_code, 201)
-        response = self.app.post('/transactions/new', json={"sender": "William", "recipient": "Cyprien", "amount": 1})
+        response = self.app.post('/transaction/new', json={"sender": "William", "recipient": "Cyprien", "amount": 1})
         self.assertEqual(response.status_code, 201)
         time.sleep(1)  # Need this to be sure that last transaction is included
 
