@@ -266,9 +266,9 @@ class Blockchain:
             print(f'Wrong step for selecting Txs, current step is {self.step}', file=sys.stderr)
             return
 
-        print("DEBUG self.Txs", self.Txs)  # FIXME to remove
+        # print("DEBUG self.Txs", self.Txs)  # FIXME to remove
         self.selected_Txs = list([tx for tx in self.Txs if self.transactionCanBeAdded(tx)])
-        print("DEBUG self.selected_Txs", self.selected_Txs)  # FIXME to remove
+        # print("DEBUG self.selected_Txs", self.selected_Txs)  # FIXME to remove
         self.step = Step.MINING
 
     def setTmpState(self, state=1):
@@ -278,7 +278,7 @@ class Blockchain:
         return self.tmp_state
 
     def transactionCanBeAdded(self, transaction):
-        print('transactionCanBeAdded', transaction['time'], self.time_limit_Txs, transaction['time'] < self.time_limit_Txs, transaction['sc'].run(Txs=self.Txs))
+        # print('transactionCanBeAdded', transaction['time'], self.time_limit_Txs, transaction['time'] < self.time_limit_Txs, transaction['sc'].run(Txs=self.Txs))
         return transaction['time'] < self.time_limit_Txs and transaction['sc'].run(Txs=self.Txs)
 
     def setupBlock(self, time_limit, block):
@@ -351,7 +351,7 @@ class Blockchain:
                     balance += tx['amount']
                 if tx['sender'] == public_key and tx['token'] == token:
                     balance -= tx['amount']
-                print("DEBUG 2 balance", balance, tx, file=sys.stderr)
+                # print("DEBUG 2 balance", balance, tx, file=sys.stderr)
 
         return balance
 
@@ -363,7 +363,6 @@ class Blockchain:
             return None, 'User does not have enough money to proceed the transaction'
 
         tx_id = transaction_id or str(uuid4())
-        print('add sc', smart_contract)
         transaction = {  # TODO create a class for this object
             'id': tx_id,
             'token': token,
