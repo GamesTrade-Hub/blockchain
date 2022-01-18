@@ -431,16 +431,6 @@ class Blockchain:
 
         return self.last_block['index'] + 1
 
-    def create_nft(self, recipient):
-        transaction = {
-            "id": None,
-            "sender": "000",
-            "recipient": recipient,
-            "nft": str(uuid.uuid4()),
-            "time": time.time_ns()
-        }
-        return transaction
-
     @staticmethod
     def generate_private_key():
         private_key = keys.gen_private_key(curve.secp256k1)

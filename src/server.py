@@ -100,6 +100,54 @@ def new_transactions():
     return json.dumps(response, cls=BcEncoder), 201
 
 
+@app.route('/new_transactions/create_nft', methods=['POST'])
+def create_nft():
+    if blockchain is None:
+        return jsonify({'message': 'Failed: node not initialized'}), 401
+    values = request.get_json()
+    required = ['recipient', 'sender', 'private_key']
+    if not all(k in values for k in required):
+        return jsonify({'message': f'Missing value among {", ".join(required)}'}), 400
+    values['private_key'] = int(values['private_key'])
+    transaction, msg = blockchain.createTransaction(
+        values['id'] if 'id' in values else None,
+        str(uuid.uuid4()),
+        values['sender'],
+        values['recipient'],
+        1,
+        values['time'] if 'id' in values else None,
+        values['condition'] if 'condition' in values else None
+    )
+    if transaction is None:
+        return jsonify({'message': f'Transaction can\'t be created, Reason: {msg}'}), 401
+    blockchain.addTransactionPool(transaction, values['private_key'], values['sender'], 'id' not in values)
+    return json.dumps({'message': f'Transaction will be added, Reason: {msg}'}), 201
+
+
+@app.route('/new_transactions/new_nft', methods=['POST'])
+def new_nft():
+    if blockchain is None:
+        return jsonify({'message': 'Failed: node not initialized'}), 401
+    values = request.get_json()
+    required = ['recipient', 'sender', 'private_key', 'token']
+    if not all(k in values for k in required):
+        return jsonify({'message': f'Missing value among {", ".join(required)}'}), 400
+    values['private_key'] = int(values['private_key'])
+    transaction, msg = blockchain.createTransaction(
+        values['id'] if 'id' in values else None,
+        values['token'],
+        values['sender'],
+        values['recipient'],
+        1,
+        values['time'] if 'id' in values else None,
+        values['condition'] if 'condition' in values else None
+    )
+    if transaction is None:
+        return jsonify({'message': f'Transaction can\'t be created, Reason: {msg}'}), 401
+    blockchain.addTransactionPool(transaction, values['private_key'], values['sender'], 'id' not in values)
+    return json.dumps({'message': f'Transaction will be added, Reason: {msg}'}), 201
+
+
 @app.route('/chain', methods=['GET'])
 def full_chain():
     if blockchain is None:
