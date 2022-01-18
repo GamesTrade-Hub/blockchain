@@ -347,7 +347,7 @@ class Blockchain:
         for block in self.chain:
             # print("DEBUG NEXT BLOCK", block['hash'], file=sys.stderr)
             for tx in block['transactions']:
-                print("DEBUG 1 balance", balance, tx, file=sys.stderr)
+                #print("DEBUG 1 balance", balance, tx, file=sys.stderr)
                 if tx['recipient'] == public_key and tx['token'] == token:
                     balance += tx['amount']
                 if tx['sender'] == public_key and tx['token'] == token:

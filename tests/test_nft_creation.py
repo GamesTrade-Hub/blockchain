@@ -11,7 +11,7 @@ class TestNFTCreation(unittest.TestCase):
         self.client = app.test_client()
         self.gth_keys = {
             "public": "107586176969073111214138186621388472896166149958805892498797251438836201351897A74644521699183317518461259885566371696845701675874024848140772236522116872470",
-            "private": os.environ.get("GTH_PRIVATE_KEY_TEST")
+            "private": "96281203938515529592468945178611699390852145171871882015412702005631509756531"
         }
         self.client_a_keys = {
             "public": "38432972238024851962163609910587920305303160517512456633372504071009136841752A22963103105905487550831827968376830879853793424696572571047463764104281739701",
@@ -28,6 +28,7 @@ class TestNFTCreation(unittest.TestCase):
             }),
             content_type="application/json"
         )
+        print(response.get_data(as_text=True))
         response_json = json.loads(response.get_data(as_text=True))
         print(response_json)
         self.assertEqual(response.status_code, 201)
