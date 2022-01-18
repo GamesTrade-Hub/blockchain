@@ -58,7 +58,7 @@ class SmartContract:
         Type.OTHER_TX_CHECK: ['recipient', 'sender', 'amount', 'token'],
     })
 
-    def __init__(self, blockchain, Txs, contract, id):
+    def __init__(self, blockchain, Txs, contract, id_):
         # For contract execution purpose
         self.blockchain = blockchain
         self.Txs = Txs
@@ -66,9 +66,10 @@ class SmartContract:
         self.smartContract = contract
         if self.contractType == Type.INVALID:
             print("Invalid contract sent to SmartContract class __init__()", file=sys.stderr)
-        self.id = id
+        self.id = id_
 
-    def run(self, prevent_self_check_id=None):  # TODO add timeout to transaction never confirmed
+    def run(self, Txs=None, prevent_self_check_id=None):  # TODO add timeout to transaction never confirmed
+        self.Txs = Txs or self.Txs
         if self.contractType == Type.INVALID:
             print('ERROR This contract should not be run', file=sys.stderr)
         if self.contractType & Type.EMPTY:
@@ -82,12 +83,14 @@ class SmartContract:
     def checkTXs(self, prevent_self_check_id):  # TODO this system might validate multiple transactions wanting the same thing although there is only one of "the other thing"
         # print("current sc", self.smartContract)
         for waitingTx in self.Txs:  # Search the corresponding transaction
+            if waitingTx['id'] == self.id:
+                continue
             # print('other tx', waitingTx)
             # print("test", [waitingTx[i] == self.smartContract[i] for i in SmartContract.requirements[self.contractType]],
             #       prevent_self_check_id == waitingTx['sc'].id,
-            #       (prevent_self_check_id == waitingTx['sc'].id or waitingTx['sc'].run(prevent_self_check_id=self.id)))
-            if all([waitingTx[i] == self.smartContract[i] for i in SmartContract.requirements[self.contractType]])\
-               and (prevent_self_check_id == waitingTx['sc'].id or waitingTx['sc'].run(prevent_self_check_id=self.id)):
+            #       (prevent_self_check_id == waitingTx['sc'].id or waitingTx['sc'].run(Txs=self.Txs, prevent_self_check_id=self.id)))
+            if all([str(waitingTx[i]) == str(self.smartContract[i]) for i in SmartContract.requirements[self.contractType]])\
+               and (prevent_self_check_id == waitingTx['sc'].id or waitingTx['sc'].run(Txs=self.Txs, prevent_self_check_id=self.id)):
                 # FIXME this check may validate with transaction not used in this block because of timestamp
                 return True
         return False

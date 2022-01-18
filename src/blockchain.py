@@ -11,6 +11,8 @@ from enum import Enum
 from src.smart_contracts import SmartContract, Type
 
 
+# TODO when transaction are passed nodes to nodes int fields becomes string, this might create issues.
+
 class BcEncoder(json.JSONEncoder):
     def default(self, o):
         # print("start", o)
@@ -142,6 +144,12 @@ class Blockchain:
         # We're only looking for chains longer than ours
         max_length = len(self.chain)
 
+        # for node in neighbours:
+        #     try:
+        #         requests.get(f'http://{node}/nodes/resolve')
+        #     except ConnectionRefusedError:
+        #         print("[ConnectionRefusedError] Connection to", f"http://{node}", "refused", file=sys.stderr)
+
         # Grab and verify the chains from all the nodes in our network
         for node in neighbours:
             try:
@@ -270,8 +278,8 @@ class Blockchain:
         return self.tmp_state
 
     def transactionCanBeAdded(self, transaction):
-        # print('transactionCanBeAdded', transaction['time'], self.time_limit_Txs, transaction['time'] < self.time_limit_Txs, transaction['sc'].run())
-        return transaction['time'] < self.time_limit_Txs and transaction['sc'].run()
+        print('transactionCanBeAdded', transaction['time'], self.time_limit_Txs, transaction['time'] < self.time_limit_Txs, transaction['sc'].run(Txs=self.Txs))
+        return transaction['time'] < self.time_limit_Txs and transaction['sc'].run(Txs=self.Txs)
 
     def setupBlock(self, time_limit, block):
         if self.step == Step.IDLE:
@@ -355,6 +363,7 @@ class Blockchain:
             return None, 'User does not have enough money to proceed the transaction'
 
         tx_id = transaction_id or str(uuid4())
+        print('add sc', smart_contract)
         transaction = {  # TODO create a class for this object
             'id': tx_id,
             'token': token,
