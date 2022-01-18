@@ -362,6 +362,8 @@ class Blockchain:
         # FIXME also have to check that other transactions doesn't change this statement. Maybe this check has to be done at the transactions selection step
         if self.is_GTH(sender) is False and self.getBalanceByToken(sender, token) < amount:
             return None, 'User does not have enough money to proceed the transaction'
+        if Blockchain.isNFT(token) and amount != 1:
+            return None, 'NFT transfer amount has to be 1'
 
         tx_id = transaction_id or str(uuid4())
         transaction = {  # TODO create a class for this object
@@ -488,7 +490,9 @@ class Blockchain:
     # @staticmethod
     # def is_GTH(private_key):
     #     return hashlib.sha224(str.encode(str(private_key))).hexdigest() == '16e32b6f4cede45149e02a0f81499f97fe7e6e79ee337492ff131bcf'
-
+    @staticmethod
+    def isNFT(token):
+        return token[:4] == 'nft_'
 
 # 2081444576893621343727462635361680480016528058863000989987875154810052104272519241468249812662668563130259817649756265743308017717653468619451285872265293
 # 2081444576893621343727462635361680480016528058863000989987875154810052104272519241468249812662668563130259817649756265743308017717653468619451285872265293
