@@ -430,6 +430,7 @@ class Blockchain:
 
     @staticmethod
     def generate_public_key(private_key, string=False):
+        private_key = private_key if type(private_key) == int else int(private_key)
         public_key = keys.get_public_key(private_key, curve.secp256k1)
         if string:
             return Blockchain.point_to_public_key(public_key)
@@ -437,6 +438,7 @@ class Blockchain:
 
     @staticmethod
     def getSignature(transaction, private_key):
+        private_key = private_key if type(private_key) == int else int(private_key)
         encoded_transaction = json.dumps(transaction, sort_keys=True, cls=BcEncoder).encode()
         signature = ecdsa.sign(encoded_transaction, private_key, curve.secp256k1, ecdsa.sha256)
         return signature
