@@ -1,6 +1,7 @@
 import hashlib
 import json
 import sys
+import uuid
 from urllib.parse import urlparse
 from uuid import uuid4
 import time
