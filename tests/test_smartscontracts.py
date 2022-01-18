@@ -35,11 +35,6 @@ class TestSmartContract(unittest.TestCase):
         print("user 2", self.app.get('/get_balance', json={'user_id': self.user_2_public_key}).get_data())
         print('============================')
 
-        print("===== test smarts contracts ======")
-        print("user 1", self.app.get('/get_balance', json={'user_id': self.user_1_public_key}).get_data())
-        print("user 2", self.app.get('/get_balance', json={'user_id': self.user_2_public_key}).get_data())
-        print('==================================')
-
         # User 1 send 50 to user 2 if user 2 send 10
         response = self.app.post('/transaction/new', json={
             "sender": self.user_1_public_key,
@@ -91,12 +86,20 @@ class TestSmartContract(unittest.TestCase):
         self.assertEqual(json.loads(response.get_data())['balance'], 50)
 
     def test_error(self):
-        response = self.app.post('/transaction/new', json={})
-        self.assertEqual(response.status_code, 400)
-        response = self.app.post('/get_balance_by_token', json={})
-        self.assertEqual(response.status_code, 400)
-        response = self.app.get('/get_balance', json={})
-        self.assertEqual(response.status_code, 400)
+        response = self.app.post('/transaction/new', json={
+            "sender": self.user_1_public_key,
+            "recipient": self.user_2_public_key,
+            "amount": 10,
+            "private_key": self.user_1_private_key,
+            "token": "snowy",
+            "sc": {
+                "type": "OTHER_TX_CHECK",
+                "sender": self.user_2_public_key,
+                "amount": 50,
+                "token": "snowy"
+            }
+        })
+        self.assertEqual(response.status_code, 401)
 
 
 if __name__ == '__main__':

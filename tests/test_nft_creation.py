@@ -44,6 +44,18 @@ class TestNFTCreation(unittest.TestCase):
         )
         self.assertEqual(response.status_code, 400)
 
+    def test_wrong_arguments(self):
+        response = self.client.post(
+            "/transaction/create_nft",
+            data=json.dumps({
+                "recipient": self.gth_keys["public"],
+                "sender": self.gth_keys["public"],
+                "private_key": self.gth_keys["private"]
+            }),
+            content_type="application/json"
+        )
+        self.assertEqual(response.status_code, 401)
+
 
 if __name__ == '__main__':
     unittest.main()
