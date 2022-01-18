@@ -121,7 +121,10 @@ def create_nft():
     if transaction is None:
         return jsonify({'message': f'Transaction can\'t be created, Reason: {msg}'}), 401
     blockchain.addTransactionPool(transaction, values['private_key'], values['sender'], 'id' not in values)
-    return json.dumps({'message': f'Transaction will be added, Reason: {msg}'}), 201
+    return json.dumps({
+        'message': f'Transaction will be added, Reason: {msg}',
+        'token': transaction["token"]
+    }), 201
 
 
 @app.route('/new_transactions/new_nft', methods=['POST'])
