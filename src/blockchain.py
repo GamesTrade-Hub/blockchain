@@ -1,5 +1,5 @@
 from src.tools import get_time, MetaSingleton, hash
-from src.transaction import TransactionsList
+from src.transaction import TransactionsList, State
 from src.node import NodesList
 from src.block import Chain, Block
 
@@ -62,15 +62,20 @@ class Blockchain(metaclass=MetaSingleton):
         return rv
 
     def replaceChainIfBetter(self, chain):
-        print('chain', chain)
+        print('replaceChainIfBetter, chain:', chain)
         if chain.__len__() > self.chain.__len__():
             # FIXME if same size, take the one having the most transactions
+            print('cancel mining process')
+            self.endCurrentMiningProcess()
+            print('mining process canceled')
+            self.txs.updateStateCdt(from_=State.IN_CHAIN, to_=State.WAITING, cdt=lambda tx: True if self.chain.containsTx(tx) and not chain.containsTx(tx) else False)
+            self.txs.updateStateCdt(from_=State.WAITING, to_=State.IN_CHAIN, cdt=lambda tx: True if chain.containsTx(tx) else False)
             self.chain = chain  # FIXME update transactions
-            print('CHAIN REPLACED')
+            print('Chain replaced')
             return True
         return False
 
-    def mine(self):
+    def mine(self, spread):
         """
         Create a new Block in the Blockchain
         :return: New Block
@@ -84,6 +89,7 @@ class Blockchain(metaclass=MetaSingleton):
                                    previous_hash=self.chain.lastBlockhash(),
                                    )
 
+        self.nodes.spreadMiningRequest()
         return "ok", 200
 
     def getBalance(self, public_key):
@@ -138,6 +144,13 @@ class Blockchain(metaclass=MetaSingleton):
         # Also, transactions in the blockchain after 10+ blocks can be removed because we can be kind of sure that they are in the blockchain for ever
 
         return 'mining step finished, block found', 200
+
+    def endCurrentMiningProcess(self):
+        """
+        If a mining process is going in this node, then end it.
+        Probably because a better chain has been received.
+        """
+        self.current_block = None
 
     @staticmethod
     def is_GTH(public_key):

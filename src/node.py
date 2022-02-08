@@ -75,6 +75,13 @@ class NodesList:
         for node in self.nodes:
             node.sendChain(chain.__dict__())
 
+    def spreadMiningRequest(self):
+        for node in self.nodes:
+            response = requests.get(f'http://{node.host}/mine')
+
+            if response.status_code != 200:
+                print(f"Mine request sent to {node} received error code {response.status_code}, Reason: {response.reason}, {response.content}")
+
 
 class Node:
     def __init__(self, host):
@@ -85,7 +92,6 @@ class Node:
 
     def getChain(self):
         try:
-            # print('get', f'http://{self.host}/chain')
             response = requests.get(f'http://{self.host}/chain')
             rj = response.json()
         except ConnectionRefusedError:

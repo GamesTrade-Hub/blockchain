@@ -22,6 +22,7 @@ def proofOfWork(block_hash, queue):
         nonce += 1
 
     queue.put(nonce)
+    print('nonce found in subprocess', nonce)
     requests.get(f'{Host().host}/mine')  # TODO change route
 
 
@@ -44,6 +45,12 @@ class Chain:
                   )
             print(self.__str__())
         return valid
+
+    def containsTx(self, transaction):
+        for tx in self.transactions():
+            if tx.id == transaction.id and tx.time == transaction.time:
+                return True
+        return False
 
     @classmethod
     def from_dict(cls, chain):

@@ -31,6 +31,8 @@ blockchain = Blockchain()
 
 @app.route('/get_new_private_key', methods=['GET'])
 def get_private_key():
+    host.host = request.host
+
     private_key = PrivateKey.generate(encoded=True)
     response = {'message': f'{private_key}'}
     return jsonify(response), 201
@@ -38,6 +40,8 @@ def get_private_key():
 
 @app.route('/get_new_public_key', methods=['GET'])
 def get_public_key():
+    host.host = request.host
+
     values = request.get_json()
     if values is None or 'private_key' not in values:
         return "Error: Please supply a private key", 400
@@ -56,6 +60,8 @@ def launch():
 
 @app.route('/status', methods=['GET'])
 def status():
+    host.host = request.host
+
     response = {'message': f'Node is OK'}
     return jsonify(response), 200
 
@@ -87,6 +93,8 @@ def create_nft():
     :root_param private_key : private key of gth
     :return:
     """
+    host.host = request.host
+
     values = request.get_json()
     required = ['token', 'nb', 'gth_private_key']
 
@@ -103,6 +111,8 @@ def create_nft():
 
 @app.route('/transaction/add', methods=['POST'])
 def add_transaction():
+    host.host = request.host
+
     values = request.get_json()
 
     required = ['tx']
@@ -118,6 +128,8 @@ def add_transaction():
 
 @app.route('/create_item', methods=['POST'])
 def create_item():
+    host.host = request.host
+
     """
     :root_param token: the token that have to be used to buy the item
     :root_param nb: id of the item to prevent nft having the same id
@@ -138,6 +150,8 @@ def create_item():
 
 @app.route('/chain', methods=['GET'])
 def chain():
+    host.host = request.host
+
     response = {
         'chain': blockchain.chain.__dict__(),
         'length': blockchain.chain_size,
@@ -147,6 +161,8 @@ def chain():
 
 @app.route('/ping', methods=['GET'])
 def ping():
+    host.host = request.host
+
     return json.dumps({'pong': 'oui',
                        'waitingTxs': blockchain.txs.__dict__()}), 200
 
@@ -178,6 +194,8 @@ def register_nodes():
 
 @app.route('/nodes/register_back', methods=['POST'])
 def register_back_node():
+    host.host = request.host
+
     if blockchain is None:
         response = {'message': f'Failed: node not initialized'}
         return jsonify(response), 401
@@ -201,6 +219,8 @@ def register_back_node():
 
 @app.route('/nodes/resolve', methods=['GET'])
 def consensus():
+    host.host = request.host
+
     replaced = blockchain.resolveConflicts()
 
     response = {
@@ -215,6 +235,7 @@ def consensus():
 
 @app.route("/nodes/list", methods=['GET'])
 def get_nodes_list():
+    host.host = request.host
     balance = blockchain.getConnectedNodes()
     return jsonify({'nodes': balance}), 200
 
@@ -222,11 +243,20 @@ def get_nodes_list():
 @app.route('/mine', methods=['GET'])
 def mine():
     host.host = request.host
+    values = request.get_json()
+
     response, code = blockchain.updateMiningState()
+
     if code:
         return jsonify(response), code
 
-    response, code = blockchain.mine()
+    if values and 'spread' in values and values['spread'] is True:
+        print('spread mine process')
+        response, code = blockchain.mine(spread=True)
+
+    else:
+        response, code = blockchain.mine(spread=False)
+
     if code != 200:
         return jsonify(response), code
 
@@ -235,6 +265,8 @@ def mine():
 
 @app.route('/chain_found', methods=['POST'])
 def chain_found():
+    host.host = request.host
+
     values = request.get_json()
     required = ['chain']
 
@@ -248,6 +280,8 @@ def chain_found():
 
 @app.route("/get_balance", methods=['GET'])
 def get_balance():
+    host.host = request.host
+
     values = request.get_json()
 
     if values is None or 'user_id' not in values:
@@ -259,6 +293,8 @@ def get_balance():
 
 @app.route("/get_balance_by_token", methods=['POST'])
 def get_balance_by_token():
+    host.host = request.host
+
     values = request.get_json()
 
     if values is None or 'user_id' not in values or 'token' not in values:

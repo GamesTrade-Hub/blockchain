@@ -81,6 +81,11 @@ class TransactionsList:
             if tx.state == from_:
                 tx.state = to_
 
+    def updateStateCdt(self, from_, to_, cdt):
+        for tx in [tx for tx in self._txs if cdt(tx)]:
+            if tx.state == from_:
+                tx.state = to_
+
     def all(self, except_id):
         for tx in self._txs:
             if tx.id != except_id:
@@ -123,6 +128,10 @@ class Transaction:
     @property
     def id(self):
         return self._id
+
+    @property
+    def time(self):
+        return self._time
 
     @property
     def smart_contract(self):
