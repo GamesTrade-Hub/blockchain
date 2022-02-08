@@ -1,3 +1,9 @@
+from src.blockchain import Blockchain
+from src.blockchain import Chain
+from src.tools import BcEncoder
+from src.keys import PublicKey, PrivateKey
+from src.config import Host
+
 import uuid
 import sys
 from urllib.parse import urlparse
@@ -5,10 +11,7 @@ from uuid import uuid4
 import time
 import requests
 from flask import Flask, jsonify, request
-from .blockchain import Blockchain, BcEncoder
 import json
-#import docker
-
 
 # Instantiate the Node
 app = Flask(__name__)
@@ -16,19 +19,19 @@ app = Flask(__name__)
 # Generate a globally unique address for this node
 node_identifier = str(uuid4()).replace('-', '')
 print("Identifier :", node_identifier)
-
 # client = docker.DockerClient()
 # container = client.containers.get("magical_meitner")
 # ip_add = container.attrs['NetworkSettings']['IPAddress']
 # print("ip_add", ip_add)
 
 # Instantiate the Blockchain
-blockchain = Blockchain(verbose=True)
+host = Host()
+blockchain = Blockchain()
 
 
 @app.route('/get_new_private_key', methods=['GET'])
 def get_private_key():
-    private_key = Blockchain.generate_private_key()
+    private_key = PrivateKey.generate(encoded=True)
     response = {'message': f'{private_key}'}
     return jsonify(response), 201
 
@@ -39,96 +42,118 @@ def get_public_key():
     if values is None or 'private_key' not in values:
         return "Error: Please supply a private key", 400
     private_key = values.get('private_key')
-    public_key = Blockchain.generate_public_key(private_key, string=True)
+    public_key = PublicKey.generate_from_private_key(private_key, encoded=True)
     response = {'message': f'{public_key}'}
     return jsonify(response), 201
 
 
 @app.route('/start', methods=['GET'])
 def launch():
+    host.host = request.host
     response = {'message': f'node initialized'}
-    return jsonify(response), 201
+    return jsonify(response), 200
 
 
 @app.route('/status', methods=['GET'])
 def status():
     response = {'message': f'Node is OK'}
-    return jsonify(response), 201
+    return jsonify(response), 200
 
 
 @app.route('/transaction/new', methods=['POST'])
-def new_transactions():
+def new_transaction():
+    host.host = request.host
     values = request.get_json()
 
     # Check that the required fields are in the POST'ed data
     required = ['sender', 'recipient', 'amount', 'private_key', 'token']
     if not all(k in values for k in required):
+        print('return', f'Missing value among {", ".join(required)}', 400)
         return f'Missing value among {", ".join(required)}', 400
 
     # print('new transaction sc', values['sc'] if 'sc' in values else "no sc")
     # Create a new transaction if the transaction is valid
-    transaction, msg = blockchain.createTransaction(values['id'] if 'id' in values else None,
-                                                    values['token'],
-                                                    values['sender'],
-                                                    values['recipient'],
-                                                    values['amount'],
-                                                    values['time'] if 'id' in values else None,
-                                                    values['sc'] if 'sc' in values else None)
-    if transaction is None:
-        response = {'message': f"Transaction can't be created, Reason: {msg}"}
-        return jsonify(response), 401
-    # If the transaction already have an id when received, it means the transaction has been received by an other node and is spread out to others
-    blockchain.addTransactionPool(transaction, values['private_key'], values['sender'], 'id' not in values)
-    response = {'message': f'Transaction will be added, Reason: {msg}'}
-    return json.dumps(response, cls=BcEncoder), 201
+    created, msg = blockchain.createTransaction(values, spread=True)
+    if not created:
+        return jsonify({'message': f"Transaction can't be created, Reason: {msg}"}), 401
+    return jsonify({'message': f'ok'}), 201
 
 
-@app.route('/transaction/create_nft', methods=['POST'])
+@app.route('/create_nft', methods=['POST'])
 def create_nft():
+    """
+    :root_param token: the token that have to be used to buy the NFT
+    :root_param nb: id of the nft to prevent nft having the same id
+    :root_param private_key : private key of gth
+    :return:
+    """
     values = request.get_json()
-    required = ['recipient', 'sender', 'private_key']
+    required = ['token', 'nb', 'gth_private_key']
 
     if not all(k in values for k in required):
         return jsonify({'message': f'Missing value among {", ".join(required)}'}), 400
 
-    transaction, msg = blockchain.createTransaction(
-        values['id'] if 'id' in values else None,
-        str('nft_') + str(uuid.uuid4()),  # TODO perform a check to ensure this doesn't exist yet
-        values['sender'],
-        values['recipient'],
-        1,
-        values['time'] if 'id' in values else None,
-        values['sc'] if 'sc' in values else None
-    )
-    if transaction is None:
-        return jsonify({'message': f'Transaction can\'t be created, Reason: {msg}'}), 401
+    created, msg = blockchain.createNFT(token=values['token'],
+                                        nb=values['nb'],
+                                        gth_private_key=values['gth_private_key'])
+    if not created:
+        return f'Transaction can\'t be created, Reason: {msg}', 401
+    return jsonify({'id': msg}), 201
 
-    blockchain.addTransactionPool(transaction, values['private_key'], values['sender'], 'id' not in values)
 
-    # print('token created', transaction["token"])
+@app.route('/transaction/add', methods=['POST'])
+def add_transaction():
+    values = request.get_json()
+
+    required = ['tx']
+    if not all(k in values for k in required):
+        return f'Missing value among {", ".join(required)}', 400
+
+    print("values", type(values), values)
+    created, msg = blockchain.createTransaction(values['tx'], spread=False)
+    if created:
+        return 'Transaction added', 201
+    return msg, 401
+
+
+@app.route('/create_item', methods=['POST'])
+def create_item():
+    """
+    :root_param token: the token that have to be used to buy the item
+    :root_param nb: id of the item to prevent nft having the same id
+    :root_param private_key : private key of gth
+    :return:
+    """
+    values = request.get_json()
+    required = ['token', 'nb']
+
+    if not all(k in values for k in required):
+        return jsonify({'message': f'Missing value among {", ".join(required)}'}), 400
+
     return json.dumps({
-        'message': f'Transaction will be added, Reason: {msg}',
-        'token': transaction["token"]
+        'message': f'Transaction will be added, Reason: ok',
+        'token': f'item_{hash(str(values["nb"]))}_{values["token"]}'
     }), 201
 
 
 @app.route('/chain', methods=['GET'])
-def full_chain():
+def chain():
     response = {
-        'chain': blockchain.chain,
+        'chain': blockchain.chain.__dict__(),
         'length': blockchain.chain_size,
     }
-    return json.dumps(response, cls=BcEncoder), 200
+    return json.dumps(response), 200
 
 
 @app.route('/ping', methods=['GET'])
 def ping():
-    return json.dumps({'pong': blockchain.getTmpState(),
-                       'waitingTxs': blockchain.Txs}, cls=BcEncoder), 200
+    return json.dumps({'pong': 'oui',
+                       'waitingTxs': blockchain.txs.__dict__()}), 200
 
 
 @app.route('/nodes/register', methods=['POST'])
 def register_nodes():
+    host.host = request.host
     values = request.get_json()
     code = 201
     message = 'New nodes have been added if not already present'
@@ -138,19 +163,17 @@ def register_nodes():
         return "Error: Please supply a valid list of nodes", 400
 
     for node in nodes:
-        code = blockchain.registerNode(node, register_back=True, host=request.host)
-        if code == 202:
-            print("Warning: Node already added")
-            code = 201
-        if code == 401:
-            break
+        code = blockchain.registerNode(node, register_back=True)
+        if code == 400:
+            print("Warning: error while adding node", node)
+            code = 400
 
     if code == 401:
         message = "Error while adding nodes"
 
     return jsonify({
         'message': message,
-        'total_nodes': list(blockchain.nodes)}), code
+        'total_nodes': blockchain.nodes.__str__()}), code
 
 
 @app.route('/nodes/register_back', methods=['POST'])
@@ -171,9 +194,9 @@ def register_back_node():
 
     response = {
         'message': message,
-        'total_nodes': list(blockchain.nodes),
+        'total_nodes': str(blockchain.nodes),
     }
-    return json.dumps(response, cls=BcEncoder), code
+    return json.dumps(response), code
 
 
 @app.route('/nodes/resolve', methods=['GET'])
@@ -182,12 +205,12 @@ def consensus():
 
     response = {
         'message': 'Our chain is authoritative',
-        'chain': blockchain.chain
+        'chain': blockchain.chain.__dict__()
     }
     if replaced:
         response['message'] = 'Our chain was replaced',
 
-    return json.dumps(response, cls=BcEncoder), 200
+    return json.dumps(response), 200
 
 
 @app.route("/nodes/list", methods=['GET'])
@@ -198,58 +221,28 @@ def get_nodes_list():
 
 @app.route('/mine', methods=['GET'])
 def mine():
-    # Select transactions
-    if blockchain.isReadyForTxsSelection() is False:
-        if blockchain.isMining() is True:
-            return 'Node already mining', 400
-        return 'Node not ready to mine : Block bounds not found', 400
+    host.host = request.host
+    response, code = blockchain.updateMiningState()
+    if code:
+        return jsonify(response), code
 
-    # TODO spread the mining process to other nodes
-    blockchain.selectTxs()
+    response, code = blockchain.mine()
+    if code != 200:
+        return jsonify(response), code
 
-    # We run the proof of work algorithm to get the next proof...
-    blockchain.newBlock()
-
-    # We must receive a reward for finding the proof.
-    # The sender is "0" to signify that this node has mined a new coin.
-    # blockchain.new_transaction(
-    #     sender="0",
-    #     recipient=node_identifier,
-    #     amount=1,
-    # ) FIXME reward is for the fastest miner
-
-    # Forge the new Block by adding it to the chain
-
-    response = blockchain.last_block
-    return json.dumps(response, cls=BcEncoder), 200
+    return json.dumps(response), code
 
 
-@app.route('/create_block', methods=['POST'])
-def create_block():
-    values = request.get_json() or {}
+@app.route('/chain_found', methods=['POST'])
+def chain_found():
+    values = request.get_json()
+    required = ['chain']
 
-    response = blockchain.setupBlock(values['time_limit'] if 'time_limit' in values else None,
-                                     values['block'] if 'block' in values else None)
+    if not all(k in values for k in required):
+        return jsonify({'message': f'Missing value among {", ".join(required)}'}), 400
 
-    if response is None:
-        return 'Can\'t create block', 400
-
-    time_limit, block = response
-    return jsonify({'time_limit': time_limit, 'block': block}), 200
-
-
-#@app.route('/get_Txs', methods=['POST'])
-#def get_Txs():
-#    values = request.get_json()
-
-#    time_limit = int(values.get('time_limit'))
-#    if time_limit is None or time_limit <= 0:
-#        return "Error: Please supply a valid time limit", 400
-
-#    response = {
-#        'Txs': blockchain.getTxs(time_limit),
-#    }
-#    return json.dumps(response, cls=BcEncoder), 200
+    blockchain.replaceChainIfBetter(Chain.from_dict(values['chain']))
+    return 'ok', 200
 
 
 @app.route("/get_balance", methods=['GET'])

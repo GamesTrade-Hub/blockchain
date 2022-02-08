@@ -1,5 +1,5 @@
 from argparse import ArgumentParser
-from src import app
+from src.server import app
 
 # FIXME regrouper ça et wsgi en mettant en place config
 
