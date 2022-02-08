@@ -80,7 +80,7 @@ class Blockchain(metaclass=MetaSingleton):
             return 'Is already Mining', 401
 
         self.current_block = Block(index=self.chain.__len__() + 1,
-                                   transactions=self.txs,
+                                   transactions=TransactionsList(self.txs.select()),
                                    previous_hash=self.chain.lastBlockhash(),
                                    )
 

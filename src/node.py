@@ -90,15 +90,14 @@ class Node:
             rj = response.json()
         except ConnectionRefusedError:
             print("[ConnectionRefusedError] Connection to", f"http://{self.host}", "refused", file=sys.stderr)
-            return
+            return None, 0
 
         if response.status_code == 200 and 'chain' in rj and 'length' in rj:
             length = rj['length']
             chain = rj['chain']
             return chain, length
-        else:
-            print('[chain] Invalid response from node', self.host)
-            return None, 0
+        print('[chain] Invalid response from node', self.host)
+        return None, 0
 
     def sendChain(self, chain):
         try:

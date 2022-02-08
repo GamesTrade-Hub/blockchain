@@ -241,6 +241,7 @@ def chain_found():
     if not all(k in values for k in required):
         return jsonify({'message': f'Missing value among {", ".join(required)}'}), 400
 
+    print('raw chain received', values['chain'])
     blockchain.replaceChainIfBetter(Chain.from_dict(values['chain']))
     return 'ok', 200
 

@@ -29,7 +29,7 @@ class TransactionsList:
             transactions = list()
 
         self._txs = transactions
-        self.error = ""
+        self.error = None
 
     def __len__(self):
         return self._txs.__len__()
@@ -51,23 +51,30 @@ class TransactionsList:
         return True, tx
 
     def addTransactionFromDict(self, tx, create=False):
-        tx, msg = Transaction.from_dict(tx, create=create)
-        if tx is None:
-            self.error = msg
+        tx = Transaction.from_dict(tx, create=create)
+        if not tx.valid():
+            self.error = tx.error
             return False, None
         self._txs.append(tx)
         return True, tx
 
     @classmethod
     def from_dict(cls, dictionary):
-        return cls(transactions=[Transaction.from_dict(tx)[0] for tx in dictionary['transactions']])
+        print('transaction from dict', dictionary)
+        txs = cls(transactions=[Transaction.from_dict(tx, create=False) for tx in dictionary['transactions']])
+        if not txs.valid():
+            print('Transaction set not valid', txs.error)
+        return txs
 
     def __dict__(self):
         return {'transactions': [tx.__dict__() for tx in self._txs]}
 
     def valid(self):
         # FIXME check transactions timestamp (must have a minimum gap between each of them if they are the same maybe not, just check id are different) / smart contract validity
-        return all([tx.valid() for tx in self._txs])
+        if not all([tx.valid() for tx in self._txs]):
+            self.error = ', '.join([tx.error for tx in self._txs if tx.error is not None])
+            return False
+        return True
 
     def updateState(self, from_, to_):
         for tx in self._txs:
@@ -110,7 +117,7 @@ class Transaction:
         if self._signature is None:
             self.sign(private_key)
 
-        self.error = ""
+        self.error = None
         self.state = state or State.WAITING
 
     @property
@@ -174,7 +181,10 @@ class Transaction:
         return True
 
     def valid(self):
-        return self.hasValidSignature() and self.hasValidAttrs()
+        if not self.hasValidSignature() and self.hasValidAttrs():
+            print('Invalid transaction', self.error)
+            return False
+        return True
 
     def validToCreate(self):
         return self.hasValidAttrs() and self.hasValidAttrsToCreate() and self.hasValidSignature()
@@ -242,8 +252,8 @@ class Transaction:
                  )
         if not tx.valid() or (create and not tx.validToCreate()):
             print("Invalid transaction", tx.__dict__(), tx.error)
-            return None, tx.error
-        return tx, 'ok'
+            return tx
+        return tx
 
     def isNFT(self):
         return self._token[:4] == 'nft_'
