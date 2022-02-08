@@ -35,7 +35,7 @@ class TransactionsList:
         return self._txs.__len__()
 
     def select(self):
-        return [tx for tx in self._txs if tx.canBeAdded(self._txs)]
+        return [tx for tx in self._txs if tx.canBeAdded(self)]
 
     def addTransaction(self, id_, token, sender, recipient, amount, time_=None, sc_=None, signature=None, private_key=None, state=State.WAITING, create=False):
         """
@@ -44,7 +44,7 @@ class TransactionsList:
         :return: True if the transaction is added false otherwise.
         """
         tx = Transaction(id_, token, sender, recipient, amount, time_, sc_, signature=signature, private_key=private_key, state=state)
-        if not tx.valid() or (create and not tx.validToCreate()):
+        if not tx.valid(create=create):
             self.error = tx.error
             return None, None
         self._txs.append(tx)
@@ -52,7 +52,7 @@ class TransactionsList:
 
     def addTransactionFromDict(self, tx, create=False):
         tx = Transaction.from_dict(tx, create=create)
-        if not tx.valid():
+        if not tx.valid(create=create):
             self.error = tx.error
             return False, None
         self._txs.append(tx)
@@ -114,7 +114,7 @@ class Transaction:
         self._recipient = PublicKey(recipient)
         self._amount = amount
         self._time = time_ or get_time()
-        self._smart_contract = sc_ or SmartContract(None, self._id)
+        self._smart_contract = SmartContract(sc_, self._id) or SmartContract(None, self._id)
         # =============== #
         self._signature = signature
         ## ================ ##
@@ -169,10 +169,10 @@ class Transaction:
 
     def hasValidAttrsToCreate(self):
         from src.blockchain import Blockchain  # You did not see that.
-        if (self.isNFT() and not Blockchain.is_GTH(self._recipient)) and Blockchain().getBalanceByToken(self._sender, self._token) < self._amount:
+        if (self.isNFT() and not Blockchain.is_GTH(self._recipient)) and Blockchain().getBalanceByToken(self._sender.__str__(), self._token) < self._amount:
             self.error = f'User does not have nft {self._token} to proceed the transaction'
             return False
-        if Blockchain.is_GTH(self._sender) is False and Blockchain().getBalanceByToken(self._sender, self._token) < self._amount:
+        if Blockchain.is_GTH(self._sender) is False and Blockchain().getBalanceByToken(self._sender.__str__(), self._token) < self._amount:
             self.error = f'User does not have enough {self._token} to proceed the transaction'
             return False
         if Blockchain.is_GTH(self._recipient) and Blockchain.is_GTH(self._sender) and self.isNFT() and Blockchain().nftExists(self._token):
@@ -189,8 +189,8 @@ class Transaction:
             return False
         return True
 
-    def valid(self):
-        if not self.hasValidSignature() and self.hasValidAttrs():
+    def valid(self, create=False):
+        if (not create and (not self.hasValidSignature() or not self.hasValidAttrs())) or (create and not self.validToCreate()):
             print('Invalid transaction', self.error)
             return False
         return True
@@ -259,8 +259,8 @@ class Transaction:
                  private_key=dictionary['private_key'] if 'private_key' in dictionary else None,
                  state=State.decode(dictionary['state']) if 'state' in dictionary else None,
                  )
-        if not tx.valid() or (create and not tx.validToCreate()):
-            print("Invalid transaction", tx.__dict__(), tx.error)
+        if not tx.valid(create=create):
+            print("Invalid transaction", tx.error, tx.__dict__())
             return tx
         return tx
 

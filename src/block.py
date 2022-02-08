@@ -87,7 +87,7 @@ class Chain:
         for tx in self.transactions():
             if tx['recipient'] == public_key and tx['token'] == token:
                 balance += tx['amount']
-            if tx['sender'] == public_key and tx['token'] == token:
+            if tx['sender'] == public_key and tx['token'] == token and tx['recipient'] != public_key:
                 balance -= tx['amount']
         return balance
 

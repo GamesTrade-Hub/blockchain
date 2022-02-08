@@ -75,7 +75,7 @@ class Blockchain(metaclass=MetaSingleton):
             return True
         return False
 
-    def mine(self, spread):
+    def mine(self, spread=False):
         """
         Create a new Block in the Blockchain
         :return: New Block
@@ -88,8 +88,8 @@ class Blockchain(metaclass=MetaSingleton):
                                    transactions=TransactionsList(self.txs.select()),
                                    previous_hash=self.chain.lastBlockhash(),
                                    )
-
-        self.nodes.spreadMiningRequest()
+        if spread:
+            self.nodes.spreadMiningRequest()
         return "ok", 200
 
     def getBalance(self, public_key):
@@ -102,7 +102,7 @@ class Blockchain(metaclass=MetaSingleton):
         added, tx = self.txs.addTransactionFromDict(tx, create=True)
 
         if not added:
-            return True, self.txs.error
+            return False, self.txs.error
 
         if spread:
             tx.spread(self.nodes)
