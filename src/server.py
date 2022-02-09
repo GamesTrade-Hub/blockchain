@@ -2,7 +2,7 @@ from src.blockchain import Blockchain
 from src.blockchain import Chain
 from src.tools import BcEncoder
 from src.keys import PublicKey, PrivateKey
-from src.config import Host
+from src.config import Host, NodeType
 
 import uuid
 import sys
@@ -68,6 +68,8 @@ def status():
 
 @app.route('/transaction/new', methods=['POST'])
 def new_transaction():
+    if blockchain.type == NodeType.MINER:
+        return "can't create transaction in a MINER node", 400
     host.host = request.host
     values = request.get_json()
 
@@ -93,6 +95,9 @@ def create_nft():
     :root_param private_key : private key of gth
     :return:
     """
+    if blockchain.type == NodeType.MINER:
+        return "can't create nft in a MINER node", 400
+
     host.host = request.host
 
     values = request.get_json()
@@ -128,6 +133,9 @@ def add_transaction():
 
 @app.route('/create_item', methods=['POST'])
 def create_item():
+    if blockchain.type == NodeType.MINER:
+        return "can't create item in a MINER node", 400
+
     host.host = request.host
 
     """
@@ -170,26 +178,40 @@ def ping():
 @app.route('/nodes/register', methods=['POST'])
 def register_nodes():
     host.host = request.host
-    values = request.get_json()
     code = 201
     message = 'New nodes have been added if not already present'
 
-    nodes = values.get('nodes')
-    if nodes is None or type(nodes) != list:
-        return "Error: Please supply a valid list of nodes", 400
+    if blockchain is None:
+        response = {'message': f'Failed: node not initialized'}
+        return jsonify(response), 401
+    message = 'New node have been added'
 
+    values = request.get_json()
+    required = ['nodes']
+
+    if not all(k in values for k in required):
+        return jsonify({'message': f'Missing value among {", ".join(required)}'}), 400
+
+    nodes = values['nodes']
     for node in nodes:
-        code = blockchain.registerNode(node, register_back=True)
+        code = blockchain.registerNode(node, type_=None, register_back=True)
         if code == 400:
             print("Warning: error while adding node", node)
             code = 400
 
-    if code == 401:
+    if code == 400:
         message = "Error while adding nodes"
 
     return jsonify({
         'message': message,
         'total_nodes': blockchain.nodes.__str__()}), code
+
+
+@app.route('/get_type', methods=['GET'])
+def get_type():
+    host.host = request.host
+
+    return jsonify({'type': host.type.value}), 200
 
 
 @app.route('/nodes/register_back', methods=['POST'])
@@ -199,15 +221,16 @@ def register_back_node():
     if blockchain is None:
         response = {'message': f'Failed: node not initialized'}
         return jsonify(response), 401
-    values = request.get_json()
     message = 'New node have been added'
 
-    node = values.get('node')
-    if node is None:
-        return "Error: Please supply a valid node", 400
+    values = request.get_json()
+    required = ['node', 'type']
 
-    code = blockchain.registerNode(node)
-    if code == 401:
+    if not all(k in values for k in required):
+        return jsonify({'message': f'Missing value among {", ".join(required)}'}), 400
+
+    code = blockchain.registerNode(values.get('node'), type_=values.get('type'))
+    if code == 400:
         message = "Error while adding node"
 
     response = {
@@ -242,6 +265,9 @@ def get_nodes_list():
 
 @app.route('/mine', methods=['GET'])
 def mine():
+    if blockchain.type == NodeType.MANAGER:
+        return "can't mine in a MANAGER node", 400
+
     host.host = request.host
     values = request.get_json()
 

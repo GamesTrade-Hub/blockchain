@@ -1,7 +1,7 @@
 from src.tools import BcEncoder, hash
 from src.transaction import TransactionsList, State
 from src.config import Host
-
+from random import random
 from multiprocessing import Process, Queue
 import json
 import ast
@@ -19,7 +19,7 @@ def proofOfWork(block_hash, queue):
 
     nonce = 0
     while Block.valid_proof(block_hash, nonce) is False:
-        nonce += 1
+        nonce += 1 + random()
 
     queue.put(nonce)
     print('nonce found in subprocess', nonce)
@@ -193,7 +193,7 @@ class Block:
 
         guess = f'{block_hash}{nonce}'
         guess_hash = hash(guess)
-        return guess_hash[:5] == "00000"
+        return guess_hash[:6] == "000000"
 
     def valid_transactions(self):
         if not self._txs.valid():

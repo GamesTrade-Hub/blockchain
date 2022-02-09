@@ -1,5 +1,5 @@
 from src.block import Chain
-from src.config import Host
+from src.config import Host, NodeType
 
 import requests
 import json
@@ -16,12 +16,9 @@ class NodesList:
 
     def spreadTransaction(self, tx):
         for node in self.nodes:
-            response = requests.post(f'http://{node.host}/transaction/add', json={'tx': tx})
+            node.sendTransaction(tx)
 
-            if response.status_code != 201:
-                print(f"Transaction sent to {node} received error code {response.status_code}, Reason: {response.reason}, {response.content}")
-
-    def addNode(self, address, register_back=False):
+    def addNode(self, address, type_, register_back=False):
         parsed_url = urlparse(address)
 
         if parsed_url.netloc:
@@ -36,7 +33,7 @@ class NodesList:
 
         if host in self.nodes:
             return False
-        node = Node(host)
+        node = Node(host, type_)
         if self.alreadyExists(node):
             return False
 
@@ -65,7 +62,7 @@ class NodesList:
     @staticmethod
     def register_back(node):
         try:
-            requests.post(f'http://{node.__str__()}/nodes/register_back', json={"node": Host().host})
+            requests.post(f'http://{node.__str__()}/nodes/register_back', json={"node": Host().host, "type": Host().type.value})
         except requests.exceptions.RequestException as e:
             print("Error", e, file=sys.stderr)
             return False
@@ -77,18 +74,54 @@ class NodesList:
 
     def spreadMiningRequest(self):
         for node in self.nodes:
-            response = requests.get(f'http://{node.host}/mine')
-
-            if response.status_code != 200:
-                print(f"Mine request sent to {node} received error code {response.status_code}, Reason: {response.reason}, {response.content}")
+            node.sendMiningRequest()
 
 
 class Node:
-    def __init__(self, host):
+    def __init__(self, host, type_):
         self.host = host
+        self.type = None if type_ is None else NodeType(type_)
+
+        if self.type is None:
+            self.getType()
+        print("NODE ADDED", self.__repr__())
 
     def __str__(self):
         return self.host
+
+    def __repr__(self):
+        return f'host: {self.host} type: {self.type.value}'
+
+    def sendMiningRequest(self):
+        if self.type == NodeType.MANAGER:
+            print("Not sending mining request to", self.__repr__())
+            return
+        response = requests.get(f'http://{self.host}/mine')
+
+        if response.status_code != 200:
+            print(f"Mine request sent to {self.__str__()} received error code {response.status_code}, Reason: {response.reason}, {response.content}")
+
+    def sendTransaction(self, tx):
+        response = requests.post(f'http://{self.host}/transaction/add', json={'tx': tx})
+
+        if response.status_code != 201:
+            print(f"Transaction sent to {self.__str__()} received error code {response.status_code}, Reason: {response.reason}, {response.content}")
+
+    def getType(self):
+        try:
+            response = requests.get(f'http://{self.host}/get_type')
+            rj = response.json()
+        except ConnectionRefusedError:
+            print("[ConnectionRefusedError] Connection to", f"http://{self.host}", "refused", file=sys.stderr)
+            self.type = NodeType.ALL
+            return
+
+        try:
+            if response.status_code == 200 and 'type' in rj:
+                self.type = NodeType(rj['type'])
+        except Exception as e:
+            print('can\'t set type', rj['type'], e)
+            self.type = NodeType.ALL
 
     def getChain(self):
         try:

@@ -2,7 +2,7 @@ from src.tools import get_time, MetaSingleton, hash
 from src.transaction import TransactionsList, State
 from src.node import NodesList
 from src.block import Chain, Block
-
+from src.config import Host, NodeType
 
 # TODO when transaction are passed nodes to nodes int fields becomes string, this might create issues.
 
@@ -14,7 +14,7 @@ def dropDuplicates(l_):
 class Blockchain(metaclass=MetaSingleton):
 
     def __init__(self):
-
+        self._type = None
         self.txs = TransactionsList()
         # Create the genesis block
         genesis_block = Block(index=1, transactions=TransactionsList(), previous_hash='0000', nonce='genesis')
@@ -27,13 +27,23 @@ class Blockchain(metaclass=MetaSingleton):
         self.mining_process_queue = None
 
     @property
+    def type(self):
+        return self._type
+
+    @type.setter
+    def type(self, type_):
+        if isinstance(type_, NodeType) and self._type is None:
+            Host().type = type_
+            self._type = type_
+
+    @property
     def chain_size(self):
         return self.chain.__len__()
 
     def getConnectedNodes(self):
         return self.nodes
 
-    def registerNode(self, address, register_back=False):
+    def registerNode(self, address, type_, register_back=False):
         """
         Add a new node to the list of nodes
         :param host: ip and port of the current api instance
@@ -41,7 +51,7 @@ class Blockchain(metaclass=MetaSingleton):
         :param address: Address of node. Eg. 'http://192.168.0.5:5000'
         """
 
-        added = self.nodes.addNode(address, register_back=register_back)
+        added = self.nodes.addNode(address, type_=type_, register_back=register_back)
 
         if not added:
             return 400
@@ -62,12 +72,10 @@ class Blockchain(metaclass=MetaSingleton):
         return rv
 
     def replaceChainIfBetter(self, chain):
-        print('replaceChainIfBetter, chain:', chain)
+        # print('replaceChainIfBetter, chain:', chain)
         if chain.__len__() > self.chain.__len__():
             # FIXME if same size, take the one having the most transactions
-            print('cancel mining process')
             self.endCurrentMiningProcess()
-            print('mining process canceled')
             self.txs.updateStateCdt(from_=State.IN_CHAIN, to_=State.WAITING, cdt=lambda tx: True if self.chain.containsTx(tx) and not chain.containsTx(tx) else False)
             self.txs.updateStateCdt(from_=State.WAITING, to_=State.IN_CHAIN, cdt=lambda tx: True if chain.containsTx(tx) else False)
             self.chain = chain  # FIXME update transactions
@@ -84,12 +92,13 @@ class Blockchain(metaclass=MetaSingleton):
         if self.current_block is not None:
             return 'Is already Mining', 401
 
+        if spread:
+            self.nodes.spreadMiningRequest()
+
         self.current_block = Block(index=self.chain.__len__() + 1,
                                    transactions=TransactionsList(self.txs.select()),
                                    previous_hash=self.chain.lastBlockhash(),
                                    )
-        if spread:
-            self.nodes.spreadMiningRequest()
         return "ok", 200
 
     def getBalance(self, public_key):
