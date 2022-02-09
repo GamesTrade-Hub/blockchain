@@ -147,7 +147,6 @@ class Block:
         if not b.valid():
             print('warning: invalid block: ', b.error)
             return None, 'Block not valid'
-        print("block created from dict with ", b._txs.__len__())
         return b
 
     @classmethod
