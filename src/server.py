@@ -79,7 +79,7 @@ def new_transaction():
         print('return', f'Missing value among {", ".join(required)}', 400)
         return f'Missing value among {", ".join(required)}', 400
 
-    print('new transaction sc', values['sc'] if 'sc' in values else "no sc")
+    # print('new transaction sc', values['sc'] if 'sc' in values else "no sc")
     # Create a new transaction if the transaction is valid
     created, msg = blockchain.createTransaction(values, spread=True)
     if not created:

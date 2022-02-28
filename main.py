@@ -10,6 +10,7 @@ if __name__ == '__main__':
     parser.add_argument('-p', '--port', default=5000, type=int, help='port to listen on')
     parser.add_argument('-t', '--type', default='all', type=str, help='Type of node (all|miner|manager)', choices=['all', 'miner', 'manager'])
     args = parser.parse_args()
+
     port = args.port
 
     bc = Blockchain()

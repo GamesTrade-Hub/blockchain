@@ -192,7 +192,7 @@ class Block:
 
         guess = f'{block_hash}{nonce}'
         guess_hash = hash(guess)
-        return guess_hash[:6] == "000000"
+        return guess_hash[:5] == "00000"
 
     def valid_transactions(self):
         if not self._txs.valid():
