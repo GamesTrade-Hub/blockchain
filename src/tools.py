@@ -25,7 +25,7 @@ class MetaSingleton(type):
         if cls not in MetaSingleton.__instances:
             print(f'Creating instance of {cls}')
             MetaSingleton.__instances[cls] = super(MetaSingleton, cls).__call__(*args, **kwargs)
-        print(MetaSingleton.__instances)
+        # print(MetaSingleton.__instances)
         return MetaSingleton.__instances[cls]
 
 
