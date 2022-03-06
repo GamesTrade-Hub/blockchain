@@ -23,7 +23,7 @@ pip install auto-py-to-exe
 
 Then run
 ````bash
-pyinstaller --noconfirm --onefile --console  "./main.py" --specpath ./bin -n node
+rm -rf ./bin/* && cd bin ; pyinstaller --noconfirm --onefile --console  "../main.py" -n node
 ````
 and follow the instructions
 
