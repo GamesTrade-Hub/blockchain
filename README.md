@@ -1,14 +1,32 @@
-# Blockchain-coin
+# Blockchain
 
-## Introduction
+This blockchain is used to manage items, nft and tokens of a game.
+Since the needed package fastecdsa is not available on Windows, the nodes cannot be run in 
 
-Cette blockchain est destinée à la gestion de la monnaie interne aux jeux vidéo. Chaque jeu voulant une monnaie va lancer une blockchain qui sera un fork de celle-ci.
+### Starting
 
+````bash
+python3 main.py -p [port number (default 5000)] -t [node type (default: all)]
+````
 
-## Lancement
+for further information see
+````bash
+python3 main.py -h
+````
 
-Afin de lancer la blockchain facilement un docker-compose est présent.
-Celui-ci contient 'blockchain' qui lance un serveur flask et fait tourner la blockchain dessus.
-Il contient également "tests" qui run les tests de unittest en python
+### Convert python file to .exe script
 
-à savoir : les tests units tests sont lancés automatiquement à chaque push et pull request sur main.
+First install the required lib using pip
+````bash
+pip install auto-py-to-exe
+````
+
+Then run
+````bash
+pyinstaller --noconfirm --onefile --console  "./main.py" --specpath ./bin -n node
+````
+and follow the instructions
+
+#### Sources
+
+- https://towardsdatascience.com/how-to-easily-convert-a-python-script-to-an-executable-file-exe-4966e253c7e9
