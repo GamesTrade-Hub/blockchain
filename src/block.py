@@ -82,9 +82,10 @@ class Chain:
                 yield tx
 
     def getBalanceByToken(self, public_key, token):
+        from src.blockchain import Blockchain
         balance = 0
 
-        for tx in self.transactions():
+        for tx in Blockchain().consideredTransactions():
             if tx['recipient'] == public_key and tx['token'] == token:
                 balance += tx['amount']
             if tx['sender'] == public_key and tx['token'] == token and tx['recipient'] != public_key:
@@ -92,9 +93,10 @@ class Chain:
         return balance
 
     def getBalance(self, public_key):
+        from src.blockchain import Blockchain
         balance = {}
 
-        for tx in self.transactions():
+        for tx in Blockchain().consideredTransactions():
             if tx['recipient'] == public_key:
                 if tx['token'] not in balance:
                     balance[tx['token']] = 0
@@ -111,9 +113,8 @@ class Block:
         ## Full block ##
         # Raw block #
         self._index = index
-        self._txs = transactions
+        self._txs: TransactionsList = transactions
         self._previous_hash = previous_hash
-        self._txs.updateState(from_=State.WAITING, to_=State.SELECTED)
         # ========= #
         self._hash = hash_ or hash(self.__encode(full=False))
         self._nonce = nonce

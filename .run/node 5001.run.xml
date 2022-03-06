@@ -1,6 +1,6 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="node 5001 miner" type="PythonConfigurationType" factoryName="Python" singleton="true">
-    <module name="GTH" />
+  <configuration default="false" name="node 5001 all" type="PythonConfigurationType" factoryName="Python" singleton="true">
+    <module name="Blockchain-coin" />
     <option name="INTERPRETER_OPTIONS" value="" />
     <option name="PARENT_ENVS" value="true" />
     <envs>
@@ -23,7 +23,7 @@
       </ENTRIES>
     </EXTENSION>
     <option name="SCRIPT_NAME" value="$PROJECT_DIR$/main.py" />
-    <option name="PARAMETERS" value="-p 5001 --type miner" />
+    <option name="PARAMETERS" value="-p 5001 --type all" />
     <option name="SHOW_COMMAND_LINE" value="false" />
     <option name="EMULATE_TERMINAL" value="false" />
     <option name="MODULE_MODE" value="false" />

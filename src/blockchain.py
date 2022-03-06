@@ -15,7 +15,7 @@ class Blockchain(metaclass=MetaSingleton):
 
     def __init__(self):
         self._type = None
-        self.txs = TransactionsList()
+        self.txs: TransactionsList = TransactionsList()
         # Create the genesis block
         genesis_block = Block(index=1, transactions=TransactionsList(), previous_hash='0000', nonce='genesis')
 
@@ -25,6 +25,12 @@ class Blockchain(metaclass=MetaSingleton):
 
         self.mining_process = None
         self.mining_process_queue = None
+
+    def consideredTransactions(self):
+        for tx in self.chain.transactions():
+            yield tx
+        for tx in self.txs.transactions(min_state=State.SELECTED, max_state=State.SELECTED):
+            yield tx
 
     @property
     def type(self):
@@ -174,10 +180,7 @@ class Blockchain(metaclass=MetaSingleton):
         return get_time()
 
     def nftExists(self, token):
-        for tx in self.chain.transactions():
-            if tx['token'] == token:
-                return True
-        for tx in self.txs.transactions():
+        for tx in self.consideredTransactions():
             if tx['token'] == token:
                 return True
         return False

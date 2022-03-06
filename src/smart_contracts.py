@@ -65,35 +65,69 @@ class SmartContract:
         if self.contractType == Type.INVALID:
             print("Invalid contract sent to SmartContract class __init__()", file=sys.stderr)
         self.related_tx_id = related_tx_id
+        self._is_validated = False
 
     def run(self, txs, prevent_self_check_id=None):  # TODO add timeout to transaction never confirmed
         self.txs = txs
         if self.contractType == Type.INVALID:
-            print('ERROR This contract should not be run', file=sys.stderr)
+            print('ERROR This contract should not be run because it has type "INVALID"', file=sys.stderr)
         if self.contractType & Type.EMPTY:
             return True
         if self.contractType & Type.EXECUTION:
-            return self.execute()
+            return self.__execute()
         if self.contractType & Type.CHECK:
-            return self.check(prevent_self_check_id)
+            return self.__check(prevent_self_check_id)
         return False
 
-    def checkTXs(self, prevent_self_check_id):  # TODO this system might validate multiple transactions wanting the same thing although there is only one of "the other thing"
+    def __doesValidate(self, tx, prevent_self_check_id):
+        """
+        Check if fields match
+        Then check you back check the same transactions that requested the check, or the smart contract is valid
+        :param tx:
+        :param prevent_self_check_id:
+        :return:
+        """
+        return not tx.isUsedToValidateSC() and\
+               all([str(tx[i]) == str(self.smartContract[i]) for i in SmartContract.requirements[self.contractType]]) and \
+               (prevent_self_check_id == tx.smart_contract.related_tx_id or
+                tx.smart_contract.run(txs=self.txs, prevent_self_check_id=self.related_tx_id))
+
+    def __checkTXs(self, prevent_self_check_id):
+        """
+        For type: Type.TX_CHECK
+        :param prevent_self_check_id:
+        :return:
+        """
         for tx in self.txs.all(except_id=self.related_tx_id):  # Search the corresponding transaction
-            if all([str(tx[i]) == str(self.smartContract[i]) for i in SmartContract.requirements[self.contractType]]) \
-                    and (prevent_self_check_id == tx.smart_contract.related_tx_id or tx.smart_contract.run(txs=self.txs, prevent_self_check_id=self.related_tx_id)):
-                # FIXME this check may validate with transaction not used in this block because of timestamp
+            if self.__doesValidate(tx, prevent_self_check_id):
+                tx.useToValidateSC()
+                self._is_validated = True
                 return True
         return False
 
-    def check(self, prevent_self_check_id):
+    def resetState(self):
+        self._is_validated = False
+
+    def isValidated(self):
+        return self._is_validated
+
+    def __check(self, prevent_self_check_id):
+        """
+        For contract type: Type.CHECK
+        :param prevent_self_check_id:
+        :return:
+        """
         if self.contractType & Type.TX_CHECK:
-            return self.checkTXs(prevent_self_check_id)
+            return self.__checkTXs(prevent_self_check_id)
         else:
-            print("Not implemented")
+            print("Warning: Not implemented", file=sys.stderr)
         return False
 
-    def execute(self):
+    def __execute(self):
+        """
+        For contract type: Type.EXECUTION
+        :return:
+        """
         raise NotImplementedError
         # return True
 
@@ -144,8 +178,3 @@ class SmartContract:
         if sc.contractType == Type.INVALID:
             return None, 'Invalid contract type'
         return sc
-
-
-
-
-
