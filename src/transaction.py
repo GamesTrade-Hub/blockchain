@@ -131,7 +131,7 @@ class Transaction:
         self._recipient: PublicKey = PublicKey(recipient)
         self._amount: float = amount
         self._time = time_ or get_time()
-        self._smart_contract: SmartContract = SmartContract(sc_, self._id) or SmartContract(None, self._id)
+        self._smart_contract: SmartContract = SmartContract(sc_, self) or SmartContract(None, self)
         # =============== #
         self._signature = signature
         ## ================ ##
@@ -177,8 +177,8 @@ class Transaction:
         return m[item]
 
     def hasValidAttrs(self):
-        from src.blockchain import Blockchain  # You did not see that.
-        # FIXME also have to check that other transactions doesn't change this statement. Maybe this check has to be done at the transactions selection step
+        from src.blockchain import Blockchain
+
         if self._sender == self._recipient and Blockchain.is_GTH(self._sender) is False:
             self.error = 'Sender and recipient can\'t be the same'
             return False
@@ -313,6 +313,6 @@ class Transaction:
         nodes.spreadTransaction(self.__dict__())
 
     def canBeAdded(self, txs):
-        return self.state == State.WAITING and self.doesNotViolateThePortfolio() and (self._smart_contract.isValidated() or self._smart_contract.run(txs=txs))
+        return self.state == State.WAITING and (self._smart_contract.isValidated() or self._smart_contract.run(txs=txs))
 
 

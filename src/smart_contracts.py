@@ -58,17 +58,20 @@ class SmartContract:
         Type.OTHER_TX_CHECK: ['recipient', 'sender', 'amount', 'token'],
     })
 
-    def __init__(self, contract, related_tx_id):
+    def __init__(self, contract, related_tx):
         self.txs = None
         # Content
         self.smartContract = contract
         if self.contractType == Type.INVALID:
             print("Invalid contract sent to SmartContract class __init__()", file=sys.stderr)
-        self.related_tx_id = related_tx_id
+        self.related_tx = related_tx
+        self.related_tx_id = related_tx.id
         self._is_validated = False
 
     def run(self, txs, prevent_self_check_id=None):  # TODO add timeout to transaction never confirmed
         self.txs = txs
+        if not self.related_tx.doesNotViolateThePortfolio():
+            return False
         if self.contractType == Type.INVALID:
             print('ERROR This contract should not be run because it has type "INVALID"', file=sys.stderr)
         if self.contractType & Type.EMPTY:
