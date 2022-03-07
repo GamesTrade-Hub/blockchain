@@ -178,8 +178,6 @@ def ping():
 @app.route('/nodes/register', methods=['POST'])
 def register_nodes():
     host.host = request.host
-    code = 201
-    message = 'New nodes have been added if not already present'
 
     if blockchain is None:
         response = {'message': f'Failed: node not initialized'}
@@ -187,20 +185,22 @@ def register_nodes():
     message = 'New node have been added'
 
     values = request.get_json()
-    required = ['nodes']
+    required = ['node']
 
     if not all(k in values for k in required):
         return jsonify({'message': f'Missing value among {", ".join(required)}'}), 400
 
-    nodes = values['nodes']
-    for node in nodes:
-        code = blockchain.registerNode(node, type_=None, register_back=True)
-        if code == 400:
-            print("Warning: error while adding node", node)
-            code = 400
-
+    print('add node from', values)
+    node = values.get('node').replace('<unknown>', request.remote_addr)  # FIXME not really clean
+    print("new node value", node)
+    code = blockchain.addNode(node,
+                              type_=None if 'type' not in values else values['type'],
+                              register_back=False if 'register_back' not in values else values['register_back'],
+                              spread=False if 'spread' not in values else values['spread']
+                              )
     if code == 400:
-        message = "Error while adding nodes"
+        print("WARNING: Error while adding nodes", node)
+        message = "ERROR: node not added"
 
     return jsonify({
         'message': message,
@@ -212,32 +212,6 @@ def get_type():
     host.host = request.host
 
     return jsonify({'type': host.type.value}), 200
-
-
-@app.route('/nodes/register_back', methods=['POST'])
-def register_back_node():
-    host.host = request.host
-
-    if blockchain is None:
-        response = {'message': f'Failed: node not initialized'}
-        return jsonify(response), 401
-    message = 'New node have been added'
-
-    values = request.get_json()
-    required = ['node', 'type']
-
-    if not all(k in values for k in required):
-        return jsonify({'message': f'Missing value among {", ".join(required)}'}), 400
-
-    code = blockchain.registerNode(values.get('node'), type_=values.get('type'))
-    if code == 400:
-        message = "Error while adding node"
-
-    response = {
-        'message': message,
-        'total_nodes': str(blockchain.nodes),
-    }
-    return json.dumps(response), code
 
 
 @app.route('/nodes/resolve', methods=['GET'])
@@ -259,8 +233,8 @@ def consensus():
 @app.route("/nodes/list", methods=['GET'])
 def get_nodes_list():
     host.host = request.host
-    balance = blockchain.getConnectedNodes()
-    return jsonify({'nodes': balance}), 200
+    nodes = blockchain.getConnectedNodes()
+    return jsonify(nodes.__dict__()), 200
 
 
 @app.route('/mine', methods=['GET'])

@@ -1,3 +1,5 @@
+from typing import List
+
 from src.block import Chain
 from src.config import Host, NodeType
 
@@ -5,22 +7,47 @@ import requests
 import json
 from urllib.parse import urlparse
 import sys
+from requests.adapters import HTTPAdapter
+from requests.packages.urllib3.util.retry import Retry
 
 
 class NodesList:
     def __init__(self):
-        self.nodes = list()
+        self.nodes: List[Node] = list()
 
     def __str__(self):
         return ', '.join(n.__str__() for n in self.nodes)
+
+    def __dict__(self):
+        return {'nodes': [f'http://{str(i)}' for i in self.nodes]}  # TODO check if http:// is necessary
+
+    def spreadNewNode(self, address, type_):
+        for node in self.nodes:
+            node.register(address, type_)
 
     def spreadTransaction(self, tx):
         for node in self.nodes:
             node.sendTransaction(tx)
 
-    def addNode(self, address, type_, register_back=False):
-        parsed_url = urlparse(address)
+    def addNode(self, address, type_=None, register_back=False, spread=False):
+        host = self.parseAddress(address)
+        if host is None:
+            return False
 
+        node = Node(host, type_)
+        if self.alreadyExists(node):
+            print("WARNING: Node already registered", file=sys.stderr)
+            return False
+
+        if spread:
+            self.spreadNewNode(address, node.type.value)
+        self.nodes.append(node)
+        if register_back:
+            return node.register_back(spread=len(self.nodes) == 1)
+        return True
+
+    def parseAddress(self, address):
+        parsed_url = urlparse(address)
         if parsed_url.netloc:
             host = parsed_url.netloc
         elif parsed_url.path:
@@ -29,19 +56,9 @@ class NodesList:
             else:
                 host = parsed_url.path
         else:
-            return False
-
-        if host in self.nodes:
-            return False
-        node = Node(host, type_)
-        if self.alreadyExists(node):
-            return False
-
-        self.nodes.append(node)
-        if register_back:
-            return NodesList.register_back(node)
-
-        return True
+            print("WARNING: Cannot parse", address, file=sys.stderr)
+            return None
+        return host
 
     def othersChains(self):
         for node in self.nodes:
@@ -59,15 +76,6 @@ class NodesList:
                 return True
         return False
 
-    @staticmethod
-    def register_back(node):
-        try:
-            requests.post(f'http://{node.__str__()}/nodes/register_back', json={"node": Host().host, "type": Host().type.value})
-        except requests.exceptions.RequestException as e:
-            print("Error", e, file=sys.stderr)
-            return False
-        return True
-
     def spreadChain(self, chain):
         for node in self.nodes:
             node.sendChain(chain.__dict__())
@@ -75,6 +83,9 @@ class NodesList:
     def spreadMiningRequest(self):
         for node in self.nodes:
             node.sendMiningRequest()
+
+    def firstConnection(self, host):
+        self.addNode(host, type_=None, register_back=True)
 
 
 class Node:
@@ -84,7 +95,7 @@ class Node:
 
         if self.type is None:
             self.getType()
-        print("NODE ADDED", self.__repr__())
+        print("NODE Created", self.__repr__())
 
     def __str__(self):
         return self.host
@@ -109,6 +120,7 @@ class Node:
 
     def getType(self):
         try:
+            print("get type sending", self.host)
             response = requests.get(f'http://{self.host}/get_type')
             rj = response.json()
         except ConnectionRefusedError:
@@ -144,3 +156,41 @@ class Node:
         except ConnectionRefusedError:
             print("[ConnectionRefusedError] Connection to", f"http://{self.host}", "refused", file=sys.stderr)
             return
+
+    def register(self, address, type_):
+        try:
+            requests.post(f'http://{self.host}/nodes/register', json={"node": address, 'type': type_, 'register_back': True})
+        except requests.exceptions.RequestException as e:
+            print("Error", e, file=sys.stderr)
+            return False
+        return True
+
+    def register_back(self, spread=False, tries=10):
+        try:
+            print("call register back on", self.__str__(), 'spread', spread)
+            host = Host().host or f'http://<unknown>:{Host().port}'
+            session = requests.Session()
+            retry = Retry(connect=20, backoff_factor=0.5)
+            adapter = HTTPAdapter(max_retries=retry)
+            session.mount('http://', adapter)
+            session.post(f'http://{self.__str__()}/nodes/register', json={"node": host, "type": Host().type.value, "spread": spread, "register_back": False}, timeout=5)
+        except requests.exceptions.RequestException as e:
+            print("Error", e, file=sys.stderr)
+            # if tries > 0:
+            #     return self.register_back(spread, tries-1)
+            return False
+        return True
+
+    def getNodesList(self):
+        try:
+            response = requests.get(f'http://{self.host}/nodes/list')
+            rj = response.json()
+        except ConnectionRefusedError:
+            print("[ConnectionRefusedError] Connection to", f"http://{self.host}", "refused", file=sys.stderr)
+            return None, 0
+
+        if response.status_code == 200 and 'nodes' in rj:
+            nodes = rj['nodes']
+            return nodes
+        print('[getNodesList] WARNING: Invalid response from node', self.host)
+        return []

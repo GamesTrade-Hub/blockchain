@@ -14,7 +14,7 @@ class TestNodes(unittest.TestCase):
 
         response = self.app.post('/nodes/register', json={})
         self.assertEqual(response.status_code, 400)
-        response = self.app.post('/nodes/register', json={"nodes": ["127.0.0.1:5002"]})
+        response = self.app.post('/nodes/register', json={"node": "127.0.0.1:5002"})
         self.assertEqual(response.status_code, 201)
         response = self.app.get('/nodes/list')
         self.assertEqual(response.status_code, 200)

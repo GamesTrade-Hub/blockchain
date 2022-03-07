@@ -20,7 +20,7 @@ class Blockchain(metaclass=MetaSingleton):
         genesis_block = Block(index=1, transactions=TransactionsList(), previous_hash='0000', nonce='genesis')
 
         self.chain = Chain(blocks=[genesis_block])
-        self.nodes = NodesList()
+        self.nodes: NodesList = NodesList()
         self.current_block = None
 
         self.mining_process = None
@@ -49,15 +49,17 @@ class Blockchain(metaclass=MetaSingleton):
     def getConnectedNodes(self):
         return self.nodes
 
-    def registerNode(self, address, type_, register_back=False):
+    def addNode(self, address, type_=None, register_back=False, spread=False):
         """
         Add a new node to the list of nodes
+        :param type_:
+        :param spread: spread new node info to other nodes
         :param host: ip and port of the current api instance
         :param register_back: tell whether or not the node just registered received a call back to register the current node
         :param address: Address of node. Eg. 'http://192.168.0.5:5000'
         """
 
-        added = self.nodes.addNode(address, type_=type_, register_back=register_back)
+        added = self.nodes.addNode(address, type_=type_, register_back=register_back, spread=spread)
 
         if not added:
             return 400

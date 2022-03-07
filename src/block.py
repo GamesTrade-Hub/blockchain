@@ -23,7 +23,7 @@ def proofOfWork(block_hash, queue):
 
     queue.put(nonce)
     print('nonce found in subprocess', nonce)
-    requests.get(f'{Host().host}/mine')  # TODO change route
+    requests.get(f'{Host().host}/mine')
 
 
 class Chain:
