@@ -188,13 +188,13 @@ class Node:
 
     def register_back(self, spread=False, tries=20):
         try:
-            print("call register back on", self.__str__(), 'spread', spread)
+            # print("call register back on", self.__str__(), 'spread', spread)
             host = Host().host or f'http://<unknown>:{Host().port}'
-            session = requests.Session()
-            retry = Retry(connect=tries, backoff_factor=0.5)
-            adapter = HTTPAdapter(max_retries=retry)
-            session.mount('http://', adapter)
-            session.post(f'http://{self.__str__()}/nodes/register', json={"node": host, "type": Host().type.value, "spread": spread, "register_back": False})
+            # session = requests.Session()
+            # retry = Retry(connect=tries, backoff_factor=0.5)
+            # adapter = HTTPAdapter(max_retries=retry)
+            # session.mount('http://', adapter)
+            requests.post(f'http://{self.__str__()}/nodes/register', json={"node": host, "type": Host().type.value, "spread": spread, "register_back": False})
         except requests.exceptions.RequestException as e:
             print("Error", e, file=sys.stderr)
             # if tries > 0:
