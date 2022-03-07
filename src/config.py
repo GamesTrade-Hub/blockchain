@@ -7,6 +7,7 @@ class NodeType(Enum):
     ALL = 'all'
     MINER = 'miner'
     MANAGER = 'manager'
+    UNKNOWN = 'UNKNOWN'
 
 
 class Host(metaclass=MetaSingleton):

@@ -38,6 +38,9 @@ class NodesList:
         if self.alreadyExists(node):
             print("WARNING: Node already registered", file=sys.stderr)
             return False
+        if node.type == NodeType.UNKNOWN:
+            print("Invalid node type for address:", address, ' host:', host)
+            return False
 
         if spread:
             self.spreadNewNode(address, node.type.value)
@@ -87,6 +90,17 @@ class NodesList:
     def firstConnection(self, host):
         self.addNode(host, type_=None, register_back=True)
 
+    def removeMe(self):
+        for n in self.nodes:
+            n.unregister()
+
+    def unregister(self, host):
+        print('unregister', host, 'from', self.__str__())
+        if host in self.__str__():
+            self.nodes = list(filter(lambda x: x.__str__() != host, self.nodes))
+            return True
+        return False
+
 
 class Node:
     def __init__(self, host, type_):
@@ -95,7 +109,10 @@ class Node:
 
         if self.type is None:
             self.getType()
-        print("NODE Created", self.__repr__())
+        if self.type == NodeType.UNKNOWN:
+            print('Error while accessing node type')
+        else:
+            print("NODE Created", self.__repr__())
 
     def __str__(self):
         return self.host
@@ -125,7 +142,11 @@ class Node:
             rj = response.json()
         except ConnectionRefusedError:
             print("[ConnectionRefusedError] Connection to", f"http://{self.host}", "refused", file=sys.stderr)
-            self.type = NodeType.ALL
+            self.type = NodeType.UNKNOWN
+            return
+        except requests.exceptions.ConnectionError:
+            print("[ConnectionRefusedError] Connection to", f"http://{self.host}", "refused", file=sys.stderr)
+            self.type = NodeType.UNKNOWN
             return
 
         try:
@@ -194,3 +215,9 @@ class Node:
             return nodes
         print('[getNodesList] WARNING: Invalid response from node', self.host)
         return []
+
+    def unregister(self):
+        try:
+            requests.post(f'http://{self.host}/nodes/unregister', json={"port": Host().port})
+        except requests.exceptions.RequestException as e:
+            print("Error", e, file=sys.stderr)

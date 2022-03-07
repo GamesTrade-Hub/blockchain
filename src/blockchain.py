@@ -186,3 +186,11 @@ class Blockchain(metaclass=MetaSingleton):
             if tx['token'] == token:
                 return True
         return False
+
+    def __del__(self):
+        import sys
+        self.nodes.removeMe()
+
+        print('Blockchain deleted')
+        sys.exit(0)
+

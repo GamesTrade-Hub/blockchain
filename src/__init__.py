@@ -4,6 +4,11 @@
 # TODO check transactions real validity when a node propose the same chain as yours with one new block (meaning he found it faster that you did)
 # TODO fix api return code to make them match the good practices
 # TODO when a node is removed it should send a signal to others
-# TODO fix the smart contract validation (like some sc can validate others multiple times)
+# TODO POA
+# TODO GUI configuration
+# TODO Other smart contract types
+# TODO Setup update without loosing current state (dump saved transactions?)
+#   - update nodes one after the other, at each node restart, one another send him the current transactions to confirm
+#   - node dump its state, update, restart, reload (can be bad if the update takes some time)
 
 

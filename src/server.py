@@ -12,6 +12,9 @@ import time
 import requests
 from flask import Flask, jsonify, request
 import json
+import sys
+import signal
+
 
 # Instantiate the Node
 app = Flask(__name__)
@@ -27,6 +30,17 @@ print("Identifier :", node_identifier)
 # Instantiate the Blockchain
 host = Host()
 blockchain = Blockchain()
+
+
+def handler(signalNumber, frame):
+    global blockchain
+    print('CTRL-C pressed!', signalNumber, frame)
+    blockchain.__del__()
+    sys.exit(1)
+
+
+signal.signal(signal.SIGINT, handler)
+signal.signal(signal.SIGTERM, handler)
 
 
 @app.route('/get_new_private_key', methods=['GET'])
@@ -205,6 +219,23 @@ def register_nodes():
     return jsonify({
         'message': message,
         'total_nodes': blockchain.nodes.__str__()}), code
+
+
+@app.route('/nodes/unregister', methods=['POST'])
+def unregister():
+    host.host = request.host
+
+    values = request.get_json()
+    required = ['port']
+
+    if not all(k in values for k in required):
+        return jsonify({'message': f'Missing value among {", ".join(required)}'}), 400
+
+    port = values['port']
+
+    rv = blockchain.nodes.unregister(f'{request.remote_addr}:{port}')
+
+    return ('ok', 200) if rv else ('node not found', 400)
 
 
 @app.route('/get_type', methods=['GET'])
