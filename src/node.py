@@ -95,7 +95,7 @@ class NodesList:
             n.unregister()
 
     def unregister(self, host):
-        print('unregister', host, 'from', self.__str__())
+        print('INFO: Unregister', host, 'from', self.__str__())
         if host in self.__str__():
             self.nodes = list(filter(lambda x: x.__str__() != host, self.nodes))
             return True
