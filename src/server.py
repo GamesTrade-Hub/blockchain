@@ -34,7 +34,7 @@ blockchain = Blockchain()
 
 def handler(signalNumber, frame):
     global blockchain
-    print('CTRL-C pressed!', signalNumber, frame)
+    print('exit required', signalNumber, frame)
     blockchain.__del__()
     sys.exit(1)
 
