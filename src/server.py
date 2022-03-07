@@ -191,6 +191,7 @@ def ping():
 
 @app.route('/nodes/register', methods=['POST'])
 def register_nodes():
+    print("register request received")
     host.host = request.host
 
     if blockchain is None:
@@ -202,6 +203,7 @@ def register_nodes():
     required = ['node']
 
     if not all(k in values for k in required):
+        print("register request answered wrong")
         return jsonify({'message': f'Missing value among {", ".join(required)}'}), 400
 
     print('add node from', values)
@@ -215,6 +217,8 @@ def register_nodes():
     if code == 400:
         print("WARNING: Error while adding nodes", node)
         message = "ERROR: node not added"
+
+    print("register request answered end")
 
     return jsonify({
         'message': message,

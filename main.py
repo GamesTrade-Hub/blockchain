@@ -11,8 +11,8 @@ def main():
     parser = ArgumentParser()
     parser.add_argument('-p', '--port', default=5000, type=int, help='port to listen on')
     parser.add_argument('-t', '--type', default='all', type=str, help='Type of node (all|miner|manager)', choices=['all', 'miner', 'manager'])
-    parser.add_argument('-fc', '--first_connection', default='http://20.188.58.215:5000', type=str, help='first connection url')
-    # parser.add_argument('-fc', '--first_connection', default='http://127.0.0.1:5000', type=str, help='first connection url (or \'none\'')
+    # parser.add_argument('-fc', '--first_connection', default='http://20.188.58.215:5000', type=str, help='first connection url')
+    parser.add_argument('-fc', '--first_connection', default='http://127.0.0.1:5000', type=str, help='first connection url (or \'none\'')
     args = parser.parse_args()
 
     Host().port = args.port

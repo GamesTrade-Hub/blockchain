@@ -18,7 +18,7 @@ class Host(metaclass=MetaSingleton):
 
     @property
     def host(self):
-        return None if self._host is None else f'http://{self._host}'
+        return f'http://<unknown>:{self._port}' if self._host is None else f'http://{self._host}'
 
     @host.setter
     def host(self, host):
