@@ -190,6 +190,7 @@ class Node:
     @run_in_thread
     def register(self, address, type_):
         try:
+            print('register', address, f'http://{self.host}/nodes/register')
             requests.post(f'http://{self.host}/nodes/register', json={"node": address, 'type': type_, 'register_back': True})
         except requests.exceptions.RequestException as e:
             print("Error", e, file=sys.stderr)
