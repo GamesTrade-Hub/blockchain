@@ -105,9 +105,9 @@ class Blockchain(metaclass=MetaSingleton):
 
         self.current_block = Block(index=self.chain.__len__() + 1,
                                    transactions=TransactionsList(self.txs.select()),
-                                   previous_hash=self.chain.lastBlockhash(),
-                                   )
-        return "ok", 200
+                                   previous_hash=self.chain.lastBlockhash())
+
+        return "Mining of a new block started", 200
 
     def getBalance(self, public_key):
         return self.chain.getBalance(public_key)
@@ -147,9 +147,13 @@ class Blockchain(metaclass=MetaSingleton):
         used to check if this node has found the solution to the POW
         :return:
         """
-        if self.current_block is None or not self.current_block.powFinished():
-            print('updateMiningState', self.current_block, self.current_block and self.current_block.powFinished())
-            return None, None
+        if not self.current_block:
+            print('current block?', self.current_block)
+            return "No block mined", 400
+
+        if not self.current_block.powFinished():
+            print('pow not finished', self.current_block.powFinished())
+            return "Pow not finished", 400
 
         # Reset the current list of transactions
         self.current_block.completeBlock()
@@ -160,7 +164,7 @@ class Blockchain(metaclass=MetaSingleton):
         # If at some point, blockchain version is changed, check if these transactions are in, otherwise try to add them back.
         # Also, transactions in the blockchain after 10+ blocks can be removed because we can be kind of sure that they are in the blockchain for ever
 
-        return 'mining step finished, block found', 200
+        return 'Mining step finished, block found', 200
 
     def endCurrentMiningProcess(self):
         """
@@ -191,6 +195,6 @@ class Blockchain(metaclass=MetaSingleton):
         import sys
         self.nodes.removeMe()
 
-        print('Blockchain deleted')
+        print('Blockchain deleted (might me in subproc in which case it is fine)')
         sys.exit(0)
 

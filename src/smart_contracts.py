@@ -90,7 +90,7 @@ class SmartContract:
         :param prevent_self_check_id:
         :return:
         """
-        return not tx.isUsedToValidateSC() and\
+        return not tx.isUsedToValidateSC() and \
                all([str(tx[i]) == str(self.smartContract[i]) for i in SmartContract.requirements[self.contractType]]) and \
                (prevent_self_check_id == tx.smart_contract.related_tx_id or
                 tx.smart_contract.run(txs=self.txs, prevent_self_check_id=self.related_tx_id))
@@ -176,7 +176,7 @@ class SmartContract:
     @classmethod
     def from_dict(cls, dictionary):
         sc = cls(contract=dictionary['contract'],
-                 related_tx_id=dictionary['related_tx_id']
+                 related_tx=None,  # FIXME
                  )
         if sc.contractType == Type.INVALID:
             return None, 'Invalid contract type'

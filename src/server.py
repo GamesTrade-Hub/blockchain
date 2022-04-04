@@ -34,7 +34,7 @@ blockchain = Blockchain()
 
 def handler(signalNumber, frame):
     global blockchain
-    print('exit required', signalNumber, frame)
+    print(f'EXIT REQUIRED signal number {signalNumber} fame {frame}', flush=True, file=sys.stderr)
     blockchain.__del__()
     sys.exit(1)
 
@@ -280,20 +280,22 @@ def mine():
     host.host = request.host
     values = request.get_json()
 
-    response, code = blockchain.updateMiningState()
-
-    if code:
-        return jsonify(response), code
-
     if values and 'spread' in values and values['spread'] is True:
-        print('spread mine process')
+        print('Spread mine process')
         response, code = blockchain.mine(spread=True)
-
     else:
         response, code = blockchain.mine(spread=False)
 
-    if code != 200:
-        return jsonify(response), code
+    return json.dumps(response), code
+
+
+@app.route('/do_not_use/end_mining_process', methods=['GET'])
+def end_mining_process():
+    if blockchain.type == NodeType.MANAGER:
+        return "can't mine in a MANAGER node", 400
+
+    host.host = request.host
+    response, code = blockchain.updateMiningState()
 
     return json.dumps(response), code
 

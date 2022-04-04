@@ -209,9 +209,6 @@ class Node:
             requests.post(f'http://{self.host}/nodes/register', json={"node": host, "type": Host().type.value, "spread": spread, "register_back": False})
         except requests.exceptions.RequestException as e:
             print("Error while register back", e)
-            # if tries > 0:
-            #     time.sleep(1)
-            #     return self.register_back(spread, tries-1)
             return False
         return True
 

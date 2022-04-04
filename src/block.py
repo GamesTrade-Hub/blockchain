@@ -1,3 +1,4 @@
+import sys
 from src.tools import BcEncoder, hash
 from src.transaction import TransactionsList, State
 from src.config import Host
@@ -6,6 +7,7 @@ from multiprocessing import Process, Queue
 import json
 import ast
 import requests
+from time import sleep
 
 
 def proofOfWork(block_hash, queue):
@@ -21,9 +23,11 @@ def proofOfWork(block_hash, queue):
     while Block.valid_proof(block_hash, nonce) is False:
         nonce += 1 + random()
 
+    sleep(1)
     queue.put(nonce)
     print('nonce found in subprocess', nonce)
-    requests.get(f'{Host().host}/mine')
+    requests.get(f'{Host().host}/do_not_use/end_mining_process')
+    sys.exit(0)
 
 
 class Chain:
@@ -121,10 +125,10 @@ class Block:
         ## ========== ##
 
         self.error = None
-        self.mining_process = None
+        self.mining_process_queue = Queue()
+        self.mining_process: Process = Process(target=proofOfWork, args=(self._hash, self.mining_process_queue))
+
         if not self._nonce:
-            self.mining_process_queue = Queue()
-            self.mining_process = Process(target=proofOfWork, args=(self._hash, self.mining_process_queue))
             self.mining_process.start()
 
     @property
@@ -220,6 +224,14 @@ class Block:
         if not self.powFinished():
             print('This method is not meant to be called if the node did not find the POW')
         self._nonce = self.mining_process_queue.get()
+        # sleep(1)  # Let time to the process to end before killing it
+        # self.mining_process.terminate()
+        # print('is alive', self.mining_process.is_alive())
+        # self.mining_process.kill()
+        # print('is alive', self.mining_process.is_alive())
+        self.mining_process_queue.close()
+        del self.mining_process_queue
+        # del self.mining_process
         print('nonce found:', self._nonce)
 
     def __stopMining(self):
