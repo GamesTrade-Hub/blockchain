@@ -13,7 +13,7 @@ source prod_node/bin/activate
 
 echo "Setup nginx reverse-proxy ..."
 sudo service nginx stop
-copy ./nginx.conf /etc/nginx/nginx.conf
+cp ./nginx.conf /etc/nginx/nginx.conf
 sudo service nginx start
 
 
