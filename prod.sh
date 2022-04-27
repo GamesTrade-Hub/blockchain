@@ -1,7 +1,7 @@
 
 echo "Update pip ..."
 /usr/bin/python3 -m pip install --upgrade pip
-echo "\033[31mIntall venv ...\033[0m"
+echo "Install venv ..."
 /usr/bin/python3 -m pip install virtualenv
 
 echo "Install nginx ..."
