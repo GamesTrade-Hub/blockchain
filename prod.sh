@@ -1,5 +1,5 @@
 
-echo "Intall venv ..."
+echo "\033[31mIntall venv ...\033[0m"
 pip3 install virtualenv
 
 echo "Install nginx ..."
@@ -13,7 +13,7 @@ source prod_node/bin/activate
 
 echo "Setup nginx reverse-proxy ..."
 sudo service nginx stop
-cp ./nginx.conf /etc/nginx/nginx.conf
+sudo cp ./nginx.conf /etc/nginx/nginx.conf
 sudo service nginx start
 
 
@@ -26,9 +26,10 @@ sudo service nginx start
 echo "Install requirements ..."
 pip3 install -r requirements/prod.txt
 
-echo "Run app ..."
-gunicorn -b 0.0.0.0:5000 --workers=1 wsgi:app
+echo "Run app 0.0.0.0:5000 ..."
+gunicorn -b 0.0.0.0:5000 --workers=1 wsgi:app --daemon --access-logfile .node_logs --error-logfile .node_errlogs
 
 
 #screen -R prod
 
+#https://www.digitalocean.com/community/tutorials/how-to-serve-flask-applications-with-gunicorn-and-nginx-on-ubuntu-14-04
