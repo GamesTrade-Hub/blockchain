@@ -23,8 +23,10 @@ sudo service nginx start
 #
 #pyinstaller --noconfirm --onefile --console  "../main.py" -n node
 
+echo "Update pip ..."
+/usr/bin/python3 -m pip install --upgrade pip
 echo "Install requirements ..."
-pip3 install -r requirements/prod.txt
+/usr/bin/python3 -m pip install -r requirements/prod.txt
 
 echo "Run app 0.0.0.0:5000 ..."
 gunicorn -b 0.0.0.0:5000 --workers=1 wsgi:app --daemon --access-logfile .node_logs --error-logfile .node_errlogs
