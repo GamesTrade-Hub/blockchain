@@ -103,8 +103,13 @@ class Blockchain(metaclass=MetaSingleton):
         if spread:
             self.nodes.spreadMiningRequest()
 
+        tx_list: TransactionsList = TransactionsList(self.txs.select())
+
+        if len(tx_list) == 0:
+            return "Not enough transactions to mine", 401
+
         self.current_block = Block(index=self.chain.__len__() + 1,
-                                   transactions=TransactionsList(self.txs.select()),
+                                   transactions=tx_list,
                                    previous_hash=self.chain.lastBlockhash())
 
         return "Mining of a new block started", 200

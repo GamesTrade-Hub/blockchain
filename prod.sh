@@ -13,10 +13,10 @@ virtualenv prod_node
 echo "Use venv prod_node ..."
 source prod_node/bin/activate
 
-echo "Setup nginx reverse-proxy ..."
-sudo service nginx stop
-sudo cp ./nginx.conf /etc/nginx/nginx.conf
-sudo service nginx start
+#echo "Setup nginx reverse-proxy ..."
+#sudo service nginx stop
+#sudo cp ./nginx.conf /etc/nginx/nginx.conf
+#sudo service nginx start
 
 
 #echo "Compile node"
