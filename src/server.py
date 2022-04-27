@@ -154,9 +154,8 @@ def create_item():
 
     """
     :root_param token: the token that have to be used to buy the item
-    :root_param nb: id of the item to prevent nft having the same id
-    :root_param private_key : private key of gth
-    :return:
+    :root_param nb: id of the item to prevent items having the same id
+    :return: token to use to identify the item in the blockchain
     """
     values = request.get_json()
     required = ['token', 'nb']
