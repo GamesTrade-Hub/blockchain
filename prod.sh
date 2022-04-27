@@ -1,6 +1,8 @@
 
+echo "Update pip ..."
+/usr/bin/python3 -m pip install --upgrade pip
 echo "\033[31mIntall venv ...\033[0m"
-pip3 install virtualenv
+/usr/bin/python3 -m pip install virtualenv
 
 echo "Install nginx ..."
 sudo apt install nginx
@@ -23,8 +25,7 @@ sudo service nginx start
 #
 #pyinstaller --noconfirm --onefile --console  "../main.py" -n node
 
-echo "Update pip ..."
-/usr/bin/python3 -m pip install --upgrade pip
+
 echo "Install requirements ..."
 /usr/bin/python3 -m pip install -r requirements/prod.txt
 
