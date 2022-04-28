@@ -1,7 +1,7 @@
 -r common.txt
 itsdangerous
 Jinja2==3.0.3
-# uWSGI==2.0.20
+uWSGI==2.0.20
 Werkzeug==2.0.3
 gunicorn==20.1.0
 psycopg2-binary==2.9.3
