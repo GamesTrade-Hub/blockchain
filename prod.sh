@@ -1,7 +1,13 @@
 
+sudo apt-get install python3.8
+sudo apt-get install python3-distutils python-setuptools python3.8-dev
+
 echo "Update pip ..."
 /usr/bin/python3.8 -m pip install --upgrade pip
+
 echo "Install venv ..."
+apt-get upgrade python-virtualenv
+/usr/bin/python3.8 -m pip install -U --force-reinstall virtualenv
 /usr/bin/python3.8 -m pip install virtualenv
 
 echo "Install nginx ..."
@@ -29,7 +35,6 @@ source prod_node/bin/activate
 echo "Install requirements ..."
 ./prod_node/bin/python3.8 -m pip install -r requirements/prod.txt
 
-source prod_node/bin/activate
 echo "Run app 0.0.0.0:5000 ..."
 #gunicorn -b 0.0.0.0:5000 --workers=1 wsgi:app --daemon --access-logfile .node_logs --error-logfile .node_errlogs
 gunicorn -b 0.0.0.0:5000 --workers=1 wsgi:app
