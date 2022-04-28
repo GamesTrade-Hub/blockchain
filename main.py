@@ -7,7 +7,7 @@ from time import sleep
 # FIXME regrouper ça et wsgi en mettant en place config
 
 
-def main():
+def debug():
     parser = ArgumentParser()
     parser.add_argument('-p', '--port', default=5000, type=int, help='port to listen on')
     parser.add_argument('-t', '--type', default='all', type=str, help='Type of node (all|miner|manager)', choices=['all', 'miner', 'manager'])
@@ -20,8 +20,8 @@ def main():
     bc.type = NodeType(args.type)
     if args.first_connection != 'none':
         bc.addNode(args.first_connection, register_back=True)
-    app.run(host='0.0.0.0', port=Host().port)
+    app.run(host='0.0.0.0', port=Host().port, debug=True)
 
 
 if __name__ == '__main__':
-    main()
+    debug()

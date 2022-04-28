@@ -2,10 +2,9 @@ from src.blockchain import Blockchain
 from src.blockchain import Chain
 from src.tools import BcEncoder
 from src.keys import PublicKey, PrivateKey
-from src.config import Host, NodeType
+from src.config import Host, NodeType, Config
 
 import uuid
-import sys
 from urllib.parse import urlparse
 from uuid import uuid4
 import time
@@ -14,6 +13,23 @@ from flask import Flask, jsonify, request
 import json
 import sys
 import signal
+import logging
+
+logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.DEBUG)
+logger.setLevel(logging.DEBUG)
+
+conf: Config = Config.from_file('config.json')
+logger.info(conf)
+
+# Instantiate the Blockchain
+host = Host()
+blockchain = Blockchain()
+blockchain.type = conf.type
+
+for n in conf.nodes:
+    logging.debug(f'add node {n}')
+    blockchain.addNode(n, register_back=True)
 
 
 # Instantiate the Node
@@ -21,15 +37,11 @@ app = Flask(__name__)
 
 # Generate a globally unique address for this node
 node_identifier = str(uuid4()).replace('-', '')
-print("Identifier :", node_identifier)
+logger.info(f"Identifier: {node_identifier}")
 # client = docker.DockerClient()
 # container = client.containers.get("magical_meitner")
 # ip_add = container.attrs['NetworkSettings']['IPAddress']
 # print("ip_add", ip_add)
-
-# Instantiate the Blockchain
-host = Host()
-blockchain = Blockchain()
 
 
 def handler(signalNumber, frame):
@@ -43,7 +55,32 @@ signal.signal(signal.SIGINT, handler)
 signal.signal(signal.SIGTERM, handler)
 
 
+def high_level_handler(invalid: list = None, valid: list = None):
+    if blockchain.type is None or blockchain.type == NodeType.UNKNOWN:
+        blockchain.type = NodeType.ALL
+
+    def decorator(fn):
+        def inner__(*args, **kwargs):
+            if (valid is None or blockchain.type in valid) and (invalid is None or blockchain.type not in invalid):
+                return fn(*args, **kwargs)
+            else:
+                msg = f'Invalid request for this node of type {blockchain.type.value}. Valid: {"empty" if valid is None else [i.value for i in valid]}. Invalid {"empty" if invalid is None else [i.value for i in invalid]}'
+                response = {'message': msg}
+                logger.info(msg)
+                return jsonify(response), 201
+
+        namespace = sys._getframe(1).f_globals  # default to caller's globals
+        name = f'{fn.__name__} + _wrap'
+        inner__.__name__ = name
+        namespace[name] = inner__
+
+        return inner__
+
+    return decorator
+
+
 @app.route('/get_new_private_key', methods=['GET'])
+@high_level_handler(invalid=[NodeType.MINER])
 def get_private_key():
     host.host = request.host
 
@@ -53,6 +90,7 @@ def get_private_key():
 
 
 @app.route('/get_new_public_key', methods=['GET'])
+@high_level_handler(invalid=[NodeType.MINER])
 def get_public_key():
     host.host = request.host
 
@@ -66,6 +104,7 @@ def get_public_key():
 
 
 @app.route('/start', methods=['GET'])
+@high_level_handler()
 def launch():
     host.host = request.host
     response = {'message': f'node initialized'}
@@ -73,6 +112,7 @@ def launch():
 
 
 @app.route('/status', methods=['GET'])
+@high_level_handler()
 def status():
     host.host = request.host
 
@@ -81,9 +121,8 @@ def status():
 
 
 @app.route('/transaction/new', methods=['POST'])
+@high_level_handler(invalid=[NodeType.MINER])
 def new_transaction():
-    if blockchain.type == NodeType.MINER:
-        return "can't create transaction in a MINER node", 400
     host.host = request.host
     values = request.get_json()
 
@@ -102,6 +141,7 @@ def new_transaction():
 
 
 @app.route('/create_nft', methods=['POST'])
+@high_level_handler(invalid=[NodeType.MINER])
 def create_nft():
     """
     :root_param token: the token that have to be used to buy the NFT
@@ -109,8 +149,6 @@ def create_nft():
     :root_param private_key : private key of gth
     :return:
     """
-    if blockchain.type == NodeType.MINER:
-        return "can't create nft in a MINER node", 400
 
     host.host = request.host
 
@@ -129,6 +167,7 @@ def create_nft():
 
 
 @app.route('/transaction/add', methods=['POST'])
+@high_level_handler()
 def add_transaction():
     host.host = request.host
 
@@ -146,9 +185,8 @@ def add_transaction():
 
 
 @app.route('/create_item', methods=['POST'])
+@high_level_handler(invalid=[NodeType.MINER])
 def create_item():
-    if blockchain.type == NodeType.MINER:
-        return "can't create item in a MINER node", 400
 
     host.host = request.host
 
@@ -170,6 +208,7 @@ def create_item():
 
 
 @app.route('/chain', methods=['GET'])
+@high_level_handler()
 def chain():
     host.host = request.host
 
@@ -181,6 +220,7 @@ def chain():
 
 
 @app.route('/ping', methods=['GET'])
+@high_level_handler()
 def ping():
     host.host = request.host
 
@@ -189,6 +229,7 @@ def ping():
 
 
 @app.route('/nodes/register', methods=['POST'])
+@high_level_handler()
 def register_nodes():
     print("register request received")
     host.host = request.host
@@ -225,6 +266,7 @@ def register_nodes():
 
 
 @app.route('/nodes/unregister', methods=['POST'])
+@high_level_handler()
 def unregister():
     host.host = request.host
 
@@ -242,6 +284,7 @@ def unregister():
 
 
 @app.route('/get_type', methods=['GET'])
+@high_level_handler()
 def get_type():
     host.host = request.host
 
@@ -249,6 +292,7 @@ def get_type():
 
 
 @app.route('/nodes/resolve', methods=['GET'])
+@high_level_handler()
 def consensus():
     host.host = request.host
 
@@ -265,6 +309,7 @@ def consensus():
 
 
 @app.route("/nodes/list", methods=['GET'])
+@high_level_handler()
 def get_nodes_list():
     host.host = request.host
     nodes = blockchain.getConnectedNodes()
@@ -272,9 +317,8 @@ def get_nodes_list():
 
 
 @app.route('/mine', methods=['GET'])
+@high_level_handler(invalid=[NodeType.MANAGER])
 def mine():
-    if blockchain.type == NodeType.MANAGER:
-        return "can't mine in a MANAGER node", 400
 
     host.host = request.host
     values = request.get_json()
@@ -289,9 +333,8 @@ def mine():
 
 
 @app.route('/do_not_use/end_mining_process', methods=['GET'])
+@high_level_handler(invalid=[NodeType.MANAGER])
 def end_mining_process():
-    if blockchain.type == NodeType.MANAGER:
-        return "can't mine in a MANAGER node", 400
 
     host.host = request.host
     response, code = blockchain.updateMiningState()
@@ -300,6 +343,7 @@ def end_mining_process():
 
 
 @app.route('/chain_found', methods=['POST'])
+@high_level_handler()
 def chain_found():
     host.host = request.host
 
@@ -315,6 +359,7 @@ def chain_found():
 
 
 @app.route("/get_balance", methods=['GET'])
+@high_level_handler()
 def get_balance():
     host.host = request.host
 
@@ -328,6 +373,7 @@ def get_balance():
 
 
 @app.route("/get_balance_by_token", methods=['POST'])
+@high_level_handler()
 def get_balance_by_token():
     host.host = request.host
 
@@ -339,9 +385,3 @@ def get_balance_by_token():
     balance = blockchain.getBalanceByToken(values['user_id'], values['token'])
     return jsonify({'balance': balance}), 200
 
-
-@app.route("/testcd", methods=['GET'])
-def test__():
-    return 'test cd 8', 200
-
-# TODO check pairs details

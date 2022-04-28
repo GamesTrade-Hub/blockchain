@@ -3,6 +3,11 @@ from src.transaction import TransactionsList, State
 from src.node import NodesList
 from src.block import Chain, Block
 from src.config import Host, NodeType
+import logging
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+
 
 # TODO when transaction are passed nodes to nodes int fields becomes string, this might create issues.
 
@@ -14,7 +19,7 @@ def dropDuplicates(l_):
 class Blockchain(metaclass=MetaSingleton):
 
     def __init__(self):
-        self._type = None
+        self._type: NodeType = NodeType.UNKNOWN
         self.txs: TransactionsList = TransactionsList()
         # Create the genesis block
         genesis_block = Block(index=1, transactions=TransactionsList(), previous_hash='0000', nonce='genesis')
@@ -38,9 +43,11 @@ class Blockchain(metaclass=MetaSingleton):
 
     @type.setter
     def type(self, type_):
-        if isinstance(type_, NodeType) and self._type is None:
+        if isinstance(type_, NodeType) and (self._type is None or self._type == NodeType.UNKNOWN):
             Host().type = type_
             self._type = type_
+        else:
+            logger.warning(f"Unable to set blockchain type current is {self._type}, wants {type_}")
 
     @property
     def chain_size(self):

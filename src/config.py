@@ -1,6 +1,14 @@
+from dataclasses import dataclass
+
+import json
+
 from src.tools import MetaSingleton
 import sys
 from enum import Enum
+import logging
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
 
 
 class NodeType(Enum):
@@ -47,3 +55,15 @@ class Host(metaclass=MetaSingleton):
 
     def __del__(self):
         print("host destroyed", file=sys.stderr)
+
+
+@dataclass
+class Config:
+    nodes: list
+    type: NodeType
+
+    @classmethod
+    def from_file(cls, file):
+        raw_cfg = json.load(open(file, 'r'))
+        raw_cfg['type'] = NodeType(raw_cfg['type'])
+        return cls(**raw_cfg)
