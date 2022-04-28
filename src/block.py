@@ -15,7 +15,7 @@ logging.basicConfig(level=logging.DEBUG)
 logger.setLevel(logging.DEBUG)
 
 
-def proofOfWork(block_hash, queue, host):
+def proofOfWork(block_hash, nonce_queue, cancel_queue, host):
     """
     Simple Proof of Work Algorithm:
      - Find a number p' such that hash(pp') contains leading 5 zeroes
@@ -26,14 +26,13 @@ def proofOfWork(block_hash, queue, host):
 
     nonce = 0
     while Block.valid_proof(block_hash, nonce) is False:
-        if queue.qsize() and queue.get(block=False) == 'cancel':
+        if cancel_queue.qsize() and cancel_queue.get(block=False) == 'cancel':
             logger.info(f'Cancel received while doing POW')
-            del queue
             sys.exit(0)
         nonce += 1 + random()
 
     sleep(1)
-    queue.put(nonce)
+    nonce_queue.put(nonce)
     print('nonce found in subprocess', nonce)
     get(f'{host}/do_not_use/end_mining_process')
     sys.exit(0)
@@ -137,9 +136,10 @@ class Block:
         ## ========== ##
 
         self.error = None
-        self.mining_process_queue = Queue()
+        self.nonce_queue = Queue()
+        self.cancel_queue = Queue()
         logger.info(f"Create new block with call back host {Host().host}")
-        self.mining_process: Process = Process(target=proofOfWork, args=(self._hash, self.mining_process_queue, Host().host))
+        self.mining_process: Process = Process(target=proofOfWork, args=(self._hash, self.nonce_queue, self.cancel_queue, Host().host))
 
         if not self._nonce:
             self.mining_process.start()
@@ -231,25 +231,27 @@ class Block:
         return True
 
     def powFinished(self):
-        return self._nonce is None and not self.mining_process_queue.empty()
+        return self._nonce is None and not self.nonce_queue.empty()
 
     def completeBlock(self):
         if not self.powFinished():
             print('This method is not meant to be called if the node did not find the POW')
-        self._nonce = self.mining_process_queue.get()
+        self._nonce = self.nonce_queue.get()
         # sleep(1)  # Let time to the process to end before killing it
         # self.mining_process.terminate()
         # print('is alive', self.mining_process.is_alive())
         # self.mining_process.kill()
         # print('is alive', self.mining_process.is_alive())
-        self.mining_process_queue.close()
-        del self.mining_process_queue
+        self.nonce_queue.close()
+        self.cancel_queue.close()
+        del self.nonce_queue
+        del self.cancel_queue
         # del self.mining_process
         print('nonce found:', self._nonce)
 
     def __stopMining(self):
         if self.mining_process and self.mining_process.is_alive():
-            self.mining_process_queue.put('cancel')
+            self.cancel_queue.put('cancel')
 
     def confirmSelectedTransactions(self):
         self._txs.updateState(from_=State.SELECTED, to_=State.IN_CHAIN)
