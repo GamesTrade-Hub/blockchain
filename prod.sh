@@ -30,7 +30,8 @@ echo "Install requirements ..."
 /usr/bin/python3 -m pip install -r requirements/prod.txt
 
 echo "Run app 0.0.0.0:5000 ..."
-gunicorn -b 0.0.0.0:5000 --workers=1 wsgi:app --daemon --access-logfile .node_logs --error-logfile .node_errlogs
+#gunicorn -b 0.0.0.0:5000 --workers=1 wsgi:app --daemon --access-logfile .node_logs --error-logfile .node_errlogs
+gunicorn -b 0.0.0.0:5000 --workers=1 wsgi:app
 
 
 #screen -R prod
