@@ -8,6 +8,11 @@ import json
 import ast
 import requests
 from time import sleep
+import logging
+
+logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.DEBUG)
+logger.setLevel(logging.DEBUG)
 
 
 def proofOfWork(block_hash, queue, host):
@@ -126,6 +131,7 @@ class Block:
 
         self.error = None
         self.mining_process_queue = Queue()
+        logger.info(f"Create new block with call back host {Host().host}")
         self.mining_process: Process = Process(target=proofOfWork, args=(self._hash, self.mining_process_queue, Host().host))
 
         if not self._nonce:

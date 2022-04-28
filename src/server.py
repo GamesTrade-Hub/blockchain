@@ -65,7 +65,8 @@ def high_level_handler(invalid: list = None, valid: list = None):
 
     def decorator(fn):
         def inner__(*args, **kwargs):
-        
+            host.host = request.host
+
             if (valid is None or blockchain.type in valid) and (invalid is None or blockchain.type not in invalid):
                 return fn(*args, **kwargs)
             else:
