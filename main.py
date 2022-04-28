@@ -19,7 +19,7 @@ def debug():
     bc.type = NodeType(args.type)
     if args.first_connection != 'none':
         bc.addNode(args.first_connection, register_back=True)
-    app.run(host='0.0.0.0', port=Host().port, debug=True)
+    app.run(host='0.0.0.0', port=Host().port, debug=False)  # if debug is True server is started twice
 
 
 if __name__ == '__main__':

@@ -48,15 +48,15 @@ logger.info(f"Identifier: {node_identifier}")
 # print("ip_add", ip_add)
 
 
-def handler(signalNumber, frame):
-    global blockchain
-    print(f'EXIT REQUIRED signal number {signalNumber} fame {frame}', flush=True, file=sys.stderr)
-    blockchain.__del__()
-    sys.exit(1)
-
-
-signal.signal(signal.SIGINT, handler)
-signal.signal(signal.SIGTERM, handler)
+# def handler(signalNumber, frame):
+#     global blockchain
+#     print(f'EXIT REQUIRED signal number {signalNumber} fame {frame}', flush=True, file=sys.stderr)
+#     blockchain.__del__()
+#     sys.exit(1)
+#
+#
+# signal.signal(signal.SIGINT, handler)
+# signal.signal(signal.SIGTERM, handler)
 
 
 def high_level_handler(invalid: list = None, valid: list = None):

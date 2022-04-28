@@ -65,6 +65,7 @@ class NodesList:
 
         if spread:
             self.spreadNewNode(address, node.type.value)
+        logger.info(f'Add node {node} in node list')
         self.nodes.append(node)
         if register_back:
             node.register_back(spread=len(self.nodes) == 1)
