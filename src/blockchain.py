@@ -23,11 +23,11 @@ class Blockchain(metaclass=MetaSingleton):
         self._type: NodeType = NodeType.UNKNOWN
         self.txs: TransactionsList = TransactionsList()
         # Create the genesis block
-        genesis_block = Block(index=1, transactions=TransactionsList(), previous_hash='0000', nonce='genesis')
+        genesis_block: Block = Block(index=1, transactions=TransactionsList(), previous_hash='0000', nonce='genesis')
 
-        self.chain = Chain(blocks=[genesis_block])
+        self.chain: Chain = Chain(blocks=[genesis_block])
         self.nodes: NodesList = NodesList()
-        self.current_block = None
+        self.current_block: Block = None
 
         self.mining_process = None
         self.mining_process_queue = None
@@ -80,7 +80,7 @@ class Blockchain(metaclass=MetaSingleton):
         :return: True if our chain was replaced, False if not
         """
 
-        logger.debug('start resolveConflicts')
+        logger.debug('Start resolveConflicts')
         rv = False
 
         # Grab and verify the chains from all the nodes in our network
@@ -89,14 +89,14 @@ class Blockchain(metaclass=MetaSingleton):
         return rv
 
     def replaceChainIfBetter(self, chain):
-        # print('replaceChainIfBetter, chain:', chain)
-        if chain.__len__() > self.chain.__len__():
+        logger.info(f"Replace chain if better")
+        if chain and chain.__len__() > self.chain.__len__():
             # FIXME if same size, take the one having the most transactions
             self.endCurrentMiningProcess()
-            self.txs.updateStateCdt(from_=State.IN_CHAIN, to_=State.WAITING, cdt=lambda tx: True if self.chain.containsTx(tx) and not chain.containsTx(tx) else False)
-            self.txs.updateStateCdt(from_=State.WAITING, to_=State.IN_CHAIN, cdt=lambda tx: True if chain.containsTx(tx) else False)
-            self.chain = chain  # FIXME update transactions
-            print('Chain replaced')
+            self.txs.updateStateCdt(from_=[State.IN_CHAIN, State.SELECTED, State.VALIDATED], to_=State.WAITING, cdt=lambda tx: True if self.chain.containsTx(tx) and not chain.containsTx(tx) else False)
+            self.txs.updateStateCdt(from_=[State.WAITING, State.SELECTED], to_=State.IN_CHAIN, cdt=lambda tx: True if chain.containsTx(tx) else False)  # Some transactions are present twice, once in a block and once in self.txs
+            self.chain = chain
+            logger.info('Chain REPLACED')
             return True
         return False
 
@@ -182,7 +182,7 @@ class Blockchain(metaclass=MetaSingleton):
 
     def endCurrentMiningProcess(self):
         """
-        If a mining process is going in this node, then end it.
+        If a mining process is going on in this node, then end it.
         Probably because a better chain has been received.
         """
         self.current_block = None

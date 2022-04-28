@@ -26,6 +26,10 @@ def proofOfWork(block_hash, queue, host):
 
     nonce = 0
     while Block.valid_proof(block_hash, nonce) is False:
+        if queue.get() == 'cancel':
+            logger.info(f'Cancel received while doing POW')
+            del queue
+            sys.exit(0)
         nonce += 1 + random()
 
     sleep(1)
@@ -242,7 +246,7 @@ class Block:
 
     def __stopMining(self):
         if self.mining_process and self.mining_process.is_alive():
-            self.mining_process.kill()
+            self.mining_process_queue.put('cancel')
 
     def confirmSelectedTransactions(self):
         self._txs.updateState(from_=State.SELECTED, to_=State.IN_CHAIN)

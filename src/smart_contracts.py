@@ -2,6 +2,11 @@ import sys
 from enum import Enum, IntEnum
 import json
 import sys
+import logging
+
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
 
 
 def get2Pow(x):
@@ -123,7 +128,7 @@ class SmartContract:
         if self.contractType & Type.TX_CHECK:
             return self.__checkTXs(prevent_self_check_id)
         else:
-            print("Warning: Not implemented", file=sys.stderr)
+            logger.warning("Not implemented")
         return False
 
     def __execute(self):

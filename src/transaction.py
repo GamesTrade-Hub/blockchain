@@ -9,6 +9,11 @@ from uuid import uuid4
 from fastecdsa import curve, ecdsa, keys, point
 from enum import IntEnum
 import requests
+import logging
+
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
 
 
 class State(IntEnum):
@@ -93,7 +98,7 @@ class TransactionsList:
 
     def updateStateCdt(self, from_, to_, cdt):
         for tx in [tx for tx in self._txs if cdt(tx)]:
-            if tx.state == from_:
+            if tx.state in from_:
                 tx.state = to_
 
     def all(self, except_id):
