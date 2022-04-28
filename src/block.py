@@ -44,13 +44,13 @@ class Chain:
     def valid(self):
         # TODO All transactions must have diff ids
 
-        valid = all([isinstance(b, Block) and b.valid() for b in self._blocks]) and all([a.hash__ == b.previous_hash for a, b in zip(self._blocks[:-2], self._blocks[1:-1])])
+        valid = all([isinstance(b, Block) and b.valid() for b in self._blocks]) and all([a.hash == b.previous_hash for a, b in zip(self._blocks[:-2], self._blocks[1:-1])])
 
         if not valid:
             print('chain not valid',
                   all([isinstance(b, Block) for b in self._blocks]),
                   all([b.valid() for b in self._blocks]),
-                  all([a.hash__ == b.previous_hash for a, b in zip(self._blocks[:-1], self._blocks[1:])])
+                  all([a.hash == b.previous_hash for a, b in zip(self._blocks[:-1], self._blocks[1:])])
                   )
             print(self.__str__())
         return valid

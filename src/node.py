@@ -141,7 +141,7 @@ class Node:
         if self.type == NodeType.MANAGER:
             logger.debug(f"Not sending mining request to {self.__repr__()} since is NodeType.MANAGER")
             return
-        response = __get(f'http://{self.host}/mine')
+        response = get(f'http://{self.host}/mine')
 
         if response and response.status_code != 200:
             logger.error(f"Mine request sent to {self.__str__()} received error code {response.status_code}, Reason: {response.reason}, {response.content}")
@@ -153,7 +153,7 @@ class Node:
             logger.warning(f"Transaction sent to {self.__str__()} received error code {response.status_code}, Reason: {response.reason}, {response.content}")
 
     def getType(self):
-        response = __get(f'http://{self.host}/get_type')
+        response = get(f'http://{self.host}/get_type')
         if response is None:
             self.type = NodeType.UNKNOWN
             return
@@ -168,7 +168,7 @@ class Node:
             self.type = NodeType.UNKNOWN
 
     def getChain(self):
-        response = __get(f'http://{self.host}/chain')
+        response = get(f'http://{self.host}/chain')
         if response is None:
             return None, 0
 
