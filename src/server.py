@@ -66,7 +66,7 @@ def high_level_handler(invalid: list = None, valid: list = None):
 
     def decorator(fn):
         def inner__(*args, **kwargs):
-            host.host = request.host
+            host.host = request.host if 'unknown' in host.host or ('127.0.0.1' not in request.host and '0.0.0.0' not in request.host) else host.host
 
             if (valid is None or blockchain.type in valid) and (invalid is None or blockchain.type not in invalid):
                 return fn(*args, **kwargs)

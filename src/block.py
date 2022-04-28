@@ -26,7 +26,7 @@ def proofOfWork(block_hash, queue, host):
 
     nonce = 0
     while Block.valid_proof(block_hash, nonce) is False:
-        if queue.get() == 'cancel':
+        if queue.qsize() and queue.get(block=False) == 'cancel':
             logger.info(f'Cancel received while doing POW')
             del queue
             sys.exit(0)
