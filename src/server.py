@@ -27,11 +27,11 @@ host = Host()
 blockchain = Blockchain()
 blockchain.type = conf.type
 
+Host().port = conf.port
+
 for n in conf.nodes:
     logging.debug(f'add node {n}')
     blockchain.addNode(n, register_back=True)
-
-Host().port = conf.port
 
 
 # Instantiate the Node
@@ -63,6 +63,7 @@ def high_level_handler(invalid: list = None, valid: list = None):
 
     def decorator(fn):
         def inner__(*args, **kwargs):
+        
             if (valid is None or blockchain.type in valid) and (invalid is None or blockchain.type not in invalid):
                 return fn(*args, **kwargs)
             else:
@@ -85,8 +86,6 @@ def high_level_handler(invalid: list = None, valid: list = None):
 @app.route('/get_new_private_key', methods=['GET'])
 @high_level_handler(invalid=[NodeType.MINER])
 def get_private_key():
-    host.host = request.host
-
     private_key = PrivateKey.generate(encoded=True)
     response = {'message': f'{private_key}'}
     return jsonify(response), 201
@@ -95,7 +94,6 @@ def get_private_key():
 @app.route('/get_new_public_key', methods=['GET'])
 @high_level_handler(invalid=[NodeType.MINER])
 def get_public_key():
-    host.host = request.host
 
     values = request.get_json()
     if values is None or 'private_key' not in values:
@@ -109,7 +107,6 @@ def get_public_key():
 @app.route('/start', methods=['GET'])
 @high_level_handler()
 def launch():
-    host.host = request.host
     response = {'message': f'node initialized'}
     return jsonify(response), 200
 
@@ -117,7 +114,6 @@ def launch():
 @app.route('/status', methods=['GET'])
 @high_level_handler()
 def status():
-    host.host = request.host
 
     response = {'message': f'Node is OK'}
     return jsonify(response), 200
@@ -126,7 +122,6 @@ def status():
 @app.route('/transaction/new', methods=['POST'])
 @high_level_handler(invalid=[NodeType.MINER])
 def new_transaction():
-    host.host = request.host
     values = request.get_json()
 
     # Check that the required fields are in the POST'ed data
@@ -153,7 +148,6 @@ def create_nft():
     :return:
     """
 
-    host.host = request.host
 
     values = request.get_json()
     required = ['token', 'nb', 'gth_private_key']
@@ -172,7 +166,6 @@ def create_nft():
 @app.route('/transaction/add', methods=['POST'])
 @high_level_handler()
 def add_transaction():
-    host.host = request.host
 
     values = request.get_json()
 
@@ -191,7 +184,6 @@ def add_transaction():
 @high_level_handler(invalid=[NodeType.MINER])
 def create_item():
 
-    host.host = request.host
 
     """
     :root_param token: the token that have to be used to buy the item
@@ -213,7 +205,6 @@ def create_item():
 @app.route('/chain', methods=['GET'])
 @high_level_handler()
 def chain():
-    host.host = request.host
 
     response = {
         'chain': blockchain.chain.__dict__(),
@@ -225,7 +216,6 @@ def chain():
 @app.route('/ping', methods=['GET'])
 @high_level_handler()
 def ping():
-    host.host = request.host
 
     return json.dumps({'pong': 'oui',
                        'waitingTxs': blockchain.txs.__dict__()}), 200
@@ -235,7 +225,6 @@ def ping():
 @high_level_handler()
 def register_nodes():
     logging.debug("Register request received")
-    host.host = request.host
 
     message = 'New node have been added'
 
@@ -255,7 +244,7 @@ def register_nodes():
                               spread=False if 'spread' not in values else values['spread']
                               )
     if code == 400:
-        logger.warning("Node not added", node)
+        logger.warning(f"Node {node} not added")
         message = "ERROR: node not added"
 
     logger.info(f"All nodes {blockchain.nodes.__str__()}")
@@ -268,7 +257,6 @@ def register_nodes():
 @app.route('/nodes/unregister', methods=['POST'])
 @high_level_handler()
 def unregister():
-    host.host = request.host
 
     values = request.get_json()
     required = ['port']
@@ -286,7 +274,6 @@ def unregister():
 @app.route('/get_type', methods=['GET'])
 @high_level_handler()
 def get_type():
-    host.host = request.host
 
     return jsonify({'type': host.type.value}), 200
 
@@ -294,7 +281,6 @@ def get_type():
 @app.route('/nodes/resolve', methods=['GET'])
 @high_level_handler()
 def consensus():
-    host.host = request.host
 
     replaced = blockchain.resolveConflicts()
 
@@ -311,7 +297,6 @@ def consensus():
 @app.route("/nodes/list", methods=['GET'])
 @high_level_handler()
 def get_nodes_list():
-    host.host = request.host
     nodes = blockchain.getConnectedNodes()
     return jsonify(nodes.__dict__()), 200
 
@@ -320,7 +305,6 @@ def get_nodes_list():
 @high_level_handler(invalid=[NodeType.MANAGER])
 def mine():
 
-    host.host = request.host
     values = request.get_json()
 
     if values and 'spread' in values and values['spread'] is True:
@@ -336,7 +320,6 @@ def mine():
 @high_level_handler(invalid=[NodeType.MANAGER])
 def end_mining_process():
 
-    host.host = request.host
     response, code = blockchain.updateMiningState()
 
     return json.dumps(response), code
@@ -345,7 +328,6 @@ def end_mining_process():
 @app.route('/chain_found', methods=['POST'])
 @high_level_handler()
 def chain_found():
-    host.host = request.host
 
     values = request.get_json()
     required = ['chain']
@@ -361,7 +343,6 @@ def chain_found():
 @app.route("/get_balance", methods=['GET'])
 @high_level_handler()
 def get_balance():
-    host.host = request.host
 
     values = request.get_json()
 
@@ -375,7 +356,6 @@ def get_balance():
 @app.route("/get_balance_by_token", methods=['POST'])
 @high_level_handler()
 def get_balance_by_token():
-    host.host = request.host
 
     values = request.get_json()
 
