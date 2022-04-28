@@ -61,6 +61,7 @@ class Host(metaclass=MetaSingleton):
 class Config:
     nodes: list
     type: NodeType
+    port: int
 
     @classmethod
     def from_file(cls, file):

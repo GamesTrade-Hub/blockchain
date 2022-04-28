@@ -1,5 +1,5 @@
 -r common.txt
-itsdangerous==2.1.0
+itsdangerous
 Jinja2==3.0.3
 uWSGI==2.0.20
 Werkzeug==2.0.3

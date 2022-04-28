@@ -206,6 +206,7 @@ class Node:
             retry = Retry(connect=tries, backoff_factor=0.5)
             adapter = HTTPAdapter(max_retries=retry)
             session.mount('http://', adapter)
+
             requests.post(f'http://{self.host}/nodes/register', json={"node": host, "type": Host().type.value, "spread": spread, "register_back": False})
         except requests.exceptions.RequestException as e:
             print("Error while register back", e)

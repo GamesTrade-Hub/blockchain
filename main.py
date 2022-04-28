@@ -15,7 +15,6 @@ def debug():
     parser.add_argument('-fc', '--first_connection', default='http://127.0.0.1:5000', type=str, help='first connection url (or \'none\'')
     args = parser.parse_args()
 
-    Host().port = args.port
     bc: Blockchain = Blockchain()
     bc.type = NodeType(args.type)
     if args.first_connection != 'none':
