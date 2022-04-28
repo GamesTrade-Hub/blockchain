@@ -1,5 +1,5 @@
 import sys
-from src.tools import BcEncoder, hash
+from src.tools import BcEncoder, hash__, get
 from src.transaction import TransactionsList, State
 from src.config import Host
 from random import random
@@ -31,7 +31,7 @@ def proofOfWork(block_hash, queue, host):
     sleep(1)
     queue.put(nonce)
     print('nonce found in subprocess', nonce)
-    requests.get(f'{host}/do_not_use/end_mining_process')
+    get(f'{host}/do_not_use/end_mining_process')
     sys.exit(0)
 
 
@@ -44,13 +44,13 @@ class Chain:
     def valid(self):
         # TODO All transactions must have diff ids
 
-        valid = all([isinstance(b, Block) and b.valid() for b in self._blocks]) and all([a.hash == b.previous_hash for a, b in zip(self._blocks[:-2], self._blocks[1:-1])])
+        valid = all([isinstance(b, Block) and b.valid() for b in self._blocks]) and all([a.hash__ == b.previous_hash for a, b in zip(self._blocks[:-2], self._blocks[1:-1])])
 
         if not valid:
             print('chain not valid',
                   all([isinstance(b, Block) for b in self._blocks]),
                   all([b.valid() for b in self._blocks]),
-                  all([a.hash == b.previous_hash for a, b in zip(self._blocks[:-1], self._blocks[1:])])
+                  all([a.hash__ == b.previous_hash for a, b in zip(self._blocks[:-1], self._blocks[1:])])
                   )
             print(self.__str__())
         return valid
@@ -79,7 +79,7 @@ class Chain:
         return self._blocks.__len__()
 
     def lastBlockhash(self):
-        return self._blocks[-1].hash
+        return self._blocks[-1].hash__
 
     def addBlock(self, block):
         block.confirmSelectedTransactions()
@@ -125,7 +125,7 @@ class Block:
         self._txs: TransactionsList = transactions
         self._previous_hash = previous_hash
         # ========= #
-        self._hash = hash_ or hash(self.__encode(full=False))
+        self._hash = hash_ or hash__(self.__encode(full=False))
         self._nonce = nonce
         ## ========== ##
 
@@ -202,7 +202,7 @@ class Block:
         """
 
         guess = f'{block_hash}{nonce}'
-        guess_hash = hash(guess)
+        guess_hash = hash__(guess)
         return guess_hash[:4] == "0000"
 
     def valid_transactions(self):

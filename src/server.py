@@ -1,6 +1,6 @@
 from src.blockchain import Blockchain
 from src.blockchain import Chain
-from src.tools import BcEncoder, hash
+from src.tools import BcEncoder, hash__
 from src.keys import PublicKey, PrivateKey
 from src.config import Host, NodeType, Config
 
@@ -77,7 +77,7 @@ def high_level_handler(invalid: list = None, valid: list = None):
                 return jsonify(response), 400
 
         # noinspection PyUnresolvedReferences
-        namespace = sys._getframe(1).f_globals  # default to caller's globals
+        namespace = sys._getframe(1).f_globals  # Emilien you did not see that
         name = f'{fn.__name__} + _wrap'
         inner__.__name__ = name
         namespace[name] = inner__
@@ -91,20 +91,19 @@ def high_level_handler(invalid: list = None, valid: list = None):
 @high_level_handler(invalid=[NodeType.MINER])
 def get_private_key():
     private_key = PrivateKey.generate(encoded=True)
-    response = {'message': f'{private_key}'}
+    response = {'key': f'{private_key}'}
     return jsonify(response), 201
 
 
 @app.route('/get_new_public_key', methods=['GET'])
 @high_level_handler(invalid=[NodeType.MINER])
 def get_public_key():
-
     values = request.get_json()
     if values is None or 'private_key' not in values:
         return "Error: Please supply a private key", 400
     private_key = values.get('private_key')
     public_key = PublicKey.generate_from_private_key(private_key, encoded=True)
-    response = {'message': f'{public_key}'}
+    response = {'key': f'{public_key}'}
     return jsonify(response), 201
 
 
@@ -200,7 +199,7 @@ def create_item():
 
     return json.dumps({
         'message': f'Item created, please use this token',
-        'token': f'item_{hash(str(values["nb"]))}_{values["token"]}'
+        'token': f'item_{hash__(str(values["nb"]))}_{values["token"]}'
     }), 201
 
 

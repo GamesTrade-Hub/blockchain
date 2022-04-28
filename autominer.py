@@ -1,5 +1,6 @@
 import requests
 from time import sleep
+from src.tools import get
 
 
 class AutoMiner:
@@ -14,7 +15,7 @@ class AutoMiner:
 
     def run(self):
         while True:
-            response = requests.get(f'http://{self.node_address}/mine', json={'spread': True})
+            response = get(f'http://{self.node_address}/mine', json={'spread': True})
             print(f'[{response.status_code}] {response.text}')
             sleep(self.cooldown)
 

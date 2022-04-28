@@ -1,4 +1,4 @@
-from src.tools import get_time, MetaSingleton, hash
+from src.tools import get_time, MetaSingleton, hash__
 from src.transaction import TransactionsList, State
 from src.node import NodesList
 from src.block import Chain, Block
@@ -143,7 +143,7 @@ class Blockchain(metaclass=MetaSingleton):
     def createNFT(self, token, nb, gth_private_key):
         added, tx = self.txs.addTransaction(
             id_=None,
-            token=f'nft_{hash(str(nb))}_{token}',
+            token=f'nft_{hash__(str(nb))}_{token}',
             sender=Blockchain.get_GTH_public_key(),
             private_key=gth_private_key,
             recipient=Blockchain.get_GTH_public_key(),
