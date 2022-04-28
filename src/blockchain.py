@@ -80,6 +80,7 @@ class Blockchain(metaclass=MetaSingleton):
         :return: True if our chain was replaced, False if not
         """
 
+        logger.debug('start resolveConflicts')
         rv = False
 
         # Grab and verify the chains from all the nodes in our network

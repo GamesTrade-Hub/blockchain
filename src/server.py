@@ -35,6 +35,7 @@ for n in conf.nodes:
     logging.debug(f'add node {n}')
     blockchain.addNode(n, register_back=True)
 
+replaced = blockchain.resolveConflicts()
 
 # Instantiate the Node
 app = Flask(__name__)
