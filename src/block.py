@@ -79,7 +79,7 @@ class Chain:
         return self._blocks.__len__()
 
     def lastBlockhash(self):
-        return self._blocks[-1].hash__
+        return self._blocks[-1].hash
 
     def addBlock(self, block):
         block.confirmSelectedTransactions()
