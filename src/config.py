@@ -54,7 +54,7 @@ class Host(metaclass=MetaSingleton):
             self._type = type_
 
     def __del__(self):
-        print("host destroyed", file=sys.stderr)
+        logger.warning("Host destroyed")
 
 
 @dataclass

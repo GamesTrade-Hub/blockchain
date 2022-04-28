@@ -205,9 +205,6 @@ class Blockchain(metaclass=MetaSingleton):
         return False
 
     def __del__(self):
-        import sys
+        logger.info('Blockchain.__del__: Informing other nodes of current exiting')
         self.nodes.removeMe()
-
-        print('Blockchain deleted (might me in subproc in which case it is fine)')
-        sys.exit(0)
 
