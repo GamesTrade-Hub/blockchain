@@ -67,6 +67,9 @@ class Chain:
 
     @classmethod
     def from_dict(cls, chain):
+        if chain is None:
+            logger.warning("Chained received to be parsed is None")
+            return None
         chain = cls(blocks=[Block.from_dict(b) for b in chain['chain']])
         if not chain.valid():
             logger.warning("Parsed chain not valid")
