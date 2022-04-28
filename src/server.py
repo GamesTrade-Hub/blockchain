@@ -19,6 +19,8 @@ logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.DEBUG)
 logger.setLevel(logging.DEBUG)
 
+logger.info("RUN SERVER.PY")
+
 conf: Config = Config.from_file('config.json')
 logger.info(conf)
 

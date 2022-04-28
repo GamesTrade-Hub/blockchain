@@ -10,7 +10,7 @@ import requests
 from time import sleep
 
 
-def proofOfWork(block_hash, queue):
+def proofOfWork(block_hash, queue, host):
     """
     Simple Proof of Work Algorithm:
      - Find a number p' such that hash(pp') contains leading 5 zeroes
@@ -26,7 +26,7 @@ def proofOfWork(block_hash, queue):
     sleep(1)
     queue.put(nonce)
     print('nonce found in subprocess', nonce)
-    requests.get(f'{Host().host}/do_not_use/end_mining_process')
+    requests.get(f'{host}/do_not_use/end_mining_process')
     sys.exit(0)
 
 
@@ -126,7 +126,7 @@ class Block:
 
         self.error = None
         self.mining_process_queue = Queue()
-        self.mining_process: Process = Process(target=proofOfWork, args=(self._hash, self.mining_process_queue))
+        self.mining_process: Process = Process(target=proofOfWork, args=(self._hash, self.mining_process_queue, Host().host))
 
         if not self._nonce:
             self.mining_process.start()
