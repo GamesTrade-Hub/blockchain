@@ -309,7 +309,6 @@ def mine():
     values = request.get_json()
 
     if values and 'spread' in values and values['spread'] is True:
-        print('Spread mine process')
         response, code = blockchain.mine(spread=True)
     else:
         response, code = blockchain.mine(spread=False)

@@ -90,6 +90,8 @@ class NodesList:
         for node in self.nodes:
             chain, length = node.getChain()
             logger.debug(f'chain received {chain}')
+            if chain is None:
+                logger.warning(f"Invalid chain {chain} from node {node}")
             chain = Chain.from_dict(chain)
             if chain is not None:
                 yield chain, length
@@ -101,6 +103,8 @@ class NodesList:
             node.sendChain(chain.__dict__())
 
     def spreadMiningRequest(self):
+        logger.info('Spread mining request')
+
         for node in self.nodes:
             node.sendMiningRequest()
 

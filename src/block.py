@@ -65,7 +65,7 @@ class Chain:
     def from_dict(cls, chain):
         chain = cls(blocks=[Block.from_dict(b) for b in chain['chain']])
         if not chain.valid():
-            print("chain not valid return none")
+            logger.warning("Parsed chain not valid")
             return None
         return chain
 
