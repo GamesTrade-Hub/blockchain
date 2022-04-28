@@ -12,11 +12,18 @@ from urllib.parse import urlparse
 import sys
 from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.util.retry import Retry
+import logging
+
+
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
 
 
 def run_in_thread(fn):
     def run(*k, **kw):
         t = threading.Thread(target=fn, args=k, kwargs=kw)
+        logger.info("Start thread")
         t.start()
         return t
     return run
@@ -43,17 +50,17 @@ class NodesList:
     def addNode(self, address, type_=None, register_back=False, spread=False):
         host = self.parseAddress(address)
         if host is None:
-            print('ERROR host is None')
+            logger.error('Host is None')
             return False
 
         if host in self.__str__():
-            print("WARNING: Node already registered", file=sys.stderr)
+            logger.warning(f"Node host {host} already registered")
             return False
 
         node = Node(host, type_)
 
         if node.type == NodeType.UNKNOWN:
-            print("Invalid node type for address:", address, ' host:', host)
+            logger.warning(f"Invalid node type for address: {address}  host  {host}")
             return False
 
         if spread:
@@ -74,19 +81,19 @@ class NodesList:
             else:
                 host = parsed_url.path
         else:
-            print("WARNING: Cannot parse", address, file=sys.stderr)
+            logger.warning(f"parseAddress cannot parse: {address}")
             return None
         return host
 
     def othersChains(self):
         for node in self.nodes:
             chain, length = node.getChain()
-            print('chain received', chain)
+            logger.debug(f'chain received {chain}')
             chain = Chain.from_dict(chain)
             if chain is not None:
                 yield chain, length
             else:
-                print("Invalid chain", chain)
+                logger.warning(f"Invalid chain {chain}")
 
     def spreadChain(self, chain):
         for node in self.nodes:
@@ -104,7 +111,7 @@ class NodesList:
             n.unregister()
 
     def unregister(self, host):
-        print('INFO: Unregister', host, 'from', self.__str__())
+        logger.info(f'Unregister {host} from {self.__str__()}')
         if host in self.__str__():
             self.nodes = list(filter(lambda x: x.__str__() != host, self.nodes))
             return True
@@ -119,9 +126,9 @@ class Node:
         if self.type is None:
             self.getType()
         if self.type == NodeType.UNKNOWN:
-            print('Error while accessing node type')
+            logger.error('New Node type is UNKNOWN')
         else:
-            print("NODE Created", self.__repr__())
+            logger.info(f"NODE Created {self.__repr__()}")
 
     def __str__(self):
         return self.host
@@ -131,30 +138,31 @@ class Node:
 
     def sendMiningRequest(self):
         if self.type == NodeType.MANAGER:
-            print("Not sending mining request to", self.__repr__())
+            logger.debug(f"Not sending mining request to {self.__repr__()} since is NodeType.MANAGER")
             return
         response = requests.get(f'http://{self.host}/mine')
 
         if response.status_code != 200:
-            print(f"Mine request sent to {self.__str__()} received error code {response.status_code}, Reason: {response.reason}, {response.content}")
+            logger.error(f"Mine request sent to {self.__str__()} received error code {response.status_code}, Reason: {response.reason}, {response.content}")
 
     def sendTransaction(self, tx):
         response = requests.post(f'http://{self.host}/transaction/add', json={'tx': tx})
 
         if response.status_code != 201:
-            print(f"Transaction sent to {self.__str__()} received error code {response.status_code}, Reason: {response.reason}, {response.content}")
+            logger.warning(f"Transaction sent to {self.__str__()} received error code {response.status_code}, Reason: {response.reason}, {response.content}")
 
     def getType(self):
         try:
-            print("get type sending", self.host)
+            logger.info(f"Send get_type request to {self.host}")
             response = requests.get(f'http://{self.host}/get_type')
             rj = response.json()
-        except ConnectionRefusedError:
-            print("[ConnectionRefusedError] Connection to", f"http://{self.host}", "refused", file=sys.stderr)
+            logger.info(f"Response {rj} received to get_type")
+        except ConnectionRefusedError as e:
+            logger.error(f"[ConnectionRefusedError] Connection to http://{self.host} refused {e}")
             self.type = NodeType.UNKNOWN
             return
-        except requests.exceptions.ConnectionError:
-            print("[ConnectionRefusedError] Connection to", f"http://{self.host}", "refused", file=sys.stderr)
+        except requests.exceptions.ConnectionError as e:
+            logger.error(f"[ConnectionError] Connection to http://{self.host} failed {e}")
             self.type = NodeType.UNKNOWN
             return
 
@@ -162,7 +170,7 @@ class Node:
             if response.status_code == 200 and 'type' in rj:
                 self.type = NodeType(rj['type'])
         except Exception as e:
-            print('can\'t set type', rj['type'], e)
+            logger.warning(f'can\'t set type {rj["type"]} {e}')
             self.type = NodeType.ALL
 
     def getChain(self):
@@ -170,19 +178,19 @@ class Node:
             response = requests.get(f'http://{self.host}/chain')
             rj = response.json()
         except ConnectionRefusedError:
-            print("[ConnectionRefusedError] Connection to", f"http://{self.host}", "refused", file=sys.stderr)
+            logger.error(f"[ConnectionRefusedError] Connection to http://{self.host} refused")
             return None, 0
 
         if response.status_code == 200 and 'chain' in rj and 'length' in rj:
             length = rj['length']
             chain = rj['chain']
             return chain, length
-        print('[chain] Invalid response from node', self.host)
+        logger.error(f'getChain() Invalid response from node {self.host}')
         return None, 0
 
     def sendChain(self, chain):
         try:
-            response = requests.post(f'http://{self.host}/chain_found', json={'chain': chain})
+            requests.post(f'http://{self.host}/chain_found', json={'chain': chain})
         except ConnectionRefusedError:
             print("[ConnectionRefusedError] Connection to", f"http://{self.host}", "refused", file=sys.stderr)
             return
@@ -190,26 +198,24 @@ class Node:
     @run_in_thread
     def register(self, address, type_):
         try:
-            print('register', address, f'http://{self.host}/nodes/register')
+            logger.info(f'[thread] Register {address} http://{self.host}/nodes/register')
             requests.post(f'http://{self.host}/nodes/register', json={"node": address, 'type': type_, 'register_back': True})
         except requests.exceptions.RequestException as e:
-            print("Error", e, file=sys.stderr)
+            logger.error(f"[thread] Error register(self, address, type_) {e}")
             return False
         return True
 
     @run_in_thread
     def register_back(self, spread=False, tries=20):
         try:
-            print("call register back on", f'http://{self.host}/nodes/register', 'spread', spread)
-            host = Host().host
+            logger.info(f"Call register back on http://{self.host}/nodes/register  spread {spread}  current host {Host().host}")
             session = requests.Session()
             retry = Retry(connect=tries, backoff_factor=0.5)
             adapter = HTTPAdapter(max_retries=retry)
             session.mount('http://', adapter)
-
-            requests.post(f'http://{self.host}/nodes/register', json={"node": host, "type": Host().type.value, "spread": spread, "register_back": False})
+            requests.post(f'http://{self.host}/nodes/register', json={"node": Host().host, "type": Host().type.value, "spread": spread, "register_back": False})
         except requests.exceptions.RequestException as e:
-            print("Error while register back", e)
+            logger.error(f"[thread] register_back(self, spread=False, tries=20) {e}")
             return False
         return True
 
@@ -218,18 +224,18 @@ class Node:
             response = requests.get(f'http://{self.host}/nodes/list')
             rj = response.json()
         except ConnectionRefusedError:
-            print("[ConnectionRefusedError] Connection to", f"http://{self.host}", "refused", file=sys.stderr)
+            logger.error(f"Connection to http://{self.host} refused")
             return None, 0
 
         if response.status_code == 200 and 'nodes' in rj:
             nodes = rj['nodes']
             return nodes
-        print('[getNodesList] WARNING: Invalid response from node', self.host)
+        logger.warning(f'[getNodesList]: Invalid response from node {self.host}')
         return []
 
     def unregister(self):
         try:
-            print("unregister from", self.host)
+            logger.info(f"Unregister from {self.host}")
             requests.post(f'http://{self.host}/nodes/unregister', json={"port": Host().port})
         except requests.exceptions.RequestException as e:
-            print("Error", e, file=sys.stderr)
+            logger.error(f"unregister() {e}")

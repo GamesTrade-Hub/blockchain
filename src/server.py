@@ -71,6 +71,7 @@ def high_level_handler(invalid: list = None, valid: list = None):
                 logger.info(msg)
                 return jsonify(response), 201
 
+        # noinspection PyUnresolvedReferences
         namespace = sys._getframe(1).f_globals  # default to caller's globals
         name = f'{fn.__name__} + _wrap'
         inner__.__name__ = name
@@ -233,12 +234,9 @@ def ping():
 @app.route('/nodes/register', methods=['POST'])
 @high_level_handler()
 def register_nodes():
-    print("register request received")
+    logging.debug("Register request received")
     host.host = request.host
 
-    if blockchain is None:
-        response = {'message': f'Failed: node not initialized'}
-        return jsonify(response), 401
     message = 'New node have been added'
 
     values = request.get_json()
@@ -248,19 +246,19 @@ def register_nodes():
         print("register request answered wrong")
         return jsonify({'message': f'Missing value among {", ".join(required)}'}), 400
 
-    print('add node from', values)
+    logger.info(f'Add node from {values}. Replace <unknown> with {request.remote_addr}')
     node = values.get('node').replace('<unknown>', request.remote_addr)  # FIXME not really clean
-    print("new node value", node)
+    logger.info(f"New node value {node}. Add node blockchain.addNode")
     code = blockchain.addNode(node,
                               type_=None if 'type' not in values else values['type'],
                               register_back=False if 'register_back' not in values else values['register_back'],
                               spread=False if 'spread' not in values else values['spread']
                               )
     if code == 400:
-        print("WARNING: Error while adding nodes", node)
+        logger.warning("Node not added", node)
         message = "ERROR: node not added"
 
-    print("register request answered end")
+    logger.info(f"All nodes {blockchain.nodes.__str__()}")
 
     return jsonify({
         'message': message,
