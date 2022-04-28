@@ -1,8 +1,8 @@
 
 echo "Update pip ..."
-/usr/bin/python3 -m pip install --upgrade pip
+/usr/bin/python3.8 -m pip install --upgrade pip
 echo "Install venv ..."
-/usr/bin/python3 -m pip install virtualenv
+/usr/bin/python3.8 -m pip install virtualenv
 
 echo "Install nginx ..."
 sudo apt install nginx
@@ -27,7 +27,7 @@ source prod_node/bin/activate
 
 
 echo "Install requirements ..."
-/usr/bin/python3 -m pip install -r requirements/prod.txt
+/usr/bin/python3.8 -m pip install -r requirements/prod.txt
 
 echo "Run app 0.0.0.0:5000 ..."
 #gunicorn -b 0.0.0.0:5000 --workers=1 wsgi:app --daemon --access-logfile .node_logs --error-logfile .node_errlogs
