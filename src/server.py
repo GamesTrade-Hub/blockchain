@@ -1,6 +1,6 @@
 from src.blockchain import Blockchain
 from src.blockchain import Chain
-from src.tools import BcEncoder
+from src.tools import BcEncoder, hash
 from src.keys import PublicKey, PrivateKey
 from src.config import Host, NodeType, Config
 
@@ -74,7 +74,7 @@ def high_level_handler(invalid: list = None, valid: list = None):
                 msg = f'Invalid request for this node of type {blockchain.type.value}. Valid: {"empty" if valid is None else [i.value for i in valid]}. Invalid {"empty" if invalid is None else [i.value for i in invalid]}'
                 response = {'message': msg}
                 logger.info(msg)
-                return jsonify(response), 201
+                return jsonify(response), 400
 
         # noinspection PyUnresolvedReferences
         namespace = sys._getframe(1).f_globals  # default to caller's globals
@@ -187,8 +187,6 @@ def add_transaction():
 @app.route('/create_item', methods=['POST'])
 @high_level_handler(invalid=[NodeType.MINER])
 def create_item():
-
-
     """
     :root_param token: the token that have to be used to buy the item
     :root_param nb: id of the item to prevent items having the same id
@@ -201,7 +199,7 @@ def create_item():
         return jsonify({'message': f'Missing value among {", ".join(required)}'}), 400
 
     return json.dumps({
-        'message': f'Transaction will be added, Reason: ok',
+        'message': f'Item created, please use this token',
         'token': f'item_{hash(str(values["nb"]))}_{values["token"]}'
     }), 201
 
