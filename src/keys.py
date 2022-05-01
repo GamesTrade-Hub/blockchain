@@ -1,14 +1,23 @@
 from fastecdsa import curve, ecdsa, keys, point
+import logging
+
+logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.DEBUG)
+logger.setLevel(logging.DEBUG)
 
 
 class PrivateKey:
     def __init__(self, key):
-        if isinstance(key, str):
-            self.key = PrivateKey.decode(key)
-        elif isinstance(key, int):
-            self.key = key
-        else:
-            print('Error: Invalid public key type. Type received', type(key))
+        try:
+            if isinstance(key, str):
+                self.key = PrivateKey.decode(key)
+            elif isinstance(key, int):
+                self.key = key
+            else:
+                print('Error: Invalid public key type. Type received', type(key))
+        except ValueError:
+            logger.warning(f'Invalid public key: {key}')
+            self.key = None
 
     @staticmethod
     def decode(key):
@@ -30,12 +39,16 @@ class PrivateKey:
 
 class PublicKey:
     def __init__(self, key):
-        if isinstance(key, str):
-            self.key = PublicKey.decode(key)
-        elif isinstance(key, point.Point):
-            self.key = key
-        else:
-            print('Error: Invalid public key type. Type received', type(key))
+        try:
+            if isinstance(key, str):
+                self.key = PublicKey.decode(key)
+            elif isinstance(key, point.Point):
+                self.key = key
+            else:
+                print('Error: Invalid public key type. Type received', type(key))
+        except ValueError:
+            logger.warning(f'Invalid public key: {key}')
+            self.key = None
 
     @staticmethod
     def decode(key):

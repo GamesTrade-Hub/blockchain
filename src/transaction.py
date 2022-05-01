@@ -141,6 +141,11 @@ class Transaction:
         self._signature = signature
         ## ================ ##
 
+        if self._sender.key is None or self._recipient.key is None:
+            logger.warning('Invalid public key')
+            self.error = 'Invalid key'
+            return
+
         if self._signature is None:
             self.sign(private_key)
 
@@ -280,8 +285,13 @@ class Transaction:
 
     def sign(self, private_key):
         private_key = PrivateKey(private_key).key
-        self._signature = ecdsa.sign(self.__encode(full=False), private_key, curve.secp256k1, ecdsa.sha256)
-        print('signature', self._signature, type(self._signature))
+        try:
+            self._signature = ecdsa.sign(self.__encode(full=False), private_key, curve.secp256k1, ecdsa.sha256)
+        except BaseException as e:
+            self.error = e
+            logger.warning(f'Unable to sign transaction {e}')
+            self._signature = None
+        logger.info(f'signature {self._signature} {type(self._signature)}')
 
     @classmethod
     def from_dict(cls, dictionary, create=False):
