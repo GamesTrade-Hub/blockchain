@@ -14,7 +14,7 @@ import json
 import sys
 import signal
 import logging
-from log import Log
+# from log import Log
 
 # log = Log().getLogger()
 
