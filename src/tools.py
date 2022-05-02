@@ -39,10 +39,10 @@ def hash__(data):
     return hashlib.sha256(data.encode()).hexdigest()
 
 
-def post(rq, json_=None):
+def post(rq, json_=None, headers=None, data=None):
     try:
         logger.info(f"-> POST {rq}")
-        response = requests.post(rq, json=json_, timeout=4)
+        response = requests.post(rq, json=json_, headers=headers, data=data, timeout=4)
         logger.info(f"Response {response} received to {rq}")
         return response
     except ConnectionRefusedError as e:
@@ -56,10 +56,10 @@ def post(rq, json_=None):
     return None
 
 
-def get(rq, json_=None):
+def get(rq, json_=None, headers=None, data=None):
     try:
         logger.info(f"-> GET  {rq}")
-        response = requests.get(rq, json=json_, timeout=4)
+        response = requests.get(rq, json=json_, headers=headers, data=data, timeout=4)
         logger.info(f"Response {response} received to {rq}")
         return response
     except ConnectionRefusedError as e:
