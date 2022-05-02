@@ -22,7 +22,7 @@ class State(IntEnum):
     IN_CHAIN = 2
     VALIDATED = 3  # Meaning, in the chain since enough blocks to be sure that this won't ever change
 
-    def encode(self):  # TODO remove me if unused
+    def encode(self):
         return int(self)
 
     @classmethod

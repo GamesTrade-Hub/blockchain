@@ -30,6 +30,7 @@ def proofOfWork(block_hash, nonce_queue, cancel_queue, host):
             logger.info(f'Cancel received while doing POW')
             sys.exit(0)
         nonce += 1 + random()
+    # get(server_emi/key_valid, 'public_key') = 'oui'
 
     sleep(1)
     nonce_queue.put(nonce)

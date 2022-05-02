@@ -93,8 +93,11 @@ class Blockchain(metaclass=MetaSingleton):
         if chain and chain.__len__() > self.chain.__len__():
             # FIXME if same size, take the one having the most transactions
             self.endCurrentMiningProcess()
-            self.txs.updateStateCdt(from_=[State.IN_CHAIN, State.SELECTED, State.VALIDATED], to_=State.WAITING, cdt=lambda tx: True if self.chain.containsTx(tx) and not chain.containsTx(tx) else False)
-            self.txs.updateStateCdt(from_=[State.WAITING, State.SELECTED], to_=State.IN_CHAIN, cdt=lambda tx: True if chain.containsTx(tx) else False)  # Some transactions are present twice, once in a block and once in self.txs
+            self.txs.updateStateCdt(from_=[State.IN_CHAIN, State.SELECTED, State.VALIDATED], to_=State.WAITING,
+                                    cdt=lambda tx: True if self.chain.containsTx(tx) and not chain.containsTx(tx) else False)
+
+            self.txs.updateStateCdt(from_=[State.WAITING, State.SELECTED], to_=State.IN_CHAIN,
+                                    cdt=lambda tx: True if chain.containsTx(tx) else False)  # Some transactions are present twice, once in a block and once in self.txs
             self.chain = chain
             logger.info('Chain REPLACED')
             return True
@@ -162,11 +165,11 @@ class Blockchain(metaclass=MetaSingleton):
         :return:
         """
         if not self.current_block:
-            print('current block?', self.current_block)
+            logger.debug(f'current block? {self.current_block}')
             return "No block mined", 400
 
         if not self.current_block.powFinished():
-            print('pow not finished', self.current_block.powFinished())
+            logger.info(f'pow not finished {self.current_block.powFinished()}')
             return "Pow not finished", 400
 
         # Reset the current list of transactions

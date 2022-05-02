@@ -14,10 +14,20 @@ import json
 import sys
 import signal
 import logging
+from log import Log
+
+# log = Log().getLogger()
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.DEBUG)
 logger.setLevel(logging.DEBUG)
+
+
+if __name__ != '__main__':
+    gunicorn_logger = logging.getLogger('gunicorn.error')
+    gunicorn_logger.setLevel(logging.DEBUG)
+    logger.handlers = gunicorn_logger.handlers
+    logger.setLevel(gunicorn_logger.level)
 
 logger.info("RUN SERVER.PY")
 
@@ -32,13 +42,14 @@ blockchain.type = conf.type
 Host().port = conf.port
 
 for n in conf.nodes:
-    logging.debug(f'add node {n}')
+    logger.debug(f'add node {n}')
     blockchain.addNode(n, register_back=True)
 
 replaced = blockchain.resolveConflicts()
 
 # Instantiate the Node
 app = Flask(__name__)
+
 
 # Generate a globally unique address for this node
 node_identifier = str(uuid4()).replace('-', '')
@@ -54,7 +65,6 @@ logger.info(f"Identifier: {node_identifier}")
 #     print(f'EXIT REQUIRED signal number {signalNumber} fame {frame}', flush=True, file=sys.stderr)
 #     blockchain.__del__()
 #     sys.exit(1)
-#
 #
 # signal.signal(signal.SIGINT, handler)
 # signal.signal(signal.SIGTERM, handler)
@@ -78,7 +88,7 @@ def high_level_handler(invalid: list = None, valid: list = None):
 
         # noinspection PyUnresolvedReferences
         namespace = sys._getframe(1).f_globals  # Emilien you did not see that
-        name = f'{fn.__name__} + _wrap'
+        name = f'{fn.__name__}_wrap'
         inner__.__name__ = name
         namespace[name] = inner__
 
@@ -151,7 +161,6 @@ def create_nft():
     :return:
     """
 
-
     values = request.get_json()
     required = ['token', 'nb', 'gth_private_key']
 
@@ -206,7 +215,6 @@ def create_item():
 @app.route('/chain', methods=['GET'])
 @high_level_handler()
 def chain():
-
     response = {
         'chain': blockchain.chain.__dict__(),
         'length': blockchain.chain_size,
@@ -217,7 +225,6 @@ def chain():
 @app.route('/ping', methods=['GET'])
 @high_level_handler()
 def ping():
-
     return json.dumps({'pong': 'oui',
                        'waitingTxs': blockchain.txs.__dict__()}), 200
 
@@ -258,7 +265,6 @@ def register_nodes():
 @app.route('/nodes/unregister', methods=['POST'])
 @high_level_handler()
 def unregister():
-
     values = request.get_json()
     required = ['port']
 
@@ -275,14 +281,12 @@ def unregister():
 @app.route('/get_type', methods=['GET'])
 @high_level_handler()
 def get_type():
-
     return jsonify({'type': host.type.value}), 200
 
 
 @app.route('/nodes/resolve', methods=['GET'])
 @high_level_handler()
 def consensus():
-
     replaced = blockchain.resolveConflicts()
 
     response = {
@@ -319,7 +323,6 @@ def mine():
 @app.route('/do_not_use/end_mining_process', methods=['GET'])
 @high_level_handler(invalid=[NodeType.MANAGER])
 def end_mining_process():
-
     response, code = blockchain.updateMiningState()
 
     return json.dumps(response), code

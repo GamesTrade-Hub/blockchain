@@ -73,7 +73,7 @@ class SmartContract:
         self.related_tx_id = related_tx.id
         self._is_validated = False
 
-    def run(self, txs, prevent_self_check_id=None):  # TODO add timeout to transaction never confirmed
+    def run(self, txs, prevent_self_check_id=None):
         self.txs = txs
         if not self.related_tx.doesNotViolateThePortfolio():
             return False

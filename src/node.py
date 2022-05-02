@@ -37,7 +37,7 @@ class NodesList:
         return ', '.join(n.__str__() for n in self.nodes)
 
     def __dict__(self):
-        return {'nodes': [f'http://{str(i)}' for i in self.nodes]}  # TODO check if http:// is necessary
+        return {'nodes': [f'http://{str(i)}' for i in self.nodes]}
 
     def spreadNewNode(self, address, type_):
         for node in self.nodes:
