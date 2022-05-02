@@ -36,10 +36,11 @@ echo "Install requirements ..."
 ./prod_node/bin/python3.8 -m pip install -r requirements/prod.txt
 
 echo "Run app 0.0.0.0:5000 ..."
-gunicorn -b 0.0.0.0:5000 --workers=1 wsgi:app --daemon --log-file .gunicorn.log --access-logfile .gunicorn_access.logs --error-logfile .gunicorn_errors.logs --log-level DEBUG
+gunicorn -b 0.0.0.0:5000 --workers=1 wsgi:app --daemon --log-file .gunicorn.logs --access-logfile .gunicorn_access.logs --error-logfile .gunicorn_errors.logs --log-level DEBUG
 #gunicorn -b 0.0.0.0:5000 --workers=1 wsgi:app
 
 
 #screen -R prod
 
 #https://www.digitalocean.com/community/tutorials/how-to-serve-flask-applications-with-gunicorn-and-nginx-on-ubuntu-14-04
+
