@@ -3,13 +3,16 @@ import json
 import hashlib
 import logging
 import requests
+from fastecdsa import ecdsa, curve
+
+from src.keys import PrivateKey
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.DEBUG)
 logger.setLevel(logging.DEBUG)
 
 
-def get_time():
+def get_time() -> int:
     return time.time_ns()
 
 

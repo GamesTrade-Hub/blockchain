@@ -43,9 +43,9 @@ Host().port = conf.port
 
 for n in conf.nodes:
     logger.debug(f'add node {n}')
-    blockchain.addNode(n, register_back=True)
+    blockchain.add_node(n, register_back=True)
 
-replaced = blockchain.resolveConflicts()
+replaced = blockchain.resolve_conflicts()
 
 # Instantiate the Node
 app = Flask(__name__)
@@ -111,7 +111,7 @@ def get_public_key():
     values = request.get_json()
     if values is None or 'private_key' not in values:
         return "Error: Please supply a private key", 400
-    private_key = values.get('private_key')
+    private_key = PrivateKey(values.get('private_key'))
     public_key = PublicKey.generate_from_private_key(private_key, encoded=True)
     response = {'key': f'{public_key}'}
     return jsonify(response), 201
@@ -145,7 +145,7 @@ def new_transaction():
 
     # print('new transaction sc', values['sc'] if 'sc' in values else "no sc")
     # Create a new transaction if the transaction is valid
-    created, msg = blockchain.createTransaction(values, spread=True)
+    created, msg = blockchain.create_transaction(values, spread=True)
     if not created:
         return jsonify({'message': f"Transaction can't be created, Reason: {msg}"}), 401
     return jsonify({'message': f'ok'}), 201
@@ -162,17 +162,39 @@ def create_nft():
     """
 
     values = request.get_json()
-    required = ['token', 'nb', 'gth_private_key']
+    required = ['token', 'gth_private_key']
 
     if not all(k in values for k in required):
         return jsonify({'message': f'Missing value among {", ".join(required)}'}), 400
 
-    created, msg = blockchain.createNFT(token=values['token'],
-                                        nb=values['nb'],
-                                        gth_private_key=values['gth_private_key'])
+    created, msg = blockchain.create_nft(
+        token=values['token'],
+        nb=str(values["nb"]) if "nb" in values else str(uuid4()),
+        gth_private_key=values['gth_private_key']
+    )
     if not created:
         return f'Transaction can\'t be created, Reason: {msg}', 401
     return jsonify({'id': msg}), 201
+
+
+@app.route('/create_item', methods=['POST'])
+@high_level_handler(invalid=[NodeType.MINER])
+def create_item():
+    """
+    :root_param token: the token that have to be used to buy the item
+    :root_param nb: id of the item to prevent items having the same id
+    :return: token to use to identify the item in the blockchain
+    """
+    values = request.get_json()
+    required = ['token']
+
+    if not all(k in values for k in required):
+        return jsonify({'message': f'Missing value among {", ".join(required)}'}), 400
+
+    return json.dumps({
+        'message': f'Item created, please use this token',
+        'token': f'item_{hash__(str(values["nb"]) if "nb" in values else str(uuid4()))}_{values["token"]}'
+    }), 201
 
 
 @app.route('/transaction/add', methods=['POST'])
@@ -186,30 +208,10 @@ def add_transaction():
         return f'Missing value among {", ".join(required)}', 400
 
     print("values", type(values), values)
-    created, msg = blockchain.createTransaction(values['tx'], spread=False)
+    created, msg = blockchain.create_transaction(values['tx'], spread=False)
     if created:
         return 'Transaction added', 201
     return msg, 401
-
-
-@app.route('/create_item', methods=['POST'])
-@high_level_handler(invalid=[NodeType.MINER])
-def create_item():
-    """
-    :root_param token: the token that have to be used to buy the item
-    :root_param nb: id of the item to prevent items having the same id
-    :return: token to use to identify the item in the blockchain
-    """
-    values = request.get_json()
-    required = ['token', 'nb']
-
-    if not all(k in values for k in required):
-        return jsonify({'message': f'Missing value among {", ".join(required)}'}), 400
-
-    return json.dumps({
-        'message': f'Item created, please use this token',
-        'token': f'item_{hash__(str(values["nb"]))}_{values["token"]}'
-    }), 201
 
 
 @app.route('/chain', methods=['GET'])
@@ -246,11 +248,11 @@ def register_nodes():
     logger.info(f'Add node from {values}. Replace <unknown> with {request.remote_addr}')
     node = values.get('node').replace('<unknown>', request.remote_addr)  # FIXME not really clean
     logger.info(f"New node value {node}. Add node blockchain.addNode")
-    code = blockchain.addNode(node,
-                              type_=None if 'type' not in values else values['type'],
-                              register_back=False if 'register_back' not in values else values['register_back'],
-                              spread=False if 'spread' not in values else values['spread']
-                              )
+    code = blockchain.add_node(node,
+                               type_=None if 'type' not in values else values['type'],
+                               register_back=False if 'register_back' not in values else values['register_back'],
+                               spread=False if 'spread' not in values else values['spread']
+                               )
     if code == 400:
         logger.warning(f"Node {node} not added")
         message = "ERROR: node not added"
@@ -287,7 +289,7 @@ def get_type():
 @app.route('/nodes/resolve', methods=['GET'])
 @high_level_handler()
 def consensus():
-    replaced = blockchain.resolveConflicts()
+    replaced = blockchain.resolve_conflicts()
 
     response = {
         'message': 'Our chain is authoritative',
@@ -302,28 +304,45 @@ def consensus():
 @app.route("/nodes/list", methods=['GET'])
 @high_level_handler()
 def get_nodes_list():
-    nodes = blockchain.getConnectedNodes()
+    nodes = blockchain.get_connected_nodes()
     return jsonify(nodes.__dict__()), 200
 
 
 @app.route('/mine', methods=['GET'])
 @high_level_handler(invalid=[NodeType.MANAGER])
 def mine():
+    """
+    DEPRECATED
+    Do not use, use the new_block function instead
+    """
 
     values = request.get_json()
 
-    if values and 'spread' in values and values['spread'] is True:
-        response, code = blockchain.mine(spread=True)
-    else:
-        response, code = blockchain.mine(spread=False)
+    response, code = blockchain.mine(spread=values and 'spread' in values and values['spread'])
 
     return json.dumps(response), code
 
 
-@app.route('/do_not_use/end_mining_process', methods=['GET'])
+@app.route('/block/new', methods=['GET'])
+@high_level_handler(invalid=[NodeType.MANAGER])
+def new_block():
+    """
+    Creates a new block if there is enough transactions in the transaction pool.
+    :root_param spread: if true and the current block does not have enough transactions in the transaction pool,
+    the new block will be spread to the other nodes
+    """
+
+    values = request.get_json()
+
+    response, code = blockchain.new_authority_block(spread=values and 'spread' in values and values['spread'])
+
+    return json.dumps(response), code
+
+
+@app.route('/private/__end_mining_process', methods=['GET'])
 @high_level_handler(invalid=[NodeType.MANAGER])
 def end_mining_process():
-    response, code = blockchain.updateMiningState()
+    response, code = blockchain.update_mining_state()
 
     return json.dumps(response), code
 
@@ -339,7 +358,7 @@ def chain_found():
         return jsonify({'message': f'Missing value among {", ".join(required)}'}), 400
 
     logging.info('Chain received', values['chain'])
-    blockchain.replaceChainIfBetter(Chain.from_dict(values['chain']))
+    blockchain.replace_chain_if_better(Chain.from_dict(values['chain']))
     return 'ok', 200
 
 
@@ -352,7 +371,7 @@ def get_balance():
     if values is None or 'user_id' not in values:
         return 'Invalid request please specify user id', 400
 
-    balance = blockchain.getBalance(values['user_id'])
+    balance = blockchain.get_balance(values['user_id'])
     return jsonify(balance), 200
 
 
@@ -365,6 +384,6 @@ def get_balance_by_token():
     if values is None or 'user_id' not in values or 'token' not in values:
         return 'Invalid request please specify user id', 400
 
-    balance = blockchain.getBalanceByToken(values['user_id'], values['token'])
+    balance = blockchain.get_balance_by_token(values['user_id'], values['token'])
     return jsonify({'balance': balance}), 200
 

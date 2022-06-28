@@ -39,16 +39,16 @@ class NodesList:
     def __dict__(self):
         return {'nodes': [f'http://{str(i)}' for i in self.nodes]}
 
-    def spreadNewNode(self, address, type_):
+    def spread_new_node(self, address, type_):
         for node in self.nodes:
             node.register(address, type_)
 
-    def spreadTransaction(self, tx):
+    def spread_transaction(self, tx):
         for node in self.nodes:
-            node.sendTransaction(tx)
+            node.send_transaction(tx)
 
-    def addNode(self, address, type_=None, register_back=False, spread=False):
-        host = self.parseAddress(address)
+    def add_node(self, address, type_=None, register_back=False, spread=False):
+        host = self.parse_address(address)
         if host is None:
             logger.error('Host is None')
             return False
@@ -64,7 +64,7 @@ class NodesList:
             return False
 
         if spread:
-            self.spreadNewNode(address, node.type.value)
+            self.spread_new_node(address, node.type.value)
         logger.info(f'Add node {node} in node list')
         self.nodes.append(node)
         if register_back:
@@ -72,7 +72,7 @@ class NodesList:
             return True
         return True
 
-    def parseAddress(self, address):
+    def parse_address(self, address):
         parsed_url = urlparse(address)
         if parsed_url.netloc:
             host = parsed_url.netloc
@@ -86,9 +86,9 @@ class NodesList:
             return None
         return host
 
-    def othersChains(self):
+    def others_chains(self):
         for node in self.nodes:
-            chain, length = node.getChain()
+            chain, length = node.get_chain()
             logger.debug(f'chain received {chain}')
             chain = Chain.from_dict(chain)
             if chain is not None:
@@ -96,20 +96,26 @@ class NodesList:
             else:
                 logger.warning(f"Invalid chain {chain} from node {node}")
 
-    def spreadChain(self, chain):
+    def spread_chain(self, chain):
         for node in self.nodes:
-            node.sendChain(chain.__dict__())
+            node.send_chain(chain.__dict__())
 
-    def spreadMiningRequest(self):
+    def spread_mining_request(self):
         logger.info('Spread mining request')
 
         for node in self.nodes:
-            node.sendMiningRequest()
+            node.send_mining_request()
 
-    def firstConnection(self, host):
-        self.addNode(host, type_=None, register_back=True)
+    def spread_block_creation_request(self):
+        logger.info('Spread block creation request')
 
-    def removeMe(self):
+        for node in self.nodes:
+            node.send_block_creation_request()
+
+    def first_connection(self, host):
+        self.add_node(host, type_=None, register_back=True)
+
+    def remove_me(self):
         for n in self.nodes:
             n.unregister()
 
@@ -127,7 +133,7 @@ class Node:
         self.type = None if type_ is None else NodeType(type_)
 
         if self.type is None:
-            self.getType()
+            self.get_type()
         if self.type == NodeType.UNKNOWN:
             logger.error('New Node type is UNKNOWN')
         else:
@@ -139,22 +145,41 @@ class Node:
     def __repr__(self):
         return f'host: {self.host} type: {self.type.value}'
 
-    def sendMiningRequest(self):
+    def send_mining_request(self):
+        """
+        Not used anymore, use send_block_creation_request instead
+        :return:
+        """
         if self.type == NodeType.MANAGER:
             logger.debug(f"Not sending mining request to {self.__repr__()} since is NodeType.MANAGER")
             return
         response = get(f'http://{self.host}/mine')
 
         if response and response.status_code != 200:
-            logger.error(f"Mine request sent to {self.__str__()} received error code {response.status_code}, Reason: {response.reason}, {response.content}")
+            logger.error(f"Mine request sent to {self.__str__()} received error code {response.status_code}, "
+                         f"Reason: {response.reason}, {response.content}")
 
-    def sendTransaction(self, tx):
+    def send_block_creation_request(self):
+        """
+        Send a request to the node to create a block.
+        :return:
+        """
+        if self.type == NodeType.MANAGER:
+            logger.debug(f"Not sending block creation request to {self.__repr__()} since is NodeType.MANAGER")
+            return
+        response = get(f'http://{self.host}/block/new')  # TODO add route to new_block
+
+        if response and response.status_code != 200:
+            logger.error(f"Block creation request sent to {self.__str__()} received error code {response.status_code}, "
+                         f"Reason: {response.reason}, {response.content}")
+
+    def send_transaction(self, tx):
         response = post(f'http://{self.host}/transaction/add', json_={'tx': tx})
 
         if response and response.status_code != 201:
             logger.warning(f"Transaction sent to {self.__str__()} received error code {response.status_code}, Reason: {response.reason}, {response.content}")
 
-    def getType(self):
+    def get_type(self):
         response = get(f'http://{self.host}/get_type')
         if response is None:
             self.type = NodeType.UNKNOWN
@@ -169,7 +194,7 @@ class Node:
             logger.warning(f'can\'t set type {rj["type"]} {e}')
             self.type = NodeType.UNKNOWN
 
-    def getChain(self):
+    def get_chain(self):
         response = get(f'http://{self.host}/chain')
         if response is None:
             return None, 0
@@ -184,7 +209,7 @@ class Node:
         logger.error(f'getChain() Invalid response from node {self.host}')
         return None, 0
 
-    def sendChain(self, chain):
+    def send_chain(self, chain):
         post(f'http://{self.host}/chain_found', json_={'chain': chain})
 
     @run_in_thread
@@ -202,7 +227,7 @@ class Node:
         response = post(f'http://{self.host}/nodes/register', json_={"node": Host().host, "type": Host().type.value, "spread": spread, "register_back": False})
         return not not response
 
-    def getNodesList(self):
+    def get_nodes_list(self):
         response = get(f'http://{self.host}/nodes/list')
         if not response:
             return []

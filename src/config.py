@@ -2,6 +2,7 @@ from dataclasses import dataclass
 
 import json
 
+from src.keys import PrivateKey, PublicKey
 from src.tools import MetaSingleton
 import sys
 from enum import Enum
@@ -9,6 +10,12 @@ import logging
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
+
+
+LIMIT_TRANSACTIONS_BLOCK = 1
+PRIVATE_KEY: PrivateKey = PrivateKey.generate()
+PUBLIC_KEY: PublicKey = PublicKey.generate_from_private_key(PRIVATE_KEY)
+logger.info(f"Encoded Public Key: {PUBLIC_KEY.encode()}")
 
 
 class NodeType(Enum):
@@ -62,6 +69,7 @@ class Config:
     nodes: list
     type: NodeType
     port: int
+    authorized_nodes_pbk: list
 
     @classmethod
     def from_file(cls, file):

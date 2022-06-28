@@ -75,7 +75,7 @@ class SmartContract:
 
     def run(self, txs, prevent_self_check_id=None):
         self.txs = txs
-        if not self.related_tx.doesNotViolateThePortfolio():
+        if not self.related_tx.does_not_violate_the_portfolio():
             return False
         if self.contractType == Type.INVALID:
             print('ERROR This contract should not be run because it has type "INVALID"', file=sys.stderr)
@@ -95,7 +95,7 @@ class SmartContract:
         :param prevent_self_check_id:
         :return:
         """
-        return not tx.isUsedToValidateSC() and \
+        return not tx.is_used_to_validate_smart_contract() and \
                all([str(tx[i]) == str(self.smartContract[i]) for i in SmartContract.requirements[self.contractType]]) and \
                (prevent_self_check_id == tx.smart_contract.related_tx_id or
                 tx.smart_contract.run(txs=self.txs, prevent_self_check_id=self.related_tx_id))
@@ -108,7 +108,7 @@ class SmartContract:
         """
         for tx in self.txs.all(except_id=self.related_tx_id):  # Search the corresponding transaction
             if self.__doesValidate(tx, prevent_self_check_id):
-                tx.useToValidateSC()
+                tx.use_to_validate_smart_contract()
                 self._is_validated = True
                 return True
         return False

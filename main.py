@@ -18,7 +18,7 @@ def debug():
     bc: Blockchain = Blockchain()
     bc.type = NodeType(args.type)
     if args.first_connection != 'none':
-        bc.addNode(args.first_connection, register_back=True)
+        bc.add_node(args.first_connection, register_back=True)
     app.run(host='0.0.0.0', port=Host().port, debug=False)  # if debug is True server is started twice
 
 

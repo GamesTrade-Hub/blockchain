@@ -9,7 +9,7 @@ To validate Smart Contract you need to match the following requirements
 
 - Transaction not already used to validate another smart contract
     ````python
-    not tx.isUsedToValidateSC() and
+    not tx.is_used_to_validate_smart_contract() and
     ````
 - Transaction details match what smart contract needs
     ````python
@@ -26,7 +26,7 @@ To validate Smart Contract you need to match the following requirements
         ````
 - Transaction related to smart contract has to be valid
     ````python
-    not self.related_tx.doesNotViolateThePortfolio()
+    not self.related_tx.does_not_violate_the_portfolio()
     ````
 <br>
 <br>

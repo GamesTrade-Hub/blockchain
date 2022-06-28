@@ -1,6 +1,7 @@
 
 sudo apt-get install python3.8
 sudo apt-get install python3-distutils python-setuptools python3.8-dev
+# apt-get install  libgmp3-dev
 
 echo "Update pip ..."
 /usr/bin/python3.8 -m pip install --upgrade pip
