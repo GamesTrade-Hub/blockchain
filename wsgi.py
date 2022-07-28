@@ -1,1 +1,1 @@
-from src.server import app
+from src.blockchain.server import app

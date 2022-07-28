@@ -3,9 +3,9 @@ from typing import List
 
 import threading
 
-from src.block import Chain
-from src.config import Host, NodeType
-from src.tools import post, get
+from src.blockchain.block import Chain
+from src.blockchain.config import Host, NodeType
+from src.blockchain.tools import post, get
 from requests import Session
 import json
 from urllib.parse import urlparse

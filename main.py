@@ -1,6 +1,6 @@
 from argparse import ArgumentParser
-from src.server import app, Blockchain
-from src.config import NodeType, Host
+from src.blockchain.server import app, Blockchain
+from src.blockchain.config import NodeType, Host
 from time import sleep
 
 
