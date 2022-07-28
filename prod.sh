@@ -1,18 +1,19 @@
 
-sudo apt-get install python3.8
-sudo apt-get install python3-distutils python-setuptools python3.8-dev
-# apt-get install  libgmp3-dev
+sudo apt-get install python3.8 -y
+sudo apt-get install python3-distutils python-setuptools python3.8-dev -y
+sudo apt-get install build-essential -y
+sudo apt-get install libgmp3-dev -y
 
 echo "Update pip ..."
 /usr/bin/python3.8 -m pip install --upgrade pip
 
 echo "Install venv ..."
-apt-get upgrade python-virtualenv
-/usr/bin/python3.8 -m pip install -U --force-reinstall virtualenv
-/usr/bin/python3.8 -m pip install virtualenv
+sudo apt-get install python3-virtualenv -y
+#/usr/bin/python3.8 -m pip install -U --force-reinstall virtualenv
+#/usr/bin/python3.8 -m pip install virtualenv
 
 echo "Install nginx ..."
-sudo apt install nginx
+sudo apt install nginx -y
 
 echo "Create venv prod_node ..."
 virtualenv prod_node
