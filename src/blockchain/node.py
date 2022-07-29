@@ -60,7 +60,7 @@ class NodesList:
         node = Node(host, type_)
 
         if node.type == NodeType.UNKNOWN:
-            logger.warning(f"Invalid node type for address: {address}  host  {host}")
+            logger.warning(f"Invalid node type for address: {address} host {host}")
             return False
 
         if spread:
@@ -181,7 +181,7 @@ class Node:
 
     def get_type(self):
         response = get(f'http://{self.host}/get_type')
-        if response is None:
+        if response is None or response.status_code != 200:
             self.type = NodeType.UNKNOWN
             return
 

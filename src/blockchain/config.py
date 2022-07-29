@@ -15,12 +15,14 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
 gth_config_folder = expanduser("~/.gth")
+config_file_name = 'config.json'
 
 config_file_path: Optional[str] = join(
     gth_config_folder,
-    'config.json'
-) if exists(join(gth_config_folder, 'credentials')) else None
+    config_file_name
+) if exists(join(gth_config_folder, config_file_name)) else None
 config_file_path = config_file_path or ('./config.json' if exists('./config.json') else None)
+logger.debug(f"config file path: {config_file_path}")
 
 LIMIT_TRANSACTIONS_BLOCK = 1
 
@@ -83,3 +85,7 @@ class Config:
         raw_cfg = json.load(open(file, 'r'))
         raw_cfg['type'] = NodeType(raw_cfg['type'])
         return cls(**raw_cfg)
+
+
+conf: Config = Config.from_file(config_file_path)
+

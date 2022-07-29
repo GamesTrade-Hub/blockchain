@@ -4,7 +4,7 @@ from src.blockchain.tools import get_time, MetaSingleton, hash__
 from src.blockchain.transaction import TransactionsList, State
 from src.blockchain.node import NodesList
 from src.blockchain.block import Chain, Block
-from src.blockchain.config import Host, NodeType, Config, PRIVATE_KEY, PUBLIC_KEY, LIMIT_TRANSACTIONS_BLOCK
+from src.blockchain.config import Host, NodeType, conf, PRIVATE_KEY, PUBLIC_KEY, LIMIT_TRANSACTIONS_BLOCK
 import logging
 
 logging.basicConfig(level=logging.DEBUG)
@@ -19,7 +19,6 @@ def drop_duplicates(l_):
 
 
 def get_authorized_nodes_public_keys():
-    conf: Config = Config.from_file('config.json')
     return conf.authorized_nodes_pbk
 
 

@@ -2,7 +2,7 @@ from src.blockchain.chain import Blockchain
 from src.blockchain.chain import Chain
 from src.blockchain.tools import BcEncoder, hash__
 from src.blockchain.keys import PublicKey, PrivateKey
-from src.blockchain.config import Host, NodeType, Config, PUBLIC_KEY
+from src.blockchain.config import Host, NodeType, conf, PUBLIC_KEY
 
 import uuid
 from urllib.parse import urlparse
@@ -31,7 +31,6 @@ if __name__ != '__main__':
 
 logger.info("RUN SERVER.PY")
 
-conf: Config = Config.from_file('config.json')
 logger.info(conf)
 
 # Instantiate the Blockchain
@@ -118,8 +117,8 @@ def get_public_key():
 
 
 @app.route('/get_node_public_key', methods=['GET'])
-@high_level_handler(invalid=[])
-def get_public_key():
+@high_level_handler()
+def get_node_public_key():
     public_key = PUBLIC_KEY
     response = {'key': f'{public_key}'}
     return jsonify(response), 200
