@@ -133,8 +133,11 @@ class AutoRunner:
                 response = self.ssm_client.send_command(
                     InstanceIds=[instance.id],
                     DocumentName="AWS-RunShellScript",
-                    Parameters={'commands': ['ls -la /']}
+                    Parameters={
+                        'commands': ['ls -la /'],
+                    }
                 )
+
                 break
             except Exception as e:
                 logger.debug(f"ssm_client.send_command failed {e}")
@@ -175,11 +178,14 @@ class AutoRunner:
                 response = self.ssm_client.send_command(
                     InstanceIds=[instance.id],
                     DocumentName="AWS-RunShellScript",
-                    Parameters={'commands': [
+                    Parameters={
+                        'commands': [
                             'git clone https://github.com/GamesTrade-Hub/blockchain.git',
                             'cd blockchain',
                             './prod.sh'
-                        ]}
+                        ],
+                        'workingDirectory': ['/home/ubuntu']
+                    }
                 )
                 break
             except Exception as e:
