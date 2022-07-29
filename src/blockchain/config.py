@@ -1,9 +1,12 @@
 from dataclasses import dataclass
 
 import json
+from os.path import exists, join, expanduser
+from typing import Optional
 
 from src.blockchain.keys import PrivateKey, PublicKey
 from src.blockchain.tools import MetaSingleton
+from src.blockchain.credentials import PUBLIC_KEY, PRIVATE_KEY
 import sys
 from enum import Enum
 import logging
@@ -11,11 +14,15 @@ import logging
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
+gth_config_folder = expanduser("~/.gth")
+
+config_file_path: Optional[str] = join(
+    gth_config_folder,
+    'config.json'
+) if exists(join(gth_config_folder, 'credentials')) else None
+config_file_path = config_file_path or ('./config.json' if exists('./config.json') else None)
 
 LIMIT_TRANSACTIONS_BLOCK = 1
-PRIVATE_KEY: PrivateKey = PrivateKey.generate()
-PUBLIC_KEY: PublicKey = PublicKey.generate_from_private_key(PRIVATE_KEY)
-logger.info(f"Encoded Public Key: {PUBLIC_KEY.encode()}")
 
 
 class NodeType(Enum):
