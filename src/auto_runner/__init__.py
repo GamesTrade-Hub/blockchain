@@ -195,12 +195,12 @@ class AutoRunner:
             output = self.ssm_client.get_command_invocation(CommandId=command_id, InstanceId=instance.id)
         logger.debug(f"run BC command output {output['StandardOutputContent']}")
         logger.debug(f"run BC command error {output['StandardErrorContent']}")
-        logger.info(f"run blockchain node setup status {output['Status']}")
+        logger.info(f"run blockchain node setup status: {output['Status']}")
         logger.debug(f"StatusDetails {output['StatusDetails']}")
 
 
 if __name__ == '__main__':
     auto_runner = AutoRunner()
     auto_runner.terminate_all_instances()
-    # auto_runner.create_node_instance()
+    auto_runner.create_node_instance()
 
