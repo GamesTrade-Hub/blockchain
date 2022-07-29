@@ -13,7 +13,7 @@ from logging import INFO, DEBUG, WARNING
 
 logging.basicConfig()
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.INFO)
 
 
 def get_public_ip(ec2_client: EC2Client, instance_id):
@@ -193,14 +193,14 @@ class AutoRunner:
         output = self.ssm_client.get_command_invocation(CommandId=command_id, InstanceId=instance.id)
         while output['Status'] == "InProgress":
             output = self.ssm_client.get_command_invocation(CommandId=command_id, InstanceId=instance.id)
-        logger.info(f"run BC command output {output['StandardOutputContent']}")
-        logger.info(f"run BC command error {output['StandardErrorContent']}")
-        logger.info(f"Status {output['Status']}")
-        logger.info(f"StatusDetails {output['StatusDetails']}")
+        logger.debug(f"run BC command output {output['StandardOutputContent']}")
+        logger.debug(f"run BC command error {output['StandardErrorContent']}")
+        logger.info(f"run blockchain node setup status {output['Status']}")
+        logger.debug(f"StatusDetails {output['StatusDetails']}")
 
 
 if __name__ == '__main__':
     auto_runner = AutoRunner()
     auto_runner.terminate_all_instances()
-    auto_runner.create_node_instance()
+    # auto_runner.create_node_instance()
 

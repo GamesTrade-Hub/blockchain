@@ -1,7 +1,5 @@
 #!/bin/bash
 
-/bin/bash
-
 sudo add-apt-repository main -y
 sudo add-apt-repository universe -y
 sudo add-apt-repository restricted -y
@@ -25,11 +23,6 @@ sudo apt-get install python3-virtualenv -y
 
 echo "Install nginx ..."
 sudo apt install nginx -y
-
-echo "Clone repo"
-git clone https://github.com/GamesTrade-Hub/blockchain.git
-echo "go in ./blockchain"
-cd blockchain
 
 echo "Create venv prod_node ..."
 virtualenv prod_node

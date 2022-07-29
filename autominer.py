@@ -15,7 +15,7 @@ class AutoMiner:
 
     def run(self):
         while True:
-            response = get(f'http://{self.node_address}/mine', json_={'spread': True})
+            response = get(f'http://{self.node_address}/mine', json_={'spread': False})
             if response is not None:
                 print(f'[{response.status_code}] {response.text}')
             sleep(self.cooldown)

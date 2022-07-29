@@ -2,7 +2,7 @@ from src.blockchain.chain import Blockchain
 from src.blockchain.chain import Chain
 from src.blockchain.tools import BcEncoder, hash__
 from src.blockchain.keys import PublicKey, PrivateKey
-from src.blockchain.config import Host, NodeType, Config
+from src.blockchain.config import Host, NodeType, Config, PUBLIC_KEY
 
 import uuid
 from urllib.parse import urlparse
@@ -115,6 +115,14 @@ def get_public_key():
     public_key = PublicKey.generate_from_private_key(private_key, encoded=True)
     response = {'key': f'{public_key}'}
     return jsonify(response), 201
+
+
+@app.route('/get_node_public_key', methods=['GET'])
+@high_level_handler(invalid=[])
+def get_public_key():
+    public_key = PUBLIC_KEY
+    response = {'key': f'{public_key}'}
+    return jsonify(response), 200
 
 
 @app.route('/start', methods=['GET'])
