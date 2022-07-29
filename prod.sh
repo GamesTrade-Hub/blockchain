@@ -1,4 +1,10 @@
 
+sudo add-apt-repository main -y
+sudo add-apt-repository universe -y
+sudo add-apt-repository restricted
+sudo add-apt-repository multiverse
+sudo apt update -y
+
 sudo apt-get install python3.8 -y
 sudo apt-get install python3-distutils python-setuptools python3.8-dev -y
 sudo apt-get install build-essential -y

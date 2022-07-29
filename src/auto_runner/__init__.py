@@ -13,7 +13,7 @@ from logging import INFO, DEBUG, WARNING
 
 logging.basicConfig()
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
+logger.setLevel(logging.DEBUG)
 
 
 def get_public_ip(ec2_client: EC2Client, instance_id):
@@ -118,14 +118,15 @@ class AutoRunner:
 
         self.__run_dummy_command_checkup(instances[0])
         logger.info(f"Created node instance: {instances[0].id}. ip: {get_public_ip(self.ec2_client_creator, instances[0].id)}")
+        self.__run_blockchain_node_setup(instances[0])
 
         return instances[0]
 
-    def __run_dummy_command_checkup(self, instance: Instance):
+    def __run_dummy_command_checkup(self, instance: Instance) -> None:
         instance.wait_until_running()
         instance.reload()
 
-        timeout = 5
+        timeout = 10
         count = 0
         while True:
             try:
@@ -137,9 +138,9 @@ class AutoRunner:
                 break
             except Exception as e:
                 logger.debug(f"ssm_client.send_command failed {e}")
-                count += 1
-                if count >= timeout:
-                    return None
+                if (count := count + 1) >= timeout:
+                    logger.error(f"ssm_client.send_command failed {timeout} times")
+                    return
                 time.sleep(3)
 
         command_id = response['Command']['CommandId']
@@ -163,6 +164,39 @@ class AutoRunner:
 
     def get_running_instances(self):
         get_running_instances(self.ec2_client_creator, self.ec2_resource_creator)
+
+    def __run_blockchain_node_setup(self, instance):
+        # https://github.com/GamesTrade-Hub/blockchain.git
+
+        timeout = 10
+        count = 0
+        while True:
+            try:
+                response = self.ssm_client.send_command(
+                    InstanceIds=[instance.id],
+                    DocumentName="AWS-RunShellScript",
+                    Parameters={'commands': [
+                            'git clone https://github.com/GamesTrade-Hub/blockchain.git',
+                            'cd blockchain',
+                            './prod.sh'
+                        ]}
+                )
+                break
+            except Exception as e:
+                logger.debug(f"ssm_client.send_command failed {e}")
+                if (count := count + 1) >= timeout:
+                    return None
+                time.sleep(3)
+
+        command_id = response['Command']['CommandId']
+        time.sleep(2)
+        output = self.ssm_client.get_command_invocation(CommandId=command_id, InstanceId=instance.id)
+        while output['Status'] == "InProgress":
+            output = self.ssm_client.get_command_invocation(CommandId=command_id, InstanceId=instance.id)
+        logger.info(f"run BC command output {output['StandardOutputContent']}")
+        logger.info(f"run BC command output {output['StandardErrorContent']}")
+        logger.info(f"Status {output['Status']}")
+        logger.info(f"StatusDetails {output['StatusDetails']}")
 
 
 if __name__ == '__main__':
