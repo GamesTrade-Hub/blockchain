@@ -194,7 +194,7 @@ class AutoRunner:
         while output['Status'] == "InProgress":
             output = self.ssm_client.get_command_invocation(CommandId=command_id, InstanceId=instance.id)
         logger.info(f"run BC command output {output['StandardOutputContent']}")
-        logger.info(f"run BC command output {output['StandardErrorContent']}")
+        logger.info(f"run BC command error {output['StandardErrorContent']}")
         logger.info(f"Status {output['Status']}")
         logger.info(f"StatusDetails {output['StatusDetails']}")
 
@@ -202,5 +202,5 @@ class AutoRunner:
 if __name__ == '__main__':
     auto_runner = AutoRunner()
     auto_runner.terminate_all_instances()
-    # auto_runner.create_node_instance()
+    auto_runner.create_node_instance()
 
