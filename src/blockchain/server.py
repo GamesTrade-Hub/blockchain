@@ -315,21 +315,6 @@ def get_nodes_list():
     return jsonify(nodes.__dict__()), 200
 
 
-@app.route('/mine', methods=['GET'])
-@high_level_handler(invalid=[NodeType.MANAGER])
-def mine():
-    """
-    DEPRECATED
-    Do not use, use the new_block function instead
-    """
-
-    values = request.get_json()
-
-    response, code = blockchain.mine(spread=values and 'spread' in values and values['spread'])
-
-    return json.dumps(response), code
-
-
 @app.route('/block/new', methods=['GET'])
 @high_level_handler(invalid=[NodeType.MANAGER])
 def new_block():
