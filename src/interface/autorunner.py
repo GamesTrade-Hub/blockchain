@@ -1,3 +1,4 @@
+import datetime
 from typing import Optional, List, Iterator
 
 import boto3
@@ -111,7 +112,7 @@ class AutoRunner:
                 'ResourceType': 'instance',
                 'Tags': [{
                     'Key': 'Name',
-                    'Value': name or 'node-{}'.format(time.time())
+                    'Value': name or f'node-{datetime.datetime.now().__str__()[5:-5]}'
                 }]
             }]
         )

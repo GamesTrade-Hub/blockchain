@@ -29,7 +29,7 @@ if __name__ != '__main__':
     logger.handlers = gunicorn_logger.handlers
     logger.setLevel(gunicorn_logger.level)
 
-logger.info("RUN SERVER.PY")
+logger.info("run blockchain/server.py")
 
 logger.info(conf)
 
