@@ -170,19 +170,23 @@ class Blockchain(metaclass=MetaSingleton):
         :return: New Block
         """
 
+        logger.debug("New authority block")
+        logger.debug(f"Current block: {self.current_block is not None}")
         if self.current_block is not None:
             return 'A block is already being created', 401
 
+        logger.debug('select transactions')
         tx_list: TransactionsList = TransactionsList(self.txs.select())
+        logger.debug(f"{tx_list.__len__()} transactions selected")
 
         if len(tx_list) < LIMIT_TRANSACTIONS_BLOCK and not spread:
             logger.warning("Not enough transactions to mine")
-            return "Not enough transactions to mine", 401
+            return "Not enough transactions to create new block", 401
 
         if len(tx_list) < LIMIT_TRANSACTIONS_BLOCK and spread:
             logger.info("Not enough transactions to mine. Spreading block/new to other nodes")
             self.nodes.spread_block_creation_request()
-            return "Not enough transactions to mine. Spread to others", 401
+            return "Not enough transactions to create new block. Spread to others", 401
 
         self.current_block = Block(
             index=self.chain.__len__() + 1,

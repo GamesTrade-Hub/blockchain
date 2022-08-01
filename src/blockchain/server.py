@@ -14,9 +14,7 @@ import json
 import sys
 import signal
 import logging
-# from log import Log
 
-# log = Log().getLogger()
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.DEBUG)
@@ -324,10 +322,13 @@ def new_block():
     the new block will be spread to the other nodes
     """
 
+    logger.debug("request.get_json()")
     values = request.get_json()
 
+    logger.debug("blockchain.new_authority_block(spread=values and 'spread' in values and values['spread'])")
     response, code = blockchain.new_authority_block(spread=values and 'spread' in values and values['spread'])
 
+    logger.debug(f"response, code = {response, code}")
     return json.dumps(response), code
 
 
