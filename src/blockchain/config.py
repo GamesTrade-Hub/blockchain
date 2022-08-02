@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-
+import os
 import json
 from os.path import exists, join, expanduser
 from typing import Optional
@@ -14,14 +14,24 @@ import logging
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
+"""
+Priority to get config file:
+1. Config file in home (~/.gth/) directory
+2. Config file in current directory
+
+The name of the config file is "config.json" or specified by the environment variable "GTH_CONFIG"
+"""
+
 gth_config_folder = expanduser("~/.gth")
-config_file_name = 'config.json'
+config_file_name = os.environ['GTH_CONFIG'] if 'GTH_CONFIG' in os.environ else 'config.json'
 
 config_file_path: Optional[str] = join(
     gth_config_folder,
     config_file_name
-) if exists(join(gth_config_folder, config_file_name)) else None
-config_file_path = config_file_path or ('./config.json' if exists('./config.json') else None)
+) if exists(join(gth_config_folder, config_file_name)) else join(
+    "./",
+    config_file_name
+) if exists(join("./", config_file_name)) else None
 logger.debug(f"config file path: {config_file_path}")
 
 LIMIT_TRANSACTIONS_BLOCK = 1

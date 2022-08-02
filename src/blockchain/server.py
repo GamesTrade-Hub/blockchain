@@ -1,5 +1,5 @@
-from src.blockchain.chain import Blockchain
-from src.blockchain.chain import Chain
+from src.blockchain.blockchain_manager import BlockchainManager
+from src.blockchain.blockchain_manager import Chain
 from src.blockchain.tools import BcEncoder, hash__
 from src.blockchain.keys import PublicKey, PrivateKey
 from src.blockchain.config import Host, NodeType, conf, PUBLIC_KEY
@@ -33,7 +33,7 @@ logger.info(conf)
 
 # Instantiate the Blockchain
 host = Host()
-blockchain = Blockchain()
+blockchain = BlockchainManager()
 blockchain.type = conf.type
 
 Host().port = conf.port
@@ -132,7 +132,6 @@ def launch():
 @app.route('/status', methods=['GET'])
 @high_level_handler()
 def status():
-
     response = {'message': f'Node is OK'}
     return jsonify(response), 200
 
@@ -170,7 +169,7 @@ def create_nft():
     required = ['token', 'gth_private_key']
 
     if not all(k in values for k in required):
-        return jsonify({'message': f'Missing value among {", ".join(required)}'}), 400
+        return jsonify({'message': f'Missing value among {", ".join(required)}'}), 401
 
     created, msg = blockchain.create_nft(
         token=values['token'],
@@ -313,7 +312,7 @@ def get_nodes_list():
     return jsonify(nodes.__dict__()), 200
 
 
-@app.route('/block/new', methods=['GET'])
+@app.route('/block/new', methods=['GET', 'POST'])
 @high_level_handler(invalid=[NodeType.MANAGER])
 def new_block():
     """

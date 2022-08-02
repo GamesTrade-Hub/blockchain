@@ -3,7 +3,7 @@ from typing import List
 
 import threading
 
-from src.blockchain.block import Chain
+from src.blockchain.chain import Chain
 from src.blockchain.config import Host, NodeType
 from src.blockchain.tools import post, get
 from requests import Session

@@ -1,6 +1,6 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="node 5002 all" type="PythonConfigurationType" factoryName="Python" singleton="true">
-    <module name="Blockchain-coin" />
+    <module name="blockchain" />
     <option name="INTERPRETER_OPTIONS" value="" />
     <option name="PARENT_ENVS" value="true" />
     <envs>

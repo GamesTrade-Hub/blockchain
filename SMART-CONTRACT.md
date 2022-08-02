@@ -13,7 +13,7 @@ To validate Smart Contract you need to match the following requirements
     ````
 - Transaction details match what smart contract needs
     ````python
-    all([str(tx[i]) == str(self.smartContract[i]) for i in SmartContract.requirements[self.contractType]]) and
+    all([str(tx[i]) == str(self.smartContract[i]) for i in SmartContract.requirements[self.contract_type]]) and
     ````
 - If the transaction used to validate the smart contract also contains a smart contract. This one has to run:
     1. The transaction used to validate the smart contract contains the smart contract that called the validation of the current smart contract

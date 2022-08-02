@@ -4,7 +4,7 @@ setup(
     description="Run a node for the GamesTradeHub blockchain",
     long_description=README,
     long_description_content_type="text/markdown",
-    url="https://github.com/GamesTrade-Hub/Blockchain-coin",
+    url="https://github.com/GamesTrade-Hub/blockchain",
     author="William, Emilien, Cyprien",
     author_email="ricque.cyprien@gmail.com",
     license="",

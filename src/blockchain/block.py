@@ -1,10 +1,10 @@
 import sys
-from typing import List
+from typing import List, Iterator, Optional
 
 from src.blockchain.config import Host
 from src.blockchain.keys import sign, has_valid_signature, PublicKey, Signature
 from src.blockchain.tools import BcEncoder, hash__, get
-from src.blockchain.transaction import TransactionsList, State
+from src.blockchain.transaction import TransactionsList, State, Transaction
 from src.blockchain.config import Host, PRIVATE_KEY
 from random import random
 from multiprocessing import Process, Queue
@@ -60,8 +60,8 @@ class Block:
             transactions: TransactionsList,
             previous_hash: str,
             validator: PublicKey,
-            nonce: Signature = None,
-            hash_=None
+            nonce: Optional[Signature] = None,
+            hash_: Optional[str] = None
     ):
         """
         :param index: index of the block in the chain
@@ -77,8 +77,8 @@ class Block:
         self._txs: TransactionsList = transactions
         self._previous_hash = previous_hash
         # ========= #
-        self._hash = hash_ or hash__(self.__encode(full=False))
-        self._nonce: Signature = nonce
+        self._hash: str = hash_ or hash__(self.__encode(full=False))
+        self._nonce: Optional[Signature] = nonce
         self._validator: PublicKey = validator
         ## ========== ##
 
@@ -91,10 +91,6 @@ class Block:
 
         if not self._nonce:
             self._nonce = proof_of_authority(self._hash)
-
-    @property
-    def previous_hash(self):
-        return self._previous_hash
 
     def __str__(self):
         return self.__dict__().__str__()
@@ -141,16 +137,9 @@ class Block:
             }}
         return d
 
-    def __encode(self, full=True):
+    def __encode(self, full=True) -> str:
         d = self.__to_dict(full=full)
         return d.__str__()
-
-    @property
-    def hash(self):
-        """
-        Creates a SHA-256 hash of a Block
-        """
-        return self._hash
 
     @staticmethod
     def valid_pow(block_hash, nonce):
@@ -172,11 +161,11 @@ class Block:
         :param validator: public key of the node which created the block
         :return: <bool> True if correct, False if not.
         """
-        from src.blockchain.chain import Blockchain
+        from src.blockchain.blockchain_manager import BlockchainManager
 
         print(f"{nonce.signature=}", f"{block_hash=}", f"{validator=}")
         return has_valid_signature(nonce.signature, block_hash, validator) and \
-               validator.encode() in Blockchain().authorized_nodes_public_keys
+               validator.encode() in BlockchainManager().authorized_nodes_public_keys
 
     def valid_transactions(self):
         if not self._txs.valid():
@@ -214,98 +203,32 @@ class Block:
         self._txs.update_state(from_=State.SELECTED, to_=State.WAITING)
         # self.__stop_mining()
 
+    @property
+    def index(self):
+        return self._index
+
+    @property
     def transactions(self):
-        for tx in self._txs.transactions():
-            yield tx
+        return self._txs
 
+    @property
+    def validator(self):
+        return self._validator
 
-class Chain:
-    def __init__(self, blocks=None):
-        if blocks is None:
-            blocks = list()
-        self._blocks: List[Block] = blocks
+    @property
+    def nonce(self):
+        return self._nonce
 
-    def valid(self):
-        # TODO All transactions must have diff ids
+    @property
+    def previous_hash(self):
+        return self._previous_hash
 
-        valid = all([isinstance(b, Block) and b.valid() for b in self._blocks]) and all(
-            [a.hash == b.previous_hash for a, b in zip(self._blocks[:-2], self._blocks[1:-1])])
+    @property
+    def hash(self) -> str:
+        """
+        SHA-256 hash of a Block
+        """
+        return self._hash
 
-        # print('valid?', valid, [type(b) for b in self._blocks])
-        # if not valid:
-        #     print(
-        #         'Chain not valid',
-        #         all([isinstance(b, Block) for b in self._blocks]),
-        #         all([b.valid() for b in self._blocks]),
-        #         all([a.hash == b.previous_hash for a, b in zip(self._blocks[:-1], self._blocks[1:])])
-        #     )
-        #     print(self.__str__())
-        return valid
-
-    def contains(self, transaction):
-        for tx in self.transactions():
-            if tx.id == transaction.id and tx.time == transaction.time:
-                return True
-        return False
-
-    @classmethod
-    def from_dict(cls, chain):
-        if chain is None:
-            logger.warning("Chained received to be parsed is None")
-            return None
-        chain = cls(blocks=[Block.from_dict(b) for b in chain['chain']])
-        if not chain.valid():
-            logger.warning("Parsed chain not valid")
-            return None
-        return chain
-
-    def __str__(self):
-        return self.__dict__().__str__()
-
-    def __dict__(self):
-        return {'chain': [block.__dict__() for block in self._blocks]}
-
-    def __len__(self):
-        return self._blocks.__len__()
-
-    def last_blockhash(self):
-        return self._blocks[-1].hash
-
-    def add_block(self, block):
-        block.confirm_selected_transactions()
-        self._blocks.append(block)
-
-    def blocks(self):
-        for block in self._blocks:
-            yield block
-
-    def transactions(self):
-        for block in self.blocks():
-            for tx in block.transactions():
-                yield tx
-
-    def get_balance_by_token(self, public_key, token) -> float:
-        from src.blockchain.chain import Blockchain
-        balance = 0
-
-        for tx in Blockchain().considered_transactions():
-            if tx['recipient'] == public_key and tx['token'] == token:
-                balance += tx['amount']
-            if tx['sender'] == public_key and tx['token'] == token and tx['recipient'] != public_key:
-                balance -= tx['amount']
-        return balance
-
-    def get_balance(self, public_key):
-        from src.blockchain.chain import Blockchain
-        balance = {}
-
-        for tx in Blockchain().considered_transactions():
-            if tx['recipient'] == public_key:
-                if tx['token'] not in balance:
-                    balance[tx['token']] = 0
-                balance[tx['token']] += tx['amount']
-            if tx['sender'] == public_key and tx['recipient'] != public_key:
-                if tx['token'] not in balance:
-                    balance[tx['token']] = 0
-                balance[tx['token']] -= tx['amount']
-        return balance
+    def __iter__(self) -> Iterator[Transaction]:
+        return self._txs.__iter__()

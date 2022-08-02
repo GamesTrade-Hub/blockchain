@@ -1,5 +1,5 @@
 import unittest
-from src import app
+from blockchain.server import app
 import json
 import time
 
@@ -42,7 +42,7 @@ class TestSmartContract(unittest.TestCase):
             "amount": 50,
             "private_key": self.user_1_private_key,
             "token": "snowy",
-            "sc": {
+            "smart_contract": {
                 "type": "OTHER_TX_CHECK",
                 "recipient": self.user_1_public_key,
                 "sender": self.user_2_public_key,
@@ -60,7 +60,7 @@ class TestSmartContract(unittest.TestCase):
             "amount": 10,
             "private_key": self.user_2_private_key,
             "token": "snowy",
-            "sc": {
+            "smart_contract": {
                 "type": "OTHER_TX_CHECK",
                 "recipient": self.user_2_public_key,
                 "sender": self.user_1_public_key,
@@ -70,7 +70,7 @@ class TestSmartContract(unittest.TestCase):
         })
         self.assertEqual(response.status_code, 201)
 
-        response = self.app.post('/create_block')
+        response = self.app.post('/block/new', json={})
         self.assertEqual(response.status_code, 200)
         self.app.get('/mine', follow_redirects=True)
 
@@ -92,13 +92,14 @@ class TestSmartContract(unittest.TestCase):
             "amount": 10,
             "private_key": self.user_1_private_key,
             "token": "snowy",
-            "sc": {
+            "smart_contract": {
                 "type": "OTHER_TX_CHECK",
                 "sender": self.user_2_public_key,
                 "amount": 50,
                 "token": "snowy"
             }
         })
+        print(f'{response.status_code} {response.get_data()=}')
         self.assertEqual(response.status_code, 401)
 
 

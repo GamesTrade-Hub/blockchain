@@ -1,7 +1,8 @@
 import json
 import os
 import unittest
-from src import app
+
+from blockchain.server import app
 
 
 class TestNFTCreation(unittest.TestCase):
@@ -19,42 +20,38 @@ class TestNFTCreation(unittest.TestCase):
         }
 
     def test_nft_creation(self):
-        response = self.client.post(
-            "/transaction/create_nft",
-            data=json.dumps({
+        token_name = "ETH"
+        response = self.client.post("/create_nft", json={
                 "recipient": self.client_a_keys["public"],
                 "sender": self.gth_keys["public"],
-                "private_key": self.gth_keys["private"]
-            }),
-            content_type="application/json"
+                "gth_private_key": self.gth_keys["private"],
+                "token": token_name,
+            },
         )
-        print(response.get_data(as_text=True))
         response_json = json.loads(response.get_data(as_text=True))
-        print(response_json)
-        self.assertEqual(response.status_code, 201)
-        self.assertEqual(response_json["message"], "Transaction will be added, Reason: ok")
-        self.assertEqual(len(response_json["token"]), 40)
+        print(f"{response_json=}")
+        self.assertEqual(
+            201,
+            response.status_code,
+            msg=f"NFT creation failed {response_json['message'] if 'message' in response_json else ''}"
+        )
+        print(f"{response_json['id']=}")
+        self.assertTrue(response_json["id"].startswith("nft_"))
+        self.assertTrue(response_json["id"].endswith(token_name))
 
     def test_missing_keys(self):
-        response = self.client.post(
-            "/transaction/create_nft",
-            data=json.dumps({
-            }),
-            content_type="application/json"
-        )
-        self.assertEqual(response.status_code, 400)
+        response = self.client.post("/create_nft", json={})
+        print(f"{response.get_data(as_text=True)=}")
+        self.assertEqual(401, response.status_code)
 
     def test_wrong_arguments(self):
-        response = self.client.post(
-            "/transaction/create_nft",
-            data=json.dumps({
+        response = self.client.post("/create_nft", json={
                 "recipient": self.gth_keys["public"],
                 "sender": self.gth_keys["public"],
-                "private_key": self.gth_keys["private"]
-            }),
-            content_type="application/json"
+                "gth_private_key": self.gth_keys["private"],
+            },
         )
-        self.assertEqual(response.status_code, 401)
+        self.assertEqual(401, response.status_code)
 
 
 if __name__ == '__main__':

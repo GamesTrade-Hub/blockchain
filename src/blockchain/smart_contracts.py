@@ -9,7 +9,7 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
 
-def get2Pow(x):
+def get_2_pow(x):
     powers = []
     i = 1
     while i <= x:
@@ -44,7 +44,7 @@ class BinIdxDict(dict):
         self.d = d
 
     def __getitem__(self, item):
-        to_get = get2Pow(item)
+        to_get = get_2_pow(item)
         res = [self.d[i] for i in to_get if i in self.d]
         if len(res) == 1:
             return res[0]
@@ -67,7 +67,7 @@ class SmartContract:
         self.txs = None
         # Content
         self.smartContract = contract
-        if self.contractType == Type.INVALID:
+        if self.contract_type == Type.INVALID:
             print("Invalid contract sent to SmartContract class __init__()", file=sys.stderr)
         self.related_tx = related_tx
         self.related_tx_id = related_tx.id
@@ -77,17 +77,17 @@ class SmartContract:
         self.txs = txs
         if not self.related_tx.does_not_violate_the_portfolio():
             return False
-        if self.contractType == Type.INVALID:
+        if self.contract_type == Type.INVALID:
             print('ERROR This contract should not be run because it has type "INVALID"', file=sys.stderr)
-        if self.contractType & Type.EMPTY:
+        if self.contract_type & Type.EMPTY:
             return True
-        if self.contractType & Type.EXECUTION:
+        if self.contract_type & Type.EXECUTION:
             return self.__execute()
-        if self.contractType & Type.CHECK:
+        if self.contract_type & Type.CHECK:
             return self.__check(prevent_self_check_id)
         return False
 
-    def __doesValidate(self, tx, prevent_self_check_id):
+    def __does_validate(self, tx, prevent_self_check_id):
         """
         Check if fields match
         Then check you back check the same transactions that requested the check, or the smart contract is valid
@@ -96,27 +96,27 @@ class SmartContract:
         :return:
         """
         return not tx.is_used_to_validate_smart_contract() and \
-               all([str(tx[i]) == str(self.smartContract[i]) for i in SmartContract.requirements[self.contractType]]) and \
+               all([str(tx[i]) == str(self.smartContract[i]) for i in SmartContract.requirements[self.contract_type]]) and \
                (prevent_self_check_id == tx.smart_contract.related_tx_id or
                 tx.smart_contract.run(txs=self.txs, prevent_self_check_id=self.related_tx_id))
 
-    def __checkTXs(self, prevent_self_check_id):
+    def __check_txs(self, prevent_self_check_id):
         """
         For type: Type.TX_CHECK
         :param prevent_self_check_id:
         :return:
         """
         for tx in self.txs.all(except_id=self.related_tx_id):  # Search the corresponding transaction
-            if self.__doesValidate(tx, prevent_self_check_id):
+            if self.__does_validate(tx, prevent_self_check_id):
                 tx.use_to_validate_smart_contract()
                 self._is_validated = True
                 return True
         return False
 
-    def resetState(self):
+    def reset_state(self):
         self._is_validated = False
 
-    def isValidated(self):
+    def is_validated(self):
         return self._is_validated
 
     def __check(self, prevent_self_check_id):
@@ -125,8 +125,8 @@ class SmartContract:
         :param prevent_self_check_id:
         :return:
         """
-        if self.contractType & Type.TX_CHECK:
-            return self.__checkTXs(prevent_self_check_id)
+        if self.contract_type & Type.TX_CHECK:
+            return self.__check_txs(prevent_self_check_id)
         else:
             logger.warning("Not implemented")
         return False
@@ -146,7 +146,7 @@ class SmartContract:
         return self.smartContract or {}
 
     @property
-    def contractType(self):
+    def contract_type(self):
         """
         check if smart contract is valid
 
@@ -178,11 +178,12 @@ class SmartContract:
 
         return Type.INVALID
 
-    @classmethod
-    def from_dict(cls, dictionary):
-        sc = cls(contract=dictionary['contract'],
-                 related_tx=None,  # FIXME
-                 )
-        if sc.contractType == Type.INVALID:
-            return None, 'Invalid contract type'
-        return sc
+    # @classmethod
+    # def from_dict(cls, dictionary):
+    #     sc = cls(
+    #         contract=dictionary['contract'],
+    #         related_tx=None,  # FIXME
+    #     )
+    #     if sc.contract_type == Type.INVALID:
+    #         return None, 'Invalid contract type'
+    #     return sc

@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Iterator
 
 from src.blockchain.tools import get_time, BcEncoder
 from src.blockchain.smart_contracts import SmartContract, Type
@@ -52,8 +52,8 @@ class TransactionsList:
                 tx.state = State.SELECTED
         return [tx for tx in self._txs if tx.state == State.SELECTED]
 
-    def add(self, id_, token, sender, recipient, amount, time_=None, sc_=None, signature=None,
-            private_key=None, state=State.WAITING, create=False):
+    def create_add_transaction(self, id_, token, sender, recipient, amount, time_=None, sc_=None, signature=None,
+                               private_key=None, state=State.WAITING, create=False):
         """
         add Transaction to the transaction list if the transaction is valid.
         Sign the transaction if there is a private key and the transaction is not already signed
@@ -109,10 +109,20 @@ class TransactionsList:
             if tx.id != except_id:
                 yield tx
 
-    def transactions(self, min_state=State.WAITING, max_state=State.VALIDATED):
+    def transactions(self, min_state=State.WAITING, max_state=State.VALIDATED) -> Iterator["Transaction"]:
         for tx in self._txs:
             if min_state <= tx.state <= max_state:
                 yield tx
+
+    def __iter__(self):
+        return self._txs.__iter__()
+
+    def __add__(self, other):
+        return TransactionsList(self._txs + other._txs)
+
+    def __iadd__(self, other):
+        self._txs += other._txs
+        return self
 
     # Smart contract related ##################
     def reset_usage_smart_contract(self):
@@ -188,7 +198,7 @@ class Transaction:
 
     def reset_usage_smart_contract(self):
         self._used = False
-        self._smart_contract.resetState()
+        self._smart_contract.reset_state()
     ########################
 
     @property
@@ -213,9 +223,9 @@ class Transaction:
         return m[item]
 
     def has_valid_attrs(self):
-        from src.blockchain.chain import Blockchain
+        from src.blockchain.blockchain_manager import BlockchainManager
 
-        if self._sender == self._recipient and Blockchain.is_gth(self._sender) is False:
+        if self._sender == self._recipient and BlockchainManager.is_gth(self._sender) is False:
             self.error = 'Sender and recipient can\'t be the same'
             return False
         if self.is_nft() and self._amount != 1:
@@ -227,25 +237,25 @@ class Transaction:
         if self._amount <= 0:
             self.error = 'amount can\'t be <= 0'
             return False
-        if self._smart_contract.contractType == Type.INVALID:
+        if self._smart_contract.contract_type == Type.INVALID:
             self.error = "Invalid smart contract"
             return False
         return True
 
     def does_not_violate_the_portfolio(self):
-        from src.blockchain.chain import Blockchain  # You did not see that.
-        if (self.is_nft() and not Blockchain.is_gth(self._recipient)) and Blockchain().get_balance_by_token(
+        from src.blockchain.blockchain_manager import BlockchainManager  # You did not see that.
+        if (self.is_nft() and not BlockchainManager.is_gth(self._recipient)) and BlockchainManager().get_balance_by_token(
                 self._sender.__str__(), self._token) < self._amount:
             self.error = f'User does not have nft {self._token} to proceed the transaction'
             print("ERROR while adding transaction", self.error, 'id', self._id)
             return False
-        if Blockchain.is_gth(self._sender) is False and Blockchain().get_balance_by_token(self._sender.__str__(),
-                                                                                          self._token) < self._amount:
+        if BlockchainManager.is_gth(self._sender) is False and BlockchainManager().get_balance_by_token(self._sender.__str__(),
+                                                                                                        self._token) < self._amount:
             self.error = f'User does not have enough {self._token} to proceed the transaction'
             print("ERROR while adding transaction", self.error, 'id', self._id)
             return False
-        if Blockchain.is_gth(self._recipient) and Blockchain.is_gth(
-                self._sender) and self.is_nft() and Blockchain().nft_exists(self._token):
+        if BlockchainManager.is_gth(self._recipient) and BlockchainManager.is_gth(
+                self._sender) and self.is_nft() and BlockchainManager().nft_exists(self._token):
             self.error = 'NFT with this id already exists'
             print("ERROR while adding transaction", self.error, 'id', self._id)
             return False
@@ -359,4 +369,4 @@ class Transaction:
         nodes.spread_transaction(self.__dict__())
 
     def can_be_added(self, txs):
-        return self.state == State.WAITING and (self._smart_contract.isValidated() or self._smart_contract.run(txs=txs))
+        return self.state == State.WAITING and (self._smart_contract.is_validated() or self._smart_contract.run(txs=txs))
