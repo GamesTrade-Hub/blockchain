@@ -1,5 +1,7 @@
 #!/bin/bash
 
+sudo apt-get install software-properties-common -y
+
 sudo add-apt-repository main -y
 sudo add-apt-repository universe -y
 sudo add-apt-repository restricted -y
