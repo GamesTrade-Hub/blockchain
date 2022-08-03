@@ -90,7 +90,7 @@ jobs:
           pass: ${{ secrets.VM_PWD }}
           first_ssh: |
             pwd ; ls -la ;
-            if test -f "${HOME}/blockchain/end_prod.sh"; then ${HOME}/blockchain/end_prod.sh; fi ;
+            if test -f "chmod +x ${HOME}/blockchain/end_prod.sh ; ${HOME}/blockchain/end_prod.sh"; then ${HOME}/blockchain/end_prod.sh; fi ;
             rm -rf ~/blockchain/ && mkdir -p ~/blockchain
           scp: |
             /home/runner/work/blockchain/blockchain/* => /home/gth_group/blockchain/
