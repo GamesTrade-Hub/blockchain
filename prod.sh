@@ -22,7 +22,7 @@ echo "Install nginx ..."
 sudo apt install nginx -y
 
 echo "Create venv prod_node ..."
-virtualenv prod_node
+/home/gth_group/.local/bin/virtualenv prod_node
 
 #echo "Setup nginx reverse-proxy ..."
 #sudo service nginx stop
@@ -38,16 +38,16 @@ virtualenv prod_node
 
 
 echo "Update pip ..."
-./prod_node/bin/python3.8 -m pip install --upgrade pip
+./prod_node/bin/python3.8 -m pip install --upgrade pip --no-input
 
 echo "Install requirements ..."
-./prod_node/bin/python3.8 -m pip install -r requirements/prod.txt
+./prod_node/bin/python3.8 -m pip install -r requirements/prod.txt --no-input
 
 echo "Run app 0.0.0.0:5000 ..."
 ./prod_node/bin/gunicorn -b 0.0.0.0:5000 --workers=1 wsgi:app --daemon --log-file .gunicorn.logs --access-logfile .gunicorn_access.logs --error-logfile .gunicorn_errors.logs --log-level DEBUG
 #gunicorn -b 0.0.0.0:5000 --workers=1 wsgi:app
 
-echo "check if running"
+echo "Check if running" --no-input
 ps aux | grep gunicorn
 
 #screen -R prod
