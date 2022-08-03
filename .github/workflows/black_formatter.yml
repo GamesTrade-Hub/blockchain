@@ -38,8 +38,8 @@ jobs:
           black . --check
 
       - name: Black Code Formatter
-        uses: jpetrucciani/black-check@21.12b0
+        uses: piotrpawlaczek/python-blacken@v22.3.0
         with:
           path: .
-          black_flags: --check
+          only-check: yes
 
