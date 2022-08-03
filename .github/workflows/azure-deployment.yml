@@ -21,8 +21,8 @@ name: Deploy node to VM
 
 
 env:
-  WEBAPP_NAME: blockchain  # set this to the name of your Azure Web App
-  PYTHON_VERSION: '3.8.13'              # set this to the Python version to use
+  WEBAPP_NAME: blockchain
+  PYTHON_VERSION: '3.8.13'
 
 on:
   push:
@@ -40,21 +40,21 @@ jobs:
     steps:
     
       - name: Wait for unit tests to succeed
-        uses: lewagon/wait-on-check-action@v1.0.0
+        uses: fountainhead/action-wait-for-check@v1.0.0
+        id: wait-for-tests
         with:
-          ref: ${{ github.ref }}
-          check-name: 'Blockchain Tests'
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
-          wait-interval: 10
+          token: ${{ secrets.GITHUB_TOKEN }}
+          checkName: unit_tests
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
     
-      - name: Wait for formating tests to succeed
-        uses: lewagon/wait-on-check-action@v1.0.0
+      - name: Wait for black to succeed
+        uses: fountainhead/action-wait-for-check@v1.0.0
+        id: wait-for-format
         with:
-          ref: ${{ github.ref }}
-          check-name: 'Code formatter'
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
-          wait-interval: 10
-    
+          token: ${{ secrets.GITHUB_TOKEN }}
+          checkName: black_format
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+
       - name: Checkout
         uses: actions/checkout@v3
 
