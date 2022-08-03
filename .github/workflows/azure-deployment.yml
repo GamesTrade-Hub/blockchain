@@ -69,22 +69,32 @@ jobs:
     needs: build
 
     steps:
-      - name: Download artifact from build job
-        uses: actions/download-artifact@v3
-        with:
-          name: python-app
-          path: .
+    #  - name: Download artifact from build job
+    #    uses: actions/download-artifact@v3
+    #    with:
+    #      name: python-app
+    #      path: .
 
       - name: SSH Server Deploy
         # You may pin to the exact commit or the version.
         # uses: kostya-ten/ssh-server-deploy@e0deb814bc458a68b61f6597a865d096e33eb586
-        uses: kostya-ten/ssh-server-deploy@v4
+        uses: cross-the-world/ssh-scp-ssh-pipelines@v1.1.4
         with:
           host: ${{ secrets.VM_HOST }}
-          port: 22
-          username: ${{ secrets.VM_USER }}
-          password: ${{ secrets.VM_PWD }}
-          before_script: pwd; ls
-          after_script: whoami
-          scp_source: README.md
-          scp_target: ~/
+          user: ${{ secrets.VM_USER }}
+          pass: ${{ secrets.VM_PWD }}
+          first_ssh: |
+            touch ~/coucou1
+            pwd
+            if test -f "${HOME}/blockchain/end_prod.sh"; then ${HOME}/blockchain/end_prod.sh; fi
+            rm -rf ~/blockchain/
+            ls -la
+            mkdir -p ~/blockchain
+            touch ~/coucou2
+          scp: |
+            './*' => ~/blockchain/
+          last_ssh: |
+            echo "Starting node"
+            cd blockchain
+            ./prod.sh
+            echo "Node started"
