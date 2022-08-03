@@ -60,7 +60,7 @@ jobs:
       - name: Upload artifact for deployment jobs
         uses: actions/upload-artifact@v3
         with:
-          name: python-app
+          name: blockchain-node
           path: |
             . 
             !venv/
@@ -70,11 +70,11 @@ jobs:
     needs: build
 
     steps:
-    #  - name: Download artifact from build job
-    #    uses: actions/download-artifact@v3
-    #    with:
-    #      name: python-app
-    #      path: .
+      - name: Download artifact from build job
+        uses: actions/download-artifact@v3
+        with:
+          name: blockchain-node
+          path: .
 
       - run: echo "host" ${{ secrets.VM_HOST }}
       - run: echo "user" ${{ secrets.VM_USER }}
