@@ -25,9 +25,10 @@ jobs:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v3
       
-      - name: install black
+      - name: Install black
         run: |
           pip install black==22.3.0
+          pip install --upgrade click==8.0.2
 
       - name: Black Code Formatter
         uses: jpetrucciani/black-check@21.12b0
