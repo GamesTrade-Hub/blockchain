@@ -75,9 +75,9 @@ jobs:
     #      name: python-app
     #      path: .
 
-      - run: echo ${{ secrets.VM_HOST }}
-      - run: echo ${{ secrets.VM_USER }}
-      - run: echo ${{ secrets.VM_PWD }}
+      - run: echo "coucou" ${{ secrets.VM_HOST }}
+      - run: echo "coucou" ${{ secrets.VM_USER }}
+      - run: echo "coucou" ${{ secrets.VM_PWD }}
 
       - name: SSH Server Deploy
         # You may pin to the exact commit or the version.
