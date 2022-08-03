@@ -34,29 +34,30 @@ permissions:
   contents: read
 
 jobs:
-  build:
+  tests:
     runs-on: ubuntu-latest
 
     steps:
+    
+      - name: Wait for unit tests to succeed
+        uses: lewagon/wait-on-check-action@v1.0.0
+        with:
+          ref: ${{ github.ref }}
+          check-name: 'Blockchain Tests'
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          wait-interval: 10
+    
+      - name: Wait for formating tests to succeed
+        uses: lewagon/wait-on-check-action@v1.0.0
+        with:
+          ref: ${{ github.ref }}
+          check-name: 'Code formatter'
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          wait-interval: 10
+    
       - name: Checkout
         uses: actions/checkout@v3
 
-      - name: Set up Python version
-        uses: actions/setup-python@v3.0.0
-        with:
-          python-version: ${{ env.PYTHON_VERSION }}
-
-      - name: Create and start virtual environment
-        run: |
-          python -m venv venv
-          source venv/bin/activate
-
-      - name: Install prod dependencies
-        run: pip install -r requirements/prod.txt
-        
-      - name: Testing with Pytest
-        run: GTH_CONFIG=test.config.json python3 -m unittest discover -s tests -p 'test_*.py'
-      
       - name: Upload artifact for deployment jobs
         uses: actions/upload-artifact@v3
         with:
@@ -67,7 +68,7 @@ jobs:
 
   deploy:
     runs-on: ubuntu-latest
-    needs: build
+    needs: tests
 
     steps:
       - name: Download artifact from build job
