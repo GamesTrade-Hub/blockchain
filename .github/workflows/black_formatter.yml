@@ -30,8 +30,12 @@ jobs:
        
       - name: Install black
         run: |
-          python -m pip install black==22.6.0  --no-input
+          python -m pip uninstall black -y
+          python -m pip uninstall click -y
           python -m pip install --upgrade click==8.0.4  --no-input
+          python -m pip install black==22.6.0  --no-input
+          python -m black . --check
+          black . --check
 
       - name: Black Code Formatter
         uses: jpetrucciani/black-check@21.12b0
