@@ -2,7 +2,7 @@ import json
 import os
 import unittest
 
-from blockchain.server import app
+from src.blockchain.server import app
 
 
 class TestNFTCreation(unittest.TestCase):

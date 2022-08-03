@@ -1,7 +1,7 @@
 import unittest
 import json
 
-from blockchain.server import app
+from src.blockchain.server import app
 
 
 class TestNodes(unittest.TestCase):

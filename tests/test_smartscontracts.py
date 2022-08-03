@@ -1,5 +1,5 @@
 import unittest
-from blockchain.server import app
+from src.blockchain.server import app
 import json
 import time
 
