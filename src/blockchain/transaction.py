@@ -52,15 +52,37 @@ class TransactionsList:
                 tx.state = State.SELECTED
         return [tx for tx in self._txs if tx.state == State.SELECTED]
 
-    def create_add_transaction(self, id_, token, sender, recipient, amount, time_=None, sc_=None, signature=None,
-                               private_key=None, state=State.WAITING, create=False):
+    def create_add_transaction(
+        self,
+        id_,
+        token,
+        sender,
+        recipient,
+        amount,
+        time_=None,
+        sc_=None,
+        signature=None,
+        private_key=None,
+        state=State.WAITING,
+        create=False,
+    ):
         """
         add Transaction to the transaction list if the transaction is valid.
         Sign the transaction if there is a private key and the transaction is not already signed
         :return: True if the transaction is added false otherwise.
         """
-        tx = Transaction(id_, token, sender, recipient, amount, time_, sc_, signature=signature,
-                         private_key=private_key, state=state)
+        tx = Transaction(
+            id_,
+            token,
+            sender,
+            recipient,
+            amount,
+            time_,
+            sc_,
+            signature=signature,
+            private_key=private_key,
+            state=state,
+        )
         if not tx.valid(create=create):
             self.error = tx.error
             return None, None
@@ -77,20 +99,27 @@ class TransactionsList:
 
     @classmethod
     def from_dict(cls, dictionary):
-        print('transaction from dict', dictionary)
-        txs = cls(transactions=[Transaction.from_dict(tx, create=False) for tx in dictionary['transactions']])
+        print("transaction from dict", dictionary)
+        txs = cls(
+            transactions=[
+                Transaction.from_dict(tx, create=False)
+                for tx in dictionary["transactions"]
+            ]
+        )
         if not txs.valid():
-            print('Transaction set not valid', txs.error)
+            print("Transaction set not valid", txs.error)
         return txs
 
     def __dict__(self):
-        return {'transactions': [tx.__dict__() for tx in self._txs]}
+        return {"transactions": [tx.__dict__() for tx in self._txs]}
 
     def valid(self):
         # FIXME check transactions timestamp (must have a minimum gap between each of them if they are the same maybe
         # not, just check id are different) / smart contract validity
         if not all([tx.valid() for tx in self._txs]):
-            self.error = ', '.join([tx.error for tx in self._txs if tx.error is not None])
+            self.error = ", ".join(
+                [tx.error for tx in self._txs if tx.error is not None]
+            )
             return False
         return True
 
@@ -109,7 +138,9 @@ class TransactionsList:
             if tx.id != except_id:
                 yield tx
 
-    def transactions(self, min_state=State.WAITING, max_state=State.VALIDATED) -> Iterator["Transaction"]:
+    def transactions(
+        self, min_state=State.WAITING, max_state=State.VALIDATED
+    ) -> Iterator["Transaction"]:
         for tx in self._txs:
             if min_state <= tx.state <= max_state:
                 yield tx
@@ -128,22 +159,23 @@ class TransactionsList:
     def reset_usage_smart_contract(self):
         for tx in self._txs:
             tx.reset_usage_smart_contract()
+
     ###########################################
 
 
 class Transaction:
     def __init__(
-            self,
-            id_: str,
-            token: str,
-            sender: PublicKey,
-            recipient: PublicKey,
-            amount: float,
-            time_: int,
-            sc_: SmartContract,
-            signature: tuple = None,
-            private_key: PrivateKey = None,
-            state: State = None
+        self,
+        id_: str,
+        token: str,
+        sender: PublicKey,
+        recipient: PublicKey,
+        amount: float,
+        time_: int,
+        sc_: SmartContract,
+        signature: tuple = None,
+        private_key: PrivateKey = None,
+        state: State = None,
     ):
         """
         Creates a transaction
@@ -161,8 +193,7 @@ class Transaction:
         :param state: state of the transaction in the blockchain (State)
         """
         if state == State.SELECTED:
-            raise 'Transaction can\'t be created in "selected" state because this state is specific to the node and ' \
-                  'does not exist in the blockchain '
+            raise 'Transaction can\'t be created in "selected" state because this state is specific to the node and ' "does not exist in the blockchain "
 
         # ## Full transaction ## #
         # # Raw transaction # #
@@ -172,14 +203,16 @@ class Transaction:
         self._recipient: PublicKey = PublicKey(recipient)
         self._amount: float = amount
         self._time: int = time_ or get_time()
-        self._smart_contract: SmartContract = SmartContract(sc_, self) or SmartContract(None, self)
+        self._smart_contract: SmartContract = SmartContract(sc_, self) or SmartContract(
+            None, self
+        )
         # # =============== # #
         self._signature: tuple = signature
         # ## ================ ## #
 
         if self._sender.key is None or self._recipient.key is None:
-            logger.warning('Invalid public key')
-            self.error = 'Invalid key'
+            logger.warning("Invalid public key")
+            self.error = "Invalid key"
             return
 
         if self._signature is None:
@@ -199,6 +232,7 @@ class Transaction:
     def reset_usage_smart_contract(self):
         self._used = False
         self._smart_contract.reset_state()
+
     ########################
 
     @property
@@ -215,27 +249,30 @@ class Transaction:
 
     def __getitem__(self, item):
         m = {
-            'recipient': self._recipient.__str__(),
-            'sender': self._sender.__str__(),
-            'amount': self._amount,
-            'token': self._token.__str__(),
+            "recipient": self._recipient.__str__(),
+            "sender": self._sender.__str__(),
+            "amount": self._amount,
+            "token": self._token.__str__(),
         }
         return m[item]
 
     def has_valid_attrs(self):
         from src.blockchain.blockchain_manager import BlockchainManager
 
-        if self._sender == self._recipient and BlockchainManager.is_gth(self._sender) is False:
-            self.error = 'Sender and recipient can\'t be the same'
+        if (
+            self._sender == self._recipient
+            and BlockchainManager.is_gth(self._sender) is False
+        ):
+            self.error = "Sender and recipient can't be the same"
             return False
         if self.is_nft() and self._amount != 1:
-            self.error = 'NFT transfer amount has to be 1'
+            self.error = "NFT transfer amount has to be 1"
             return False
         if self.is_item() and self._amount != int(self._amount):
-            self.error = 'Item transfer amount has to be natural integer > 0'
+            self.error = "Item transfer amount has to be natural integer > 0"
             return False
         if self._amount <= 0:
-            self.error = 'amount can\'t be <= 0'
+            self.error = "amount can't be <= 0"
             return False
         if self._smart_contract.contract_type == Type.INVALID:
             self.error = "Invalid smart contract"
@@ -243,37 +280,61 @@ class Transaction:
         return True
 
     def does_not_violate_the_portfolio(self):
-        from src.blockchain.blockchain_manager import BlockchainManager  # You did not see that.
-        if (self.is_nft() and not BlockchainManager.is_gth(self._recipient)) and BlockchainManager().get_balance_by_token(
-                self._sender.__str__(), self._token) < self._amount:
-            self.error = f'User does not have nft {self._token} to proceed the transaction'
-            print("ERROR while adding transaction", self.error, 'id', self._id)
+        from src.blockchain.blockchain_manager import (
+            BlockchainManager,
+        )  # You did not see that.
+
+        if (
+            self.is_nft() and not BlockchainManager.is_gth(self._recipient)
+        ) and BlockchainManager().get_balance_by_token(
+            self._sender.__str__(), self._token
+        ) < self._amount:
+            self.error = (
+                f"User does not have nft {self._token} to proceed the transaction"
+            )
+            print("ERROR while adding transaction", self.error, "id", self._id)
             return False
-        if BlockchainManager.is_gth(self._sender) is False and BlockchainManager().get_balance_by_token(self._sender.__str__(),
-                                                                                                        self._token) < self._amount:
-            self.error = f'User does not have enough {self._token} to proceed the transaction'
-            print("ERROR while adding transaction", self.error, 'id', self._id)
+        if (
+            BlockchainManager.is_gth(self._sender) is False
+            and BlockchainManager().get_balance_by_token(
+                self._sender.__str__(), self._token
+            )
+            < self._amount
+        ):
+            self.error = (
+                f"User does not have enough {self._token} to proceed the transaction"
+            )
+            print("ERROR while adding transaction", self.error, "id", self._id)
             return False
-        if BlockchainManager.is_gth(self._recipient) and BlockchainManager.is_gth(
-                self._sender) and self.is_nft() and BlockchainManager().nft_exists(self._token):
-            self.error = 'NFT with this id already exists'
-            print("ERROR while adding transaction", self.error, 'id', self._id)
+        if (
+            BlockchainManager.is_gth(self._recipient)
+            and BlockchainManager.is_gth(self._sender)
+            and self.is_nft()
+            and BlockchainManager().nft_exists(self._token)
+        ):
+            self.error = "NFT with this id already exists"
+            print("ERROR while adding transaction", self.error, "id", self._id)
             return False
         return True
 
     def has_valid_signature(self):
         if not bool(self._signature):
-            self.error = 'transaction not signed'
+            self.error = "transaction not signed"
             return False
-        if not ecdsa.verify(self._signature, self.__encode(full=False), self._sender.key, curve.secp256k1,
-                            ecdsa.sha256):
-            self.error = 'Invalid signature'
+        if not ecdsa.verify(
+            self._signature,
+            self.__encode(full=False),
+            self._sender.key,
+            curve.secp256k1,
+            ecdsa.sha256,
+        ):
+            self.error = "Invalid signature"
             return False
         return True
 
     def valid(self, create=False):
         if not self.has_valid_signature() or not self.has_valid_attrs():
-            print('Invalid transaction', self.error)
+            print("Invalid transaction", self.error)
             return False
         return True
 
@@ -287,16 +348,16 @@ class Transaction:
         :return: transaction as a dict
         """
         d = {
-            'id': self._id,
-            'token': self._token,
-            'sender': self._sender.__str__(),
-            'recipient': self._recipient.__str__(),
-            'amount': self._amount,
-            'time': self._time,
-            'smart_contract': self._smart_contract.__dict__(),
+            "id": self._id,
+            "token": self._token,
+            "sender": self._sender.__str__(),
+            "recipient": self._recipient.__str__(),
+            "amount": self._amount,
+            "time": self._time,
+            "smart_contract": self._smart_contract.__dict__(),
         }
         if full:
-            d = {**d, **{'signature': self._signature}}
+            d = {**d, **{"signature": self._signature}}
         return d
 
     def __encode(self, full=False):
@@ -318,34 +379,40 @@ class Transaction:
         """
         Used for export
         """
-        return {**self.__to_dict(full=True), **{
-            'signature': self._signature,
-            'state': self.state.encode()
-        }}
+        return {
+            **self.__to_dict(full=True),
+            **{"signature": self._signature, "state": self.state.encode()},
+        }
 
     def sign(self, private_key):
         private_key = PrivateKey(private_key).key
         try:
-            self._signature = ecdsa.sign(self.__encode(full=False), private_key, curve.secp256k1, ecdsa.sha256)
+            self._signature = ecdsa.sign(
+                self.__encode(full=False), private_key, curve.secp256k1, ecdsa.sha256
+            )
         except BaseException as e:
             self.error = e
-            logger.warning(f'Unable to sign transaction {e}')
+            logger.warning(f"Unable to sign transaction {e}")
             self._signature = None
-        logger.info(f'signature {self._signature} {type(self._signature)}')
+        logger.info(f"signature {self._signature} {type(self._signature)}")
 
     @classmethod
     def from_dict(cls, dictionary, create=False):
         tx = cls(
-            id_=dictionary['id'] if 'id' in dictionary else None,
-            token=dictionary['token'],
-            sender=dictionary['sender'],
-            recipient=dictionary['recipient'],
-            amount=dictionary['amount'],
-            time_=dictionary['time'] if 'id' in dictionary else None,
-            sc_=dictionary['smart_contract'] if 'smart_contract' in dictionary else None,
-            signature=dictionary['signature'] if 'signature' in dictionary else None,
-            private_key=dictionary['private_key'] if 'private_key' in dictionary else None,
-            state=State.decode(dictionary['state']) if 'state' in dictionary else None,
+            id_=dictionary["id"] if "id" in dictionary else None,
+            token=dictionary["token"],
+            sender=dictionary["sender"],
+            recipient=dictionary["recipient"],
+            amount=dictionary["amount"],
+            time_=dictionary["time"] if "id" in dictionary else None,
+            sc_=dictionary["smart_contract"]
+            if "smart_contract" in dictionary
+            else None,
+            signature=dictionary["signature"] if "signature" in dictionary else None,
+            private_key=dictionary["private_key"]
+            if "private_key" in dictionary
+            else None,
+            state=State.decode(dictionary["state"]) if "state" in dictionary else None,
         )
         if not tx.valid(create=create):
             logger.warning(f"Invalid transaction {tx.error} {tx.__dict__()}")
@@ -353,20 +420,22 @@ class Transaction:
         return tx
 
     def is_nft(self):
-        return self._token[:4] == 'nft_'
+        return self._token[:4] == "nft_"
 
     def is_item(self):
-        return self._token[:5] == 'item_'
+        return self._token[:5] == "item_"
 
     def spread(self, nodes):
         """
         Spread transaction to other nodes
         """
         if not self.valid():
-            logger.warning('Can\'t spread an invalid transaction')
+            logger.warning("Can't spread an invalid transaction")
             return
 
         nodes.spread_transaction(self.__dict__())
 
     def can_be_added(self, txs):
-        return self.state == State.WAITING and (self._smart_contract.is_validated() or self._smart_contract.run(txs=txs))
+        return self.state == State.WAITING and (
+            self._smart_contract.is_validated() or self._smart_contract.run(txs=txs)
+        )

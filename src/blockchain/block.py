@@ -31,15 +31,15 @@ def proof_of_work(block_hash, nonce_queue, cancel_queue, host):
 
     nonce = 0
     while Block.valid_pow(block_hash, nonce) is False:
-        if cancel_queue.qsize() and cancel_queue.get(block=False) == 'cancel':
-            logger.info(f'Cancel received while doing POW')
+        if cancel_queue.qsize() and cancel_queue.get(block=False) == "cancel":
+            logger.info(f"Cancel received while doing POW")
             sys.exit(0)
         nonce += 1 + random()
 
     sleep(1)
     nonce_queue.put(nonce)
-    print('nonce found in subprocess', nonce)
-    get(f'{host}/private/__end_mining_process')
+    print("nonce found in subprocess", nonce)
+    get(f"{host}/private/__end_mining_process")
     sys.exit(0)
 
 
@@ -55,13 +55,13 @@ def proof_of_authority(block_hash) -> Signature:
 
 class Block:
     def __init__(
-            self,
-            index: int,
-            transactions: TransactionsList,
-            previous_hash: str,
-            validator: PublicKey,
-            nonce: Optional[Signature] = None,
-            hash_: Optional[str] = None
+        self,
+        index: int,
+        transactions: TransactionsList,
+        previous_hash: str,
+        validator: PublicKey,
+        nonce: Optional[Signature] = None,
+        hash_: Optional[str] = None,
     ):
         """
         :param index: index of the block in the chain
@@ -96,21 +96,21 @@ class Block:
         return self.__dict__().__str__()
 
     def __dict__(self):
-        return {**self.__to_dict(full=True), **{'hash': self._hash}}
+        return {**self.__to_dict(full=True), **{"hash": self._hash}}
 
     @classmethod
     def from_dict(cls, dictionary):
         block = cls(
-            index=dictionary['index'],
-            transactions=TransactionsList.from_dict(dictionary['transactions']),
-            previous_hash=dictionary['previous_hash'],
-            validator=PublicKey(dictionary['validator']),
-            nonce=Signature(dictionary['nonce']),
-            hash_=dictionary['hash']
+            index=dictionary["index"],
+            transactions=TransactionsList.from_dict(dictionary["transactions"]),
+            previous_hash=dictionary["previous_hash"],
+            validator=PublicKey(dictionary["validator"]),
+            nonce=Signature(dictionary["nonce"]),
+            hash_=dictionary["hash"],
         )
         if not block.valid():
-            logger.warning(f'Invalid block: {block.error}')
-            return None, 'Invalid block'
+            logger.warning(f"Invalid block: {block.error}")
+            return None, "Invalid block"
         return block
 
     @classmethod
@@ -125,16 +125,19 @@ class Block:
         :return:
         """
         d = {
-            'index': self._index,
-            'transactions': self._txs.__dict__(),
-            'previous_hash': self._previous_hash
+            "index": self._index,
+            "transactions": self._txs.__dict__(),
+            "previous_hash": self._previous_hash,
         }
         if full:
-            d = {**d, **{
-                'nonce': self._nonce.encode(),
-                'validator': self._validator.encode(),
-                'hash': self._hash,
-            }}
+            d = {
+                **d,
+                **{
+                    "nonce": self._nonce.encode(),
+                    "validator": self._validator.encode(),
+                    "hash": self._hash,
+                },
+            }
         return d
 
     def __encode(self, full=True) -> str:
@@ -148,7 +151,7 @@ class Block:
         :return: <bool> True if correct, False if not.
         """
 
-        guess = f'{block_hash}{nonce}'
+        guess = f"{block_hash}{nonce}"
         guess_hash = hash__(guess)
         return guess_hash[:4] == "0000"
 
@@ -164,8 +167,10 @@ class Block:
         from src.blockchain.blockchain_manager import BlockchainManager
 
         print(f"{nonce.signature=}", f"{block_hash=}", f"{validator=}")
-        return has_valid_signature(nonce.signature, block_hash, validator) and \
-               validator.encode() in BlockchainManager().authorized_nodes_public_keys
+        return (
+            has_valid_signature(nonce.signature, block_hash, validator)
+            and validator.encode() in BlockchainManager().authorized_nodes_public_keys
+        )
 
     def valid_transactions(self):
         if not self._txs.valid():
@@ -181,11 +186,11 @@ class Block:
         #     logger.warning(f'Invalid block {self.error}')
         #     return False
         if not Block.valid_poa(self._hash, self._nonce, self._validator):
-            self.error = f'Invalid POA: {self._nonce}, hash: {self._hash}'
-            logger.warning(f'Invalid block {self.error}')
+            self.error = f"Invalid POA: {self._nonce}, hash: {self._hash}"
+            logger.warning(f"Invalid block {self.error}")
             return False
         if not self.valid_transactions():
-            print(f'Invalid block {self.error}')
+            print(f"Invalid block {self.error}")
             return False
         return True
 

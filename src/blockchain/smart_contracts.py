@@ -34,7 +34,7 @@ type_crp = {
     "TX_CHECK": Type.TX_CHECK,
     "OTHER_TX_CHECK": Type.OTHER_TX_CHECK,
     "EXTERNAL_CHECK": Type.EXTERNAL_CHECK,
-    "EXECUTION": Type.EXECUTION
+    "EXECUTION": Type.EXECUTION,
 }
 
 
@@ -59,16 +59,21 @@ class BinIdxDict(dict):
 
 
 class SmartContract:
-    requirements = BinIdxDict({
-        Type.OTHER_TX_CHECK: ['recipient', 'sender', 'amount', 'token'],
-    })
+    requirements = BinIdxDict(
+        {
+            Type.OTHER_TX_CHECK: ["recipient", "sender", "amount", "token"],
+        }
+    )
 
     def __init__(self, contract, related_tx):
         self.txs = None
         # Content
         self.smartContract = contract
         if self.contract_type == Type.INVALID:
-            print("Invalid contract sent to SmartContract class __init__()", file=sys.stderr)
+            print(
+                "Invalid contract sent to SmartContract class __init__()",
+                file=sys.stderr,
+            )
         self.related_tx = related_tx
         self.related_tx_id = related_tx.id
         self._is_validated = False
@@ -78,7 +83,10 @@ class SmartContract:
         if not self.related_tx.does_not_violate_the_portfolio():
             return False
         if self.contract_type == Type.INVALID:
-            print('ERROR This contract should not be run because it has type "INVALID"', file=sys.stderr)
+            print(
+                'ERROR This contract should not be run because it has type "INVALID"',
+                file=sys.stderr,
+            )
         if self.contract_type & Type.EMPTY:
             return True
         if self.contract_type & Type.EXECUTION:
@@ -95,10 +103,21 @@ class SmartContract:
         :param prevent_self_check_id:
         :return:
         """
-        return not tx.is_used_to_validate_smart_contract() and \
-               all([str(tx[i]) == str(self.smartContract[i]) for i in SmartContract.requirements[self.contract_type]]) and \
-               (prevent_self_check_id == tx.smart_contract.related_tx_id or
-                tx.smart_contract.run(txs=self.txs, prevent_self_check_id=self.related_tx_id))
+        return (
+            not tx.is_used_to_validate_smart_contract()
+            and all(
+                [
+                    str(tx[i]) == str(self.smartContract[i])
+                    for i in SmartContract.requirements[self.contract_type]
+                ]
+            )
+            and (
+                prevent_self_check_id == tx.smart_contract.related_tx_id
+                or tx.smart_contract.run(
+                    txs=self.txs, prevent_self_check_id=self.related_tx_id
+                )
+            )
+        )
 
     def __check_txs(self, prevent_self_check_id):
         """
@@ -106,7 +125,9 @@ class SmartContract:
         :param prevent_self_check_id:
         :return:
         """
-        for tx in self.txs.all(except_id=self.related_tx_id):  # Search the corresponding transaction
+        for tx in self.txs.all(
+            except_id=self.related_tx_id
+        ):  # Search the corresponding transaction
             if self.__does_validate(tx, prevent_self_check_id):
                 tx.use_to_validate_smart_contract()
                 self._is_validated = True
@@ -166,13 +187,15 @@ class SmartContract:
         # print("parse contract", self.smartContract)
         if self.smartContract is None or self.smartContract == {}:
             return Type.EMPTY
-        if 'type' not in self.smartContract:
+        if "type" not in self.smartContract:
             return Type.INVALID
-        if self.smartContract['type'].upper().replace(' ', '_') == 'OTHER_TX_CHECK':
+        if self.smartContract["type"].upper().replace(" ", "_") == "OTHER_TX_CHECK":
             type_ = Type.OTHER_TX_CHECK | Type.CHECK | Type.TX_CHECK
             # print('type_', type_)
             # print("SmartContract.requirements[type_]", SmartContract.requirements[type_])
-            if any([i not in self.smartContract for i in SmartContract.requirements[type_]]):  # Check if all requirements fields are present
+            if any(
+                [i not in self.smartContract for i in SmartContract.requirements[type_]]
+            ):  # Check if all requirements fields are present
                 return Type.INVALID
             return type_
 

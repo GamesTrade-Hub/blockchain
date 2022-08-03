@@ -18,30 +18,34 @@ logger.setLevel(logging.INFO)
 
 
 def get_public_ip(ec2_client: EC2Client, instance_id):
-    reservations = ec2_client.describe_instances(InstanceIds=[instance_id]).get("Reservations")
+    reservations = ec2_client.describe_instances(InstanceIds=[instance_id]).get(
+        "Reservations"
+    )
 
     for reservation in reservations:
-        for instance in reservation['Instances']:
+        for instance in reservation["Instances"]:
             return instance.get("PublicIpAddress")
 
 
 def stop_instance(ec2_client, instance_id):
     response = ec2_client.stop_instances(InstanceIds=[instance_id])
-    logger.info(f'stop {instance_id=}: {response}')
+    logger.info(f"stop {instance_id=}: {response}")
 
 
 def terminate_instance(ec2_client, instance_id):
     response = ec2_client.terminate_instances(InstanceIds=[instance_id])
-    logger.info(f'terminate {instance_id=}: {response}')
+    logger.info(f"terminate {instance_id=}: {response}")
 
 
 def running_instances_ids(ec2_client) -> Iterator[str]:
-    reservations = ec2_client.describe_instances(Filters=[
-        {
-            "Name": "instance-state-name",
-            "Values": ["running"],
-        }
-    ]).get("Reservations")
+    reservations = ec2_client.describe_instances(
+        Filters=[
+            {
+                "Name": "instance-state-name",
+                "Values": ["running"],
+            }
+        ]
+    ).get("Reservations")
 
     for reservation in reservations:
         for instance in reservation["Instances"]:
@@ -54,12 +58,14 @@ def terminate_all_instances(ec2_client):
 
 
 def get_running_instances(ec2_client, ec2_resource):
-    reservations = ec2_client.describe_instances(Filters=[
-        {
-            "Name": "instance-state-name",
-            "Values": ["running"],
-        }
-    ]).get("Reservations")
+    reservations = ec2_client.describe_instances(
+        Filters=[
+            {
+                "Name": "instance-state-name",
+                "Values": ["running"],
+            }
+        ]
+    ).get("Reservations")
 
     for reservation in reservations:
         for instance in reservation["Instances"]:
@@ -69,24 +75,34 @@ def get_running_instances(ec2_client, ec2_resource):
             private_ip = instance["PrivateIpAddress"]
             print(f"{instance_id}, {instance_type}, {public_ip=}, {private_ip=}")
 
-    for status in ec2_resource.meta.client.describe_instance_status()['InstanceStatuses']:
+    for status in ec2_resource.meta.client.describe_instance_status()[
+        "InstanceStatuses"
+    ]:
         print(status)
 
 
 class AutoRunner:
-    region_name = 'eu-west-3'
-    key_name = 'aws_gth_keys'
+    region_name = "eu-west-3"
+    key_name = "aws_gth_keys"
 
     def __init__(self):
-        self.node_session = boto3.Session(profile_name='ec2_node')
-        self.creator_session = boto3.Session(profile_name='ec2_creator')
+        self.node_session = boto3.Session(profile_name="ec2_node")
+        self.creator_session = boto3.Session(profile_name="ec2_creator")
 
-        self.ec2_resource_node: ServiceResource = self.node_session.resource('ec2', region_name=self.region_name)
-        self.ec2_client_node: EC2Client = self.node_session.client('ec2', region_name=self.region_name)
-        self.ec2_resource_creator: ServiceResource = self.creator_session.resource('ec2', region_name=self.region_name)
-        self.ec2_client_creator: EC2Client = self.creator_session.client('ec2', region_name=self.region_name)
+        self.ec2_resource_node: ServiceResource = self.node_session.resource(
+            "ec2", region_name=self.region_name
+        )
+        self.ec2_client_node: EC2Client = self.node_session.client(
+            "ec2", region_name=self.region_name
+        )
+        self.ec2_resource_creator: ServiceResource = self.creator_session.resource(
+            "ec2", region_name=self.region_name
+        )
+        self.ec2_client_creator: EC2Client = self.creator_session.client(
+            "ec2", region_name=self.region_name
+        )
 
-        self.ssm_client = self.node_session.client('ssm', region_name=self.region_name)
+        self.ssm_client = self.node_session.client("ssm", region_name=self.region_name)
 
     def create_node_instance(self, name=None) -> Optional[Instance]:
         """
@@ -96,29 +112,36 @@ class AutoRunner:
         """
         logger.info("Creating node instance")
         instances: List[Instance] = self.ec2_resource_creator.create_instances(
-            ImageId='ami-0f7559f51d3a22167',
+            ImageId="ami-0f7559f51d3a22167",
             KeyName=self.key_name,
             MaxCount=1,
             MinCount=1,
-            Monitoring={'Enabled': True},
-            Placement={'AvailabilityZone': 'eu-west-3c'},
-            InstanceType='t2.micro',
-            SecurityGroupIds=['sg-0ea7ad2589dc158bf'],
+            Monitoring={"Enabled": True},
+            Placement={"AvailabilityZone": "eu-west-3c"},
+            InstanceType="t2.micro",
+            SecurityGroupIds=["sg-0ea7ad2589dc158bf"],
             IamInstanceProfile={
-                'Arn': 'arn:aws:iam::747137879128:instance-profile/BlockchainNode',
+                "Arn": "arn:aws:iam::747137879128:instance-profile/BlockchainNode",
             },
-            InstanceInitiatedShutdownBehavior='terminate',
-            TagSpecifications=[{
-                'ResourceType': 'instance',
-                'Tags': [{
-                    'Key': 'Name',
-                    'Value': name or f'node-{datetime.datetime.now().__str__()[5:-5]}'
-                }]
-            }]
+            InstanceInitiatedShutdownBehavior="terminate",
+            TagSpecifications=[
+                {
+                    "ResourceType": "instance",
+                    "Tags": [
+                        {
+                            "Key": "Name",
+                            "Value": name
+                            or f"node-{datetime.datetime.now().__str__()[5:-5]}",
+                        }
+                    ],
+                }
+            ],
         )
 
         self.__run_dummy_command_checkup(instances[0])
-        logger.info(f"Created node instance: {instances[0].id}. ip: {get_public_ip(self.ec2_client_creator, instances[0].id)}")
+        logger.info(
+            f"Created node instance: {instances[0].id}. ip: {get_public_ip(self.ec2_client_creator, instances[0].id)}"
+        )
         self.__run_blockchain_node_setup(instances[0])
 
         return instances[0]
@@ -135,8 +158,8 @@ class AutoRunner:
                     InstanceIds=[instance.id],
                     DocumentName="AWS-RunShellScript",
                     Parameters={
-                        'commands': ['ls -la /'],
-                    }
+                        "commands": ["ls -la /"],
+                    },
                 )
 
                 break
@@ -147,11 +170,15 @@ class AutoRunner:
                     return
                 time.sleep(3)
 
-        command_id = response['Command']['CommandId']
+        command_id = response["Command"]["CommandId"]
         time.sleep(2)
-        output = self.ssm_client.get_command_invocation(CommandId=command_id, InstanceId=instance.id)
-        while output['Status'] == "InProgress":
-            output = self.ssm_client.get_command_invocation(CommandId=command_id, InstanceId=instance.id)
+        output = self.ssm_client.get_command_invocation(
+            CommandId=command_id, InstanceId=instance.id
+        )
+        while output["Status"] == "InProgress":
+            output = self.ssm_client.get_command_invocation(
+                CommandId=command_id, InstanceId=instance.id
+            )
         logger.debug(f"dummy command output {output['StandardOutputContent']}")
 
     def stop_instance(self, instance_id):
@@ -180,13 +207,13 @@ class AutoRunner:
                     InstanceIds=[instance.id],
                     DocumentName="AWS-RunShellScript",
                     Parameters={
-                        'commands': [
-                            'git clone https://github.com/GamesTrade-Hub/blockchain.git',
-                            'cd blockchain',
-                            './prod.sh'
+                        "commands": [
+                            "git clone https://github.com/GamesTrade-Hub/blockchain.git",
+                            "cd blockchain",
+                            "./prod.sh",
                         ],
-                        'workingDirectory': ['/home/ubuntu']
-                    }
+                        "workingDirectory": ["/home/ubuntu"],
+                    },
                 )
                 break
             except Exception as e:
@@ -195,19 +222,22 @@ class AutoRunner:
                     return None
                 time.sleep(3)
 
-        command_id = response['Command']['CommandId']
+        command_id = response["Command"]["CommandId"]
         time.sleep(2)
-        output = self.ssm_client.get_command_invocation(CommandId=command_id, InstanceId=instance.id)
-        while output['Status'] == "InProgress":
-            output = self.ssm_client.get_command_invocation(CommandId=command_id, InstanceId=instance.id)
+        output = self.ssm_client.get_command_invocation(
+            CommandId=command_id, InstanceId=instance.id
+        )
+        while output["Status"] == "InProgress":
+            output = self.ssm_client.get_command_invocation(
+                CommandId=command_id, InstanceId=instance.id
+            )
         logger.debug(f"run BC command output {output['StandardOutputContent']}")
         logger.debug(f"run BC command error {output['StandardErrorContent']}")
         logger.info(f"run blockchain node setup status: {output['Status']}")
         logger.debug(f"StatusDetails {output['StatusDetails']}")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     auto_runner = AutoRunner()
     auto_runner.terminate_all_instances()
     auto_runner.create_node_instance()
-

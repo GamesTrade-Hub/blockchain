@@ -10,7 +10,7 @@ class ManageKeys:
     def get_all_keys(self):
         resp = get(
             f"{self.base_url}listkeys/",
-            headers={"Authorization": f"Token {self.token}"}
+            headers={"Authorization": f"Token {self.token}"},
         )
         return resp.json()
 
@@ -24,11 +24,7 @@ class ManageKeys:
         resp = post(
             f"{self.base_url}addkey/",
             headers={"Authorization": f"Token {self.token}"},
-            data={
-                "pub_key": pub_key,
-                "key": key_to_add,
-                "entity": entity
-            }
+            data={"pub_key": pub_key, "key": key_to_add, "entity": entity},
         )
         return resp.content
 
@@ -36,6 +32,6 @@ class ManageKeys:
         resp = post(
             f"{self.base_url}checkkey/",
             headers={"Authorization": f"Token {self.token}"},
-            data={"key": key}
+            data={"key": key},
         )
         return True if resp.json()["status"] == "Ok" else False

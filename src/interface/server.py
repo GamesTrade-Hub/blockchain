@@ -12,6 +12,7 @@ import json
 import sys
 import signal
 import logging
+
 # from log import Log
 
 # log = Log().getLogger()
@@ -22,8 +23,8 @@ logging.basicConfig(level=logging.DEBUG)
 logger.setLevel(logging.DEBUG)
 
 
-if __name__ != '__main__':
-    gunicorn_logger = logging.getLogger('gunicorn.error')
+if __name__ != "__main__":
+    gunicorn_logger = logging.getLogger("gunicorn.error")
     gunicorn_logger.setLevel(logging.DEBUG)
     logger.handlers = gunicorn_logger.handlers
     logger.setLevel(gunicorn_logger.level)
@@ -36,47 +37,44 @@ ar = AutoRunner()
 app = Flask(__name__)
 
 
-@app.route('/nodes/new', methods=['GET', 'POST'])
+@app.route("/nodes/new", methods=["GET", "POST"])
 def consensus():
 
     response = {
-        'message': 'The new node is being created',
+        "message": "The new node is being created",
     }
     values = request.get_json()
 
-    ar.create_node_instance(values['name'] if 'name' in values else None)
+    ar.create_node_instance(values["name"] if "name" in values else None)
 
     return json.dumps(response), 200
 
 
-@app.route('/nodes/terminate', methods=['GET', 'POST'])
+@app.route("/nodes/terminate", methods=["GET", "POST"])
 def consensus():
 
     response = {
-        'message': 'node terminated',
+        "message": "node terminated",
     }
     values = request.get_json()
 
-    required = ['id']
+    required = ["id"]
 
     if not all(k in values for k in required):
-        return jsonify({'message': f'Missing value among {", ".join(required)}'}), 400
+        return jsonify({"message": f'Missing value among {", ".join(required)}'}), 400
 
-    ar.terminate_instance(values['id'])
+    ar.terminate_instance(values["id"])
 
     return json.dumps(response), 200
 
 
-@app.route('/nodes/terminate_all', methods=['GET', 'POST'])
+@app.route("/nodes/terminate_all", methods=["GET", "POST"])
 def consensus():
 
     response = {
-        'message': 'nodes terminated',
+        "message": "nodes terminated",
     }
 
     ar.terminate_all_instances()
 
     return json.dumps(response), 200
-
-
-

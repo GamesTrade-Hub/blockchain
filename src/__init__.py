@@ -10,5 +10,3 @@
 # TODO Setup update without loosing current state (dump saved transactions?)
 #   - update nodes one after the other, at each node restart, one another send him the current transactions to confirm
 #   - node dump its state, update, restart, reload (can be bad if the update takes some time)
-
-

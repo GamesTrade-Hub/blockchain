@@ -23,25 +23,27 @@ The name of the config file is "config.json" or specified by the environment var
 """
 
 gth_config_folder = expanduser("~/.gth")
-config_file_name = os.environ['GTH_CONFIG'] if 'GTH_CONFIG' in os.environ else 'config.json'
+config_file_name = (
+    os.environ["GTH_CONFIG"] if "GTH_CONFIG" in os.environ else "config.json"
+)
 
-config_file_path: Optional[str] = join(
-    gth_config_folder,
-    config_file_name
-) if exists(join(gth_config_folder, config_file_name)) else join(
-    "./",
-    config_file_name
-) if exists(join("./", config_file_name)) else None
+config_file_path: Optional[str] = (
+    join(gth_config_folder, config_file_name)
+    if exists(join(gth_config_folder, config_file_name))
+    else join("./", config_file_name)
+    if exists(join("./", config_file_name))
+    else None
+)
 logger.debug(f"config file path: {config_file_path}")
 
 LIMIT_TRANSACTIONS_BLOCK = 1
 
 
 class NodeType(Enum):
-    ALL = 'all'
-    MINER = 'miner'
-    MANAGER = 'manager'
-    UNKNOWN = 'UNKNOWN'
+    ALL = "all"
+    MINER = "miner"
+    MANAGER = "manager"
+    UNKNOWN = "UNKNOWN"
 
 
 class Host(metaclass=MetaSingleton):
@@ -52,7 +54,11 @@ class Host(metaclass=MetaSingleton):
 
     @property
     def host(self):
-        return f'http://<unknown>:{self._port}' if self._host is None else f'http://{self._host}'
+        return (
+            f"http://<unknown>:{self._port}"
+            if self._host is None
+            else f"http://{self._host}"
+        )
 
     @host.setter
     def host(self, host):
@@ -92,10 +98,9 @@ class Config:
 
     @classmethod
     def from_file(cls, file):
-        raw_cfg = json.load(open(file, 'r'))
-        raw_cfg['type'] = NodeType(raw_cfg['type'])
+        raw_cfg = json.load(open(file, "r"))
+        raw_cfg["type"] = NodeType(raw_cfg["type"])
         return cls(**raw_cfg)
 
 
 conf: Config = Config.from_file(config_file_path)
-

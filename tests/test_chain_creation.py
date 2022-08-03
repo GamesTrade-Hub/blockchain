@@ -19,5 +19,5 @@ class TestChainCreation(unittest.TestCase):
         self.assertEqual(self.blm.chain.last_block.previous_hash, "0000")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

@@ -24,7 +24,14 @@ class BcEncoder(json.JSONEncoder):
         #     print(':', i, o.__dict__[i])
         #     if o.__dict__[i].__class__.__module__ != 'builtins':
         #         print("no builtin result", o.__dict__[i].__class__.__module__,  json.dumps(o.__dict__[i], cls=BcEncoder))
-        return {i: (o.__dict__[i].__str__() if o.__dict__[i].__class__.__module__ != '__builtin__' else o.__dict__[i]) for i in o.__dict__}
+        return {
+            i: (
+                o.__dict__[i].__str__()
+                if o.__dict__[i].__class__.__module__ != "__builtin__"
+                else o.__dict__[i]
+            )
+            for i in o.__dict__
+        }
 
 
 class MetaSingleton(type):
@@ -32,8 +39,10 @@ class MetaSingleton(type):
 
     def __call__(cls, *args, **kwargs):
         if cls not in MetaSingleton.__instances:
-            print(f'Creating instance of {cls}')
-            MetaSingleton.__instances[cls] = super(MetaSingleton, cls).__call__(*args, **kwargs)
+            print(f"Creating instance of {cls}")
+            MetaSingleton.__instances[cls] = super(MetaSingleton, cls).__call__(
+                *args, **kwargs
+            )
         # print(MetaSingleton.__instances)
         return MetaSingleton.__instances[cls]
 
@@ -51,7 +60,7 @@ def post(rq, json_=None, headers=None, data=None):
     except ConnectionRefusedError as e:
         logger.error(f"[ConnectionRefusedError] Connection to {rq} refused {e}")
     except requests.exceptions.Timeout as e:
-        logger.error(f'[Timeout] Timeout error on {rq} : {e}')
+        logger.error(f"[Timeout] Timeout error on {rq} : {e}")
     except requests.exceptions.ConnectionError as e:
         logger.error(f"[ConnectionError] Connection to {rq} failed {e}")
     except BaseException as e:
@@ -68,10 +77,9 @@ def get(rq, json_=None, headers=None, data=None):
     except ConnectionRefusedError as e:
         logger.error(f"[ConnectionRefusedError] Connection to {rq} refused {e}")
     except requests.exceptions.Timeout as e:
-        logger.error(f'[Timeout] Timeout error on {rq} : {e}')
+        logger.error(f"[Timeout] Timeout error on {rq} : {e}")
     except requests.exceptions.ConnectionError as e:
         logger.error(f"[ConnectionError] Connection to {rq} failed {e}")
     except BaseException as e:
         logger.error(f"[ConnectionError] Connection to {rq} failed {e}")
     return None
-

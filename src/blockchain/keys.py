@@ -14,19 +14,21 @@ class Signature:
             elif isinstance(signature, tuple):
                 self.signature = signature
             else:
-                logger.error(f'Invalid private key type. Type received {type(signature)}')
+                logger.error(
+                    f"Invalid private key type. Type received {type(signature)}"
+                )
         except ValueError:
-            logger.error(f'Invalid private key type. Type received {type(signature)}')
+            logger.error(f"Invalid private key type. Type received {type(signature)}")
 
     def __str__(self):
-        return f'{self.signature[0]}A{self.signature[1]}'
+        return f"{self.signature[0]}A{self.signature[1]}"
 
     def encode(self):
         return self.__str__()
 
     @staticmethod
     def decode(signature):
-        return tuple([int(s) for s in signature.split('A')])
+        return tuple([int(s) for s in signature.split("A")])
 
 
 class PrivateKey:
@@ -39,9 +41,9 @@ class PrivateKey:
             elif isinstance(key, int):
                 self.key = key
             else:
-                logger.error(f'Invalid private key type. Type received {type(key)}')
+                logger.error(f"Invalid private key type. Type received {type(key)}")
         except ValueError:
-            logger.error(f'Invalid private key type. Type received {type(key)}')
+            logger.error(f"Invalid private key type. Type received {type(key)}")
 
     @staticmethod
     def decode(key):
@@ -71,17 +73,17 @@ class PublicKey:
             elif isinstance(key, point.Point):
                 self.key = key
             else:
-                logger.error(f'Invalid public key type. Type received {type(key)}')
+                logger.error(f"Invalid public key type. Type received {type(key)}")
         except ValueError:
-            logger.error(f'Invalid public key type. Type received {type(key)}')
+            logger.error(f"Invalid public key type. Type received {type(key)}")
 
     @staticmethod
     def decode(key):
-        pk = str(key).split('A')
+        pk = str(key).split("A")
         return point.Point(int(pk[0]), int(pk[1]), curve.secp256k1)
 
     def encode(self):
-        return str(self.key.x) + 'A' + str(self.key.y)
+        return str(self.key.x) + "A" + str(self.key.y)
 
     def __str__(self):
         return self.encode()
@@ -98,17 +100,21 @@ def sign(content: str, private_key: PrivateKey) -> tuple:
     try:
         signature = ecdsa.sign(content, private_key.key, curve.secp256k1, ecdsa.sha256)
     except BaseException as e:
-        logger.warning(f'Unable to sign string {content}: {e}')
+        logger.warning(f"Unable to sign string {content}: {e}")
         signature = None
-    logger.info(f'[sign] signature created {signature} {type(signature)}')
+    logger.info(f"[sign] signature created {signature} {type(signature)}")
     return signature
 
 
-def has_valid_signature(signature: tuple, content: str, sender_public_key: PublicKey) -> bool:
+def has_valid_signature(
+    signature: tuple, content: str, sender_public_key: PublicKey
+) -> bool:
     if not bool(signature):
-        logger.warning(f'[hasValidSignature] transaction not signed')
+        logger.warning(f"[hasValidSignature] transaction not signed")
         return False
-    if not ecdsa.verify(signature, content, sender_public_key.key, curve.secp256k1, ecdsa.sha256):
-        logger.warning(f'[hasValidSignature] Invalid signature')
+    if not ecdsa.verify(
+        signature, content, sender_public_key.key, curve.secp256k1, ecdsa.sha256
+    ):
+        logger.warning(f"[hasValidSignature] Invalid signature")
         return False
     return True

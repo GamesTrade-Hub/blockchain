@@ -5,7 +5,14 @@ from src.blockchain.tools import get_time, MetaSingleton, hash__
 from src.blockchain.transaction import TransactionsList, State
 from src.blockchain.node import NodesList
 from src.blockchain.block import Block
-from src.blockchain.config import Host, NodeType, conf, PRIVATE_KEY, PUBLIC_KEY, LIMIT_TRANSACTIONS_BLOCK
+from src.blockchain.config import (
+    Host,
+    NodeType,
+    conf,
+    PRIVATE_KEY,
+    PUBLIC_KEY,
+    LIMIT_TRANSACTIONS_BLOCK,
+)
 import logging
 
 logging.basicConfig(level=logging.DEBUG)
@@ -24,7 +31,6 @@ def get_authorized_nodes_public_keys():
 
 
 class BlockchainManager(metaclass=MetaSingleton):
-
     def __init__(self):
         self._type: NodeType = NodeType.UNKNOWN
         self.txs: TransactionsList = TransactionsList()
@@ -32,9 +38,9 @@ class BlockchainManager(metaclass=MetaSingleton):
         genesis_block: Block = Block(
             index=1,
             transactions=TransactionsList(),
-            previous_hash='0000',
+            previous_hash="0000",
             validator=PUBLIC_KEY,
-            nonce=None
+            nonce=None,
         )
 
         self.chain: Chain = Chain(blocks=[genesis_block])
@@ -44,12 +50,16 @@ class BlockchainManager(metaclass=MetaSingleton):
         self.mining_process = None
         self.mining_process_queue = None
 
-        self.authorized_nodes_public_keys: List[str] = get_authorized_nodes_public_keys()
+        self.authorized_nodes_public_keys: List[
+            str
+        ] = get_authorized_nodes_public_keys()
 
     def considered_transactions(self):
         for tx in self.chain.transactions:
             yield tx
-        for tx in self.txs.transactions(min_state=State.SELECTED, max_state=State.SELECTED):
+        for tx in self.txs.transactions(
+            min_state=State.SELECTED, max_state=State.SELECTED
+        ):
             yield tx
 
     @property
@@ -58,11 +68,15 @@ class BlockchainManager(metaclass=MetaSingleton):
 
     @type.setter
     def type(self, type_):
-        if isinstance(type_, NodeType) and (self._type is None or self._type == NodeType.UNKNOWN):
+        if isinstance(type_, NodeType) and (
+            self._type is None or self._type == NodeType.UNKNOWN
+        ):
             Host().type = type_
             self._type = type_
         elif type_ != self._type:
-            logger.warning(f"Unable to set blockchain type current is {self._type}, wants {type_}")
+            logger.warning(
+                f"Unable to set blockchain type current is {self._type}, wants {type_}"
+            )
 
     @property
     def chain_size(self):
@@ -81,7 +95,9 @@ class BlockchainManager(metaclass=MetaSingleton):
         :return: True if the node was added, False if not
         """
 
-        added = self.nodes.add_node(address, type_=type_, register_back=register_back, spread=spread)
+        added = self.nodes.add_node(
+            address, type_=type_, register_back=register_back, spread=spread
+        )
 
         if not added:
             return 400
@@ -94,7 +110,7 @@ class BlockchainManager(metaclass=MetaSingleton):
         :return: True if our chain was replaced, False if not
         """
 
-        logger.debug('Start resolveConflicts')
+        logger.debug("Start resolveConflicts")
         rv = False
 
         # Grab and verify the chains from all the nodes in our network
@@ -106,7 +122,7 @@ class BlockchainManager(metaclass=MetaSingleton):
         logger.info(f"Replace chain if better")
         if chain and chain.__len__() > self.chain.__len__():
             # self.end_current_mining_process()
-            logger.info('Replace chain because the other one is longer')
+            logger.info("Replace chain because the other one is longer")
             self.replace_chain(chain)
             return True
 
@@ -119,22 +135,26 @@ class BlockchainManager(metaclass=MetaSingleton):
                 if tx_c2 < oldest_transaction_other or tx_c2 == -1:
                     oldest_transaction_other = tx_c2
             if oldest_transaction_mine > oldest_transaction_other:
-                logger.info('Replace chain because the other has older transactions')
+                logger.info("Replace chain because the other has older transactions")
                 self.replace_chain(chain)
                 return True
         return False
 
     def replace_chain(self, chain):
         self.txs.update_state_cdt(
-            from_=[State.IN_CHAIN, State.SELECTED, State.VALIDATED], to_=State.WAITING,
-            cdt=lambda tx: True if self.chain.contains(tx) and not chain.contains(tx) else False
+            from_=[State.IN_CHAIN, State.SELECTED, State.VALIDATED],
+            to_=State.WAITING,
+            cdt=lambda tx: True
+            if self.chain.contains(tx) and not chain.contains(tx)
+            else False,
         )
         self.txs.update_state_cdt(
-            from_=[State.WAITING, State.SELECTED], to_=State.IN_CHAIN,
-            cdt=lambda tx: True if chain.contains(tx) else False
+            from_=[State.WAITING, State.SELECTED],
+            to_=State.IN_CHAIN,
+            cdt=lambda tx: True if chain.contains(tx) else False,
         )  # Some transactions are present twice, once in a block and once in self.txs
         self.chain = chain
-        logger.info('Chain replaced')
+        logger.info("Chain replaced")
 
     def mine(self, spread=False):
         """
@@ -146,7 +166,7 @@ class BlockchainManager(metaclass=MetaSingleton):
         logger.warning("Mine is deprecated, use new_authority_block instead")
 
         if self.current_block is not None:
-            return 'Is already Mining', 401
+            return "Is already Mining", 401
 
         tx_list: TransactionsList = TransactionsList(self.txs.select())
 
@@ -160,7 +180,7 @@ class BlockchainManager(metaclass=MetaSingleton):
             index=self.chain.__len__() + 1,
             transactions=tx_list,
             previous_hash=self.chain.last_blockhash,
-            validator=PUBLIC_KEY
+            validator=PUBLIC_KEY,
         )
 
         return "Mining of a new block started", 200
@@ -174,9 +194,9 @@ class BlockchainManager(metaclass=MetaSingleton):
         logger.debug("New authority block")
         logger.debug(f"Current block: {self.current_block is not None}")
         if self.current_block is not None:
-            return 'A block is already being created', 401
+            return "A block is already being created", 401
 
-        logger.debug('select transactions')
+        logger.debug("select transactions")
         tx_list: TransactionsList = TransactionsList(self.txs.select())
         logger.debug(f"{tx_list.__len__()} transactions selected")
 
@@ -185,7 +205,9 @@ class BlockchainManager(metaclass=MetaSingleton):
             return "Not enough transactions to create new block", 401
 
         if len(tx_list) < LIMIT_TRANSACTIONS_BLOCK and spread:
-            logger.info("Not enough transactions to mine. Spreading block/new to other nodes")
+            logger.info(
+                "Not enough transactions to mine. Spreading block/new to other nodes"
+            )
             self.nodes.spread_block_creation_request()
             return "Not enough transactions to create new block. Spread to others", 401
 
@@ -193,11 +215,11 @@ class BlockchainManager(metaclass=MetaSingleton):
             index=self.chain.__len__() + 1,
             transactions=tx_list,
             validator=PUBLIC_KEY,
-            previous_hash=self.chain.last_blockhash
+            previous_hash=self.chain.last_blockhash,
         )
 
         self.chain.add_block(self.current_block)
-        logger.info('Block created and added to chain. Spread to other nodes')
+        logger.info("Block created and added to chain. Spread to other nodes")
         self.current_block = None
         self.nodes.spread_chain(self.chain)
 
@@ -218,23 +240,23 @@ class BlockchainManager(metaclass=MetaSingleton):
         if spread:
             tx.spread(self.nodes)
 
-        return True, 'ok'
+        return True, "ok"
 
     def create_nft(self, token, nb, gth_private_key):
         added, tx = self.txs.create_add_transaction(
             id_=None,
-            token=f'nft_{hash__(str(nb))}_{token}',
+            token=f"nft_{hash__(str(nb))}_{token}",
             sender=BlockchainManager.get_gth_public_key(),
             private_key=gth_private_key,
             recipient=BlockchainManager.get_gth_public_key(),
             amount=1,
-            create=True
+            create=True,
         )
 
         if not added:
             return False, self.txs.error
 
-        return True, tx['token']
+        return True, tx["token"]
 
     def update_mining_state(self):
         """
@@ -244,11 +266,11 @@ class BlockchainManager(metaclass=MetaSingleton):
         """
         logger.warning("update_mining_state is deprecated")
         if not self.current_block:
-            logger.debug(f'current block? {self.current_block}')
+            logger.debug(f"current block? {self.current_block}")
             return "No block mined", 400
 
         if not self.current_block.pow_finished():
-            logger.info(f'pow not finished {self.current_block.pow_finished()}')
+            logger.info(f"pow not finished {self.current_block.pow_finished()}")
             return "Pow not finished", 400
 
         # Reset the current list of transactions
@@ -260,7 +282,7 @@ class BlockchainManager(metaclass=MetaSingleton):
         # If at some point, blockchain version is changed, check if these transactions are in, otherwise try to add them back.
         # Also, transactions in the blockchain after 10+ blocks can be removed because we can be kind of sure that they are in the blockchain for ever
 
-        return 'Mining step finished, block found', 200
+        return "Mining step finished, block found", 200
 
     def end_current_mining_process(self):
         """
@@ -277,7 +299,7 @@ class BlockchainManager(metaclass=MetaSingleton):
 
     @staticmethod
     def get_gth_public_key():
-        return '107586176969073111214138186621388472896166149958805892498797251438836201351897A74644521699183317518461259885566371696845701675874024848140772236522116872470'
+        return "107586176969073111214138186621388472896166149958805892498797251438836201351897A74644521699183317518461259885566371696845701675874024848140772236522116872470"
 
     @staticmethod
     def get_time():
@@ -285,11 +307,10 @@ class BlockchainManager(metaclass=MetaSingleton):
 
     def nft_exists(self, token):
         for tx in self.considered_transactions():
-            if tx['token'] == token:
+            if tx["token"] == token:
                 return True
         return False
 
     def __del__(self):
-        logger.info('Blockchain.__del__: Informing other nodes of current exiting')
+        logger.info("Blockchain.__del__: Informing other nodes of current exiting")
         self.nodes.remove_me()
-

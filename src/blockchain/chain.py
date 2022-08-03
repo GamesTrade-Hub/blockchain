@@ -20,7 +20,11 @@ class Chain:
         # TODO All transactions must have diff ids
 
         valid = all([isinstance(b, Block) and b.valid() for b in self._blocks]) and all(
-            [a.hash == b.previous_hash for a, b in zip(self._blocks[:-2], self._blocks[1:-1])])
+            [
+                a.hash == b.previous_hash
+                for a, b in zip(self._blocks[:-2], self._blocks[1:-1])
+            ]
+        )
 
         # print('valid?', valid, [type(b) for b in self._blocks])
         # if not valid:
@@ -44,7 +48,7 @@ class Chain:
         if chain is None:
             logger.warning("Chained received to be parsed is None")
             return None
-        chain = cls(blocks=[Block.from_dict(b) for b in chain['chain']])
+        chain = cls(blocks=[Block.from_dict(b) for b in chain["chain"]])
         if not chain.valid():
             logger.warning("Parsed chain not valid")
             return None
@@ -54,7 +58,7 @@ class Chain:
         return self.__dict__().__str__()
 
     def __dict__(self):
-        return {'chain': [block.__dict__() for block in self._blocks]}
+        return {"chain": [block.__dict__() for block in self._blocks]}
 
     def __len__(self):
         return self._blocks.__len__()
@@ -84,26 +88,32 @@ class Chain:
 
     def get_balance_by_token(self, public_key, token) -> float:
         from src.blockchain.blockchain_manager import BlockchainManager
+
         balance = 0
 
         for tx in BlockchainManager().considered_transactions():
-            if tx['recipient'] == public_key and tx['token'] == token:
-                balance += tx['amount']
-            if tx['sender'] == public_key and tx['token'] == token and tx['recipient'] != public_key:
-                balance -= tx['amount']
+            if tx["recipient"] == public_key and tx["token"] == token:
+                balance += tx["amount"]
+            if (
+                tx["sender"] == public_key
+                and tx["token"] == token
+                and tx["recipient"] != public_key
+            ):
+                balance -= tx["amount"]
         return balance
 
     def get_balance(self, public_key):
         from src.blockchain.blockchain_manager import BlockchainManager
+
         balance = {}
 
         for tx in BlockchainManager().considered_transactions():
-            if tx['recipient'] == public_key:
-                if tx['token'] not in balance:
-                    balance[tx['token']] = 0
-                balance[tx['token']] += tx['amount']
-            if tx['sender'] == public_key and tx['recipient'] != public_key:
-                if tx['token'] not in balance:
-                    balance[tx['token']] = 0
-                balance[tx['token']] -= tx['amount']
+            if tx["recipient"] == public_key:
+                if tx["token"] not in balance:
+                    balance[tx["token"]] = 0
+                balance[tx["token"]] += tx["amount"]
+            if tx["sender"] == public_key and tx["recipient"] != public_key:
+                if tx["token"] not in balance:
+                    balance[tx["token"]] = 0
+                balance[tx["token"]] -= tx["amount"]
         return balance
