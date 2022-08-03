@@ -79,10 +79,25 @@ jobs:
         with:
           name: python-app
           path: .
-          
-      - name: 'Deploy to Azure Web App'
-        id: deploy-to-webapp
-        uses: azure/webapps-deploy@v2
+
+      - name: SSH Server Deploy
+        # You may pin to the exact commit or the version.
+        # uses: kostya-ten/ssh-server-deploy@e0deb814bc458a68b61f6597a865d096e33eb586
+        uses: kostya-ten/ssh-server-deploy@v4
         with:
-          app-name: ${{ env.AZURE_WEBAPP_NAME }}
-          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+          # Host
+          host: ${{ secrets.VM_HOST }}
+          # Port
+          port: 22
+          # Username
+          username: ${{ secrets.VM_USER }}
+          # Password
+          password: ${{ secrets.VM_PWD }}
+          # Before script
+          before_script: ./end_prod.sh
+          # After script
+          after_script: ./prod.sh
+          # After script
+#          scp_source: # optional
+          # After script
+#          scp_target: # optional, default is ~
