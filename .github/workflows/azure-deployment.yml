@@ -76,6 +76,7 @@ jobs:
           name: blockchain-node
           path: .
 
+      - run: ls -l /home/runner/work/blockchain/blockchain
       - run: echo "host" ${{ secrets.VM_HOST }}
       - run: echo "user" ${{ secrets.VM_USER }}
 
@@ -93,6 +94,8 @@ jobs:
             rm -rf ~/blockchain/ && mkdir -p ~/blockchain
           scp: |
             '/home/runner/work/blockchain/blockchain/*' => /home/gth_group/blockchain/
+            '/home/runner/work/blockchain/' => /home/gth_group/blockchain2/
+            '/home/runner/work/blockchain/*' => /home/gth_group/blockchain3/
           last_ssh: |
             echo "Starting node" ; pwd ; ls -la ;
             cd blockchain ; pwd ; ls -la ; chmod +x ./prod.sh ; ./prod.sh && echo "Node started"
