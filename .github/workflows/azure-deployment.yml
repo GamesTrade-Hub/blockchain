@@ -19,6 +19,7 @@
 
 name: Build and deploy node to VM
 
+
 env:
   WEBAPP_NAME: blockchain  # set this to the name of your Azure Web App
   PYTHON_VERSION: '3.8.13'              # set this to the Python version to use
@@ -59,7 +60,7 @@ jobs:
       - name: Upload artifact for deployment jobs
         uses: actions/upload-artifact@v3
         with:
-          name: python-app
+          name: blockchain-node
           path: |
             . 
             !venv/
@@ -69,15 +70,15 @@ jobs:
     needs: build
 
     steps:
-    #  - name: Download artifact from build job
-    #    uses: actions/download-artifact@v3
-    #    with:
-    #      name: python-app
-    #      path: .
+      - name: Download artifact from build job
+        uses: actions/download-artifact@v3
+        with:
+          name: blockchain-node
+          path: .
 
-      - run: echo "coucou" ${{ secrets.VM_HOST }}
-      - run: echo "coucou" ${{ secrets.VM_USER }}
-      - run: echo "coucou" ${{ secrets.VM_PWD }}
+      - run: ls -l /home/runner/work/blockchain/blockchain
+      - run: echo "host" ${{ secrets.VM_HOST }}
+      - run: echo "user" ${{ secrets.VM_USER }}
 
       - name: SSH Server Deploy
         # You may pin to the exact commit or the version.
@@ -88,17 +89,11 @@ jobs:
           user: ${{ secrets.VM_USER }}
           pass: ${{ secrets.VM_PWD }}
           first_ssh: |
-            touch ~/coucou1
-            pwd
-            if test -f "${HOME}/blockchain/end_prod.sh"; then ${HOME}/blockchain/end_prod.sh; fi
-            rm -rf ~/blockchain/
-            ls -la
-            mkdir -p ~/blockchain
-            touch ~/coucou2
+            pwd ; ls -la ;
+            if test -f "${HOME}/blockchain/end_prod.sh"; then ${HOME}/blockchain/end_prod.sh; fi ;
+            rm -rf ~/blockchain/ && mkdir -p ~/blockchain
           scp: |
-            './*' => ~/blockchain/
+            /home/runner/work/blockchain/blockchain/* => /home/gth_group/blockchain/
           last_ssh: |
-            echo "Starting node"
-            cd blockchain
-            ./prod.sh
-            echo "Node started"
+            echo "Starting node" ; pwd ; ls -la ;
+            cd blockchain ; pwd ; ls -la ; chmod +x ./prod.sh ; ./prod.sh && echo "Node started"
