@@ -27,8 +27,8 @@ jobs:
       
       - name: Install black
         run: |
-          pip install black==22.3.0
-          pip install --upgrade click==8.0.2
+          pip install black==22.6.0
+          pip install --upgrade click==8.0.4
 
       - name: Black Code Formatter
         uses: jpetrucciani/black-check@21.12b0
