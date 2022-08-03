@@ -26,7 +26,3 @@ Then run
 rm -rf ./bin/* && cd bin ; pyinstaller --noconfirm --onefile --console  "../main.py" -n node
 ````
 and follow the instructions
-
-#### Sources
-
-- https://towardsdatascience.com/how-to-easily-convert-a-python-script-to-an-executable-file-exe-4966e253c7e9

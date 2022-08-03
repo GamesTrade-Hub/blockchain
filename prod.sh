@@ -13,9 +13,6 @@ sudo apt-get install libgmp3-dev -y
 sudo apt-get install python3-pip -y
 sudo apt install gunicorn -y
 
-echo "Update pip ..."
-/usr/bin/python3.8 -m pip install --upgrade pip
-
 echo "Install venv ..."
 sudo apt-get install python3-virtualenv -y
 #/usr/bin/python3.8 -m pip install -U --force-reinstall virtualenv
@@ -39,6 +36,9 @@ virtualenv prod_node
 #
 #pyinstaller --noconfirm --onefile --console  "../main.py" -n node
 
+
+echo "Update pip ..."
+./prod_node/bin/python3.8 -m pip install --upgrade pip
 
 echo "Install requirements ..."
 ./prod_node/bin/python3.8 -m pip install -r requirements/prod.txt
