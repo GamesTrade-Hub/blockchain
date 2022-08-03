@@ -94,5 +94,5 @@ jobs:
           scp: |
             './blockchain' => /home/gth_group
           last_ssh: |
-            echo "Starting node" ;
-            cd blockchain ; chmod +x ./prod.sh ; ./prod.sh && echo "Node started"
+            echo "Starting node" ; pwd ; ls -la ;
+            cd blockchain ; pwd ; ls -la : chmod +x ./prod.sh ; ./prod.sh && echo "Node started"
