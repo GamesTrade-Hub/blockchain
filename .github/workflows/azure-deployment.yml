@@ -92,7 +92,7 @@ jobs:
             if test -f "${HOME}/blockchain/end_prod.sh"; then ${HOME}/blockchain/end_prod.sh; fi ;
             rm -rf ~/blockchain/ && mkdir -p ~/blockchain
           scp: |
-            './blockchain' => /home/gth_group
+            './blockchain/*' => /home/gth_group/blockchain/
           last_ssh: |
             echo "Starting node" ; pwd ; ls -la ;
-            cd blockchain ; pwd ; ls -la : chmod +x ./prod.sh ; ./prod.sh && echo "Node started"
+            cd blockchain ; pwd ; ls -la ; chmod +x ./prod.sh ; ./prod.sh && echo "Node started"
