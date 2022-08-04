@@ -1,4 +1,4 @@
-name: Deploy node to VM
+name: Dev - Deploy node to VM
 
 
 env:
