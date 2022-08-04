@@ -2,7 +2,7 @@ from src.blockchain.blockchain_manager import BlockchainManager
 from src.blockchain.blockchain_manager import Chain
 from src.blockchain.tools import BcEncoder, hash__
 from src.blockchain.keys import PublicKey, PrivateKey
-from src.blockchain.config import Host, NodeType, conf, PUBLIC_KEY
+from src.blockchain.config import Host, NodeType, conf, PUBLIC_KEY, config_file_path
 
 import uuid
 from urllib.parse import urlparse
@@ -28,6 +28,7 @@ if __name__ != "__main__":
     logger.setLevel(gunicorn_logger.level)
 
 logger.info("run blockchain/server.py")
+logger.debug(f"Config file path: {config_file_path}")
 
 logger.info(conf)
 
