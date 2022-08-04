@@ -210,7 +210,7 @@ class AutoRunner:
                         "commands": [
                             "git clone https://github.com/GamesTrade-Hub/blockchain.git",
                             "cd blockchain",
-                            "./prod.sh",
+                            "./deploy.sh prod.config.json",
                         ],
                         "workingDirectory": ["/home/ubuntu"],
                     },

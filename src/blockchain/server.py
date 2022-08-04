@@ -338,6 +338,7 @@ def new_block():
     the new block will be spread to the other nodes
     """
 
+    logger.debug(f"Chain size: {blockchain.chain_size}")
     logger.debug("request.get_json()")
     values = request.get_json()
 

@@ -51,7 +51,7 @@ jobs:
 
   deploy:
     runs-on: ubuntu-latest
-    environment: Production
+    environment: Development
     needs: tests
 
     steps:
