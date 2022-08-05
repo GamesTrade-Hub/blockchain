@@ -156,35 +156,6 @@ class BlockchainManager(metaclass=MetaSingleton):
         self.chain = chain
         logger.info("Chain replaced")
 
-    def mine(self, spread=False):
-        """
-        DEPRECATED
-        Create a new Block in the Blockchain
-        :return: New Block
-        """
-
-        logger.warning("Mine is deprecated, use new_authority_block instead")
-
-        if self.current_block is not None:
-            return "Is already Mining", 401
-
-        tx_list: TransactionsList = TransactionsList(self.txs.select())
-
-        if len(tx_list) == 0:
-            return "Not enough transactions to mine", 401
-
-        if spread:
-            self.nodes.spread_mining_request()
-
-        self.current_block = Block(
-            index=self.chain.__len__() + 1,
-            transactions=tx_list,
-            previous_hash=self.chain.last_blockhash,
-            validator=PUBLIC_KEY,
-        )
-
-        return "Mining of a new block started", 200
-
     def new_authority_block(self, spread=False) -> (str, int):
         """
         Create a new Block in the Blockchain
@@ -201,15 +172,15 @@ class BlockchainManager(metaclass=MetaSingleton):
         logger.debug(f"{tx_list.__len__()} transactions selected")
 
         if len(tx_list) < LIMIT_TRANSACTIONS_BLOCK and not spread:
-            logger.warning("Not enough transactions to mine")
-            return "Not enough transactions to create new block", 401
+            err_msg = "Not enough transactions to create a new block"
+            logger.warning(err_msg)
+            return err_msg, 401
 
         if len(tx_list) < LIMIT_TRANSACTIONS_BLOCK and spread:
-            logger.info(
-                "Not enough transactions to mine. Spreading block/new to other nodes"
-            )
+            info_msg = "Not enough transactions to create a new block, spreading"
+            logger.info(info_msg)
             self.nodes.spread_block_creation_request()
-            return "Not enough transactions to create new block. Spread to others", 401
+            return info_msg, 401
 
         self.current_block = Block(
             index=self.chain.__len__() + 1,

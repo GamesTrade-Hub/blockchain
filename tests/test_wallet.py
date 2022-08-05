@@ -3,54 +3,50 @@ from src.blockchain.server import app
 import json
 import time
 
+from tests.testing_tools import BlockchainTestTools
 
-class TestMining(unittest.TestCase):
+
+class TestWallet(BlockchainTestTools):
     def setUp(self):
-        self.app = app.test_client()
+        super(TestWallet, self).setUp()
 
-    def test_balance(self):
-        response = self.app.get("/status")
-        self.assertEqual(response.status_code, 200)
-        response = self.app.post(
-            "/transaction/new",
-            json={
-                "sender": "107586176969073111214138186621388472896166149958805892498797251438836201351897A74644521699183317518461259885566371696845701675874024848140772236522116872470",
-                "recipient": "45924479284721020088255655764259838493632121191345267194632595708284069229257A64353570746271633642239099441557900798355211921538755593764691886599926285870",
-                "amount": 50,
-                "token": "BNB",
-                "private_key": "96281203938515529592468945178611699390852145171871882015412702005631509756531",
-            },
+        self.new_transaction(
+            sender=self.gth_public_key,
+            recipient=self.user_2_public_key,
+            amount=50,
+            token="BNB",
+            private_key=self.gth_private_key,
+            check_block_created=True,
         )
-        self.assertEqual(response.status_code, 201)
-        time.sleep(1)  # Need this to be sure that last transaction is included
 
-        response = self.app.post("/block/new", json={})
-        self.assertEqual(response.status_code, 200)
-        self.app.get("/mine", follow_redirects=True)
+    def test_balance_generic_method(self):
+        self.check_balance_is_correct(self.user_2_public_key, "BNB", 50)
 
-        response = self.app.get(
+    def check_balance_method_specific_token(self):
+        response = self._app.get(
             "/get_balance",
             json={
-                "user_id": "45924479284721020088255655764259838493632121191345267194632595708284069229257A64353570746271633642239099441557900798355211921538755593764691886599926285870"
-            },
-        )
-        self.assertEqual(json.loads(response.get_data())["BNB"], 50)
-
-        response = self.app.post(
-            "/get_balance_by_token",
-            json={
-                "user_id": "45924479284721020088255655764259838493632121191345267194632595708284069229257A64353570746271633642239099441557900798355211921538755593764691886599926285870",
+                "user_id": self.user_2_public_key,
                 "token": "BNB",
             },
         )
-        self.assertEqual(json.loads(response.get_data())["balance"], 50)
+        self.assertEqual(json.loads(response.get_data()), 50, msg=response.get_data())
+
+    def check_balance_method_all_tokens(self):
+        response = self._app.get(
+            "/get_balance",
+            json={
+                "user_id": self.user_2_public_key,
+            },
+        )
+        self.assertEqual(
+            json.loads(response.get_data())["BNB"], 50, msg=response.get_data()
+        )
 
     def test_error(self):
-        response = self.app.post("/transaction/new", json={})
+        response = self._app.post("/transaction/new", json={})
         self.assertEqual(response.status_code, 400)
-        response = self.app.post("/get_balance_by_token", json={})
-        self.assertEqual(response.status_code, 400)
-        response = self.app.get("/get_balance", json={})
+        response = self._app.get("/get_balance", json={})
         self.assertEqual(response.status_code, 400)
 
 

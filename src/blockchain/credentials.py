@@ -8,6 +8,10 @@ import logging
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
+"""
+Credentials file if present, is located in home (~/.gth/) directory under the file name "credentials"
+"""
+
 gth_config_folder = expanduser("~/.gth")
 credentials_file_name = "credentials"
 

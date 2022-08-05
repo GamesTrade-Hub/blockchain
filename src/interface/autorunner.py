@@ -75,9 +75,7 @@ def get_running_instances(ec2_client, ec2_resource):
             private_ip = instance["PrivateIpAddress"]
             print(f"{instance_id}, {instance_type}, {public_ip=}, {private_ip=}")
 
-    for status in ec2_resource.meta.client.describe_instance_status()[
-        "InstanceStatuses"
-    ]:
+    for status in ec2_resource.meta.app.describe_instance_status()["InstanceStatuses"]:
         print(status)
 
 
@@ -92,17 +90,17 @@ class AutoRunner:
         self.ec2_resource_node: ServiceResource = self.node_session.resource(
             "ec2", region_name=self.region_name
         )
-        self.ec2_client_node: EC2Client = self.node_session.client(
+        self.ec2_client_node: EC2Client = self.node_session.app(
             "ec2", region_name=self.region_name
         )
         self.ec2_resource_creator: ServiceResource = self.creator_session.resource(
             "ec2", region_name=self.region_name
         )
-        self.ec2_client_creator: EC2Client = self.creator_session.client(
+        self.ec2_client_creator: EC2Client = self.creator_session.app(
             "ec2", region_name=self.region_name
         )
 
-        self.ssm_client = self.node_session.client("ssm", region_name=self.region_name)
+        self.ssm_client = self.node_session.app("ssm", region_name=self.region_name)
 
     def create_node_instance(self, name=None) -> Optional[Instance]:
         """
