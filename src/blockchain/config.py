@@ -24,7 +24,7 @@ The name of the config file is "config.json" or specified by the environment var
 
 gth_config_folder = expanduser("~/.gth")
 config_file_name = (
-    os.environ["GTH_CONFIG"] if "GTH_CONFIG" in os.environ else "config.json"
+    os.environ["GTH_CONFIG"] if "GTH_CONFIG" in os.environ else "configs/dev.config.json"
 )
 
 config_file_path: Optional[str] = (

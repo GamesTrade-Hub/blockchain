@@ -22,11 +22,11 @@ logger.setLevel(logging.DEBUG)
 # TODO when transaction are passed nodes to nodes int fields becomes string, this might create issues.
 
 
-def drop_duplicates(l_):
+def drop_duplicates(l_) -> list:
     return [dict(t) for t in {tuple(d.items()) for d in l_}]
 
 
-def get_authorized_nodes_public_keys():
+def get_authorized_nodes_public_keys() -> list:
     return conf.authorized_nodes_pbk
 
 

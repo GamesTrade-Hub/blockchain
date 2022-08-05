@@ -1,28 +1,39 @@
 # Blockchain
 
 This blockchain is used to manage items, nft and tokens of a game.
-Since the needed package fastecdsa is not available on Windows, the nodes cannot be run in 
+Since the needed package fastecdsa is not available on Windows, the nodes cannot be run on windows.
 
-### Starting
+### Start
 
+Install dependencies
+```bash
+pip3 install -r requirements/dev.txt
+```
+
+Run a node in debug mode using configuration configs/dev.config.json (default config file)
+To change the config file, set GTH_CONFIG environment variable to the path of the config file.
+```bash
 ````bash
-python3 main.py -p [port number (default 5000)] -t [node type (default: all)]
+python3 main.py
 ````
 
-for further information see
-````bash
-python3 main.py -h
-````
+### Deploy
 
-### Convert python file to .exe script
+The deployment is done with github actions when a merge to main is done.
+To see how it works, check the script deploy.sh.
 
-First install the required lib using pip
-````bash
-pip install auto-py-to-exe
-````
 
-Then run
-````bash
-rm -rf ./bin/* && cd bin ; pyinstaller --noconfirm --onefile --console  "../main.py" -n node
-````
-and follow the instructions
+### Test
+
+You can test your environment by running the tests
+```bash
+GTH_CONFIG=configs/test.config.json python3 -m unittest discover -s tests -p 'test_*.py'
+```
+
+### Documentation
+
+Documentation is generated using Spinx.
+To install it, run the following command:
+```bash
+sudo apt-get install python3-sphinx
+```
