@@ -22,6 +22,12 @@ class TestMining(unittest.TestCase):
         response = self.app.get("/chain")
         bc_len = json.loads(response.get_data())["length"]
 
+        response = self.app.post("/nodes/register", json={})
+        self.assertEqual(400, response.status_code)
+
+        response = self.app.get("/nodes/list")
+        self.assertEqual(200, response.status_code)
+
         response = self.app.post(
             "/transaction/new",
             json={
@@ -35,8 +41,10 @@ class TestMining(unittest.TestCase):
         self.assertEqual(201, response.status_code)
 
         response = self.app.post("/block/new", json={})
-        print(f"{response.get_data()=}")
-        self.assertEqual(200, response.status_code)
+        self.assertEqual(response.status_code, 200)
+
+        response = self.app.get("/nodes/resolve", follow_redirects=True)
+        self.assertEqual(response.status_code, 200)
 
         response = self.app.get("/chain")
         self.assertEqual(bc_len + 1, json.loads(response.get_data())["length"])

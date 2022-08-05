@@ -4,7 +4,7 @@ import json
 import time
 
 
-class TestMining(unittest.TestCase):
+class TestWallet(unittest.TestCase):
     def setUp(self):
         self.app = app.test_client()
 

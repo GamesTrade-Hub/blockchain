@@ -65,8 +65,6 @@ jobs:
       - run: echo "user" ${{ secrets.VM_USER }}
 
       - name: SSH Server Deploy
-        # You may pin to the exact commit or the version.
-        # uses: kostya-ten/ssh-server-deploy@e0deb814bc458a68b61f6597a865d096e33eb586
         uses: cross-the-world/ssh-scp-ssh-pipelines@v1.1.4
         with:
           host: ${{ secrets.VM_HOST }}
@@ -80,4 +78,4 @@ jobs:
             /home/runner/work/blockchain/blockchain/* => /home/gth_group/blockchain/
           last_ssh: |
             echo "Starting node" ; pwd ; ls -la ;
-            cd blockchain ; pwd ; ls -la ; chmod +x ./deploy.sh ; ./deploy.sh prod.config.json && echo "Node started"
+            cd blockchain ; pwd ; ls -la ; chmod +x ./deploy.sh ; ./deploy.sh dev.config.json && echo "Node started"
