@@ -79,4 +79,4 @@ jobs:
             /home/runner/work/blockchain/blockchain/* => /home/gth_group/blockchain/
           last_ssh: |
             echo "Starting node" ; pwd ; ls -la ;
-            cd blockchain ; pwd ; ls -la ; chmod +x ./deploy.sh ; ./deploy.sh prod.config.json && echo "Node started"
+            cd blockchain ; pwd ; ls -la ; chmod +x ./deploy.sh ; ./deploy.sh ./configs/prod.config.json && echo "Node started"

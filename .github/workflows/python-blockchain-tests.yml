@@ -46,5 +46,5 @@ jobs:
 
       - name: Test with unittest
         env:
-          GTH_CONFIG: test.config.json
+          GTH_CONFIG: ./configs/test.config.json
         run: python3 -m unittest discover -s tests -p 'test_*.py'

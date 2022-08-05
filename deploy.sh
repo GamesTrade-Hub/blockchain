@@ -3,9 +3,9 @@
 # Help section
 # Specify that the first argument is the config file name with config.json as default
 if [ $# -eq 0 ] || [ $1 == "-h" ] || [ $1 == "--help" ]; then
-    echo "Usage: $0 [config_file_name]"
-    echo "Example: $0 prod.config.json"
-    echo "Default config file name is config.json"
+    echo "Usage: $0 [config_file_name|config_file_path]"
+    echo "Example: $0 ./configs/prod.config.json"
+    echo "Default config file name is ./configs/config.json"
     exit 1
 fi
 
@@ -71,7 +71,7 @@ function contains() {
 if [ $# -eq 1 ] && contains "$1" "config.json"; then
     config_file=$1
 else
-    config_file="config.json"
+    config_file="./configs/config.json"
 fi
 
 echo "Using config file: $config_file"
@@ -80,7 +80,7 @@ echo "Using config file: $config_file"
 port=`./prod_node/bin/python3.8 -c "import json; print(json.load(open('$config_file'))['port'])"`
 
 echo "Run app on 0.0.0.0: ..."
-GTH_CONFIG=$config_file ./prod_node/bin/gunicorn -b 0.0.0.0:$port --workers=1 wsgi:app --daemon --log-file .gunicorn.logs --access-logfile .gunicorn_access.logs --error-logfile .gunicorn_errors.logs --log-level DEBUG --timeout 30
+GTH_CONFIG=$config_file ./prod_node/bin/gunicorn -b 0.0.0.0:$port --workers=1 wsgi:app --daemon --log-file ~/.gth/.gunicorn_$port.logs --access-logfile ~/.gth/.gunicorn_access_$port.logs --error-logfile ~/.gth/.gunicorn_errors_$port.logs --log-level DEBUG --timeout 30
 #gunicorn -b 0.0.0.0:5000 --workers=1 wsgi:app
 
 echo "Check if running"
