@@ -76,9 +76,11 @@ fi
 
 echo "Using config file: $config_file"
 
+# Parse the json config file and save the values in bash variables
+port=`./prod_node/bin/python3.8 -c "import json; print(json.load(open('config.json'))['port'])"`
 
 echo "Run app on 0.0.0.0: ..."
-GTH_CONFIG=$config_file ./prod_node/bin/gunicorn -b 0.0.0.0:5000 --workers=1 wsgi:app --daemon --log-file .gunicorn.logs --access-logfile .gunicorn_access.logs --error-logfile .gunicorn_errors.logs --log-level DEBUG --timeout 30
+GTH_CONFIG=$config_file ./prod_node/bin/gunicorn -b 0.0.0.0:$port --workers=1 wsgi:app --daemon --log-file .gunicorn.logs --access-logfile .gunicorn_access.logs --error-logfile .gunicorn_errors.logs --log-level DEBUG --timeout 30
 #gunicorn -b 0.0.0.0:5000 --workers=1 wsgi:app
 
 echo "Check if running"
@@ -87,4 +89,5 @@ ps aux | grep gunicorn
 #screen -R prod
 
 #https://www.digitalocean.com/community/tutorials/how-to-serve-flask-applications-with-gunicorn-and-nginx-on-ubuntu-14-04
+
 
