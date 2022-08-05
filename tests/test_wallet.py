@@ -16,7 +16,7 @@ class TestWallet(BlockchainTestTools):
             amount=50,
             token="BNB",
             private_key=self.gth_private_key,
-            check_block_created=True
+            check_block_created=True,
         )
 
     def test_balance_generic_method(self):
@@ -39,7 +39,9 @@ class TestWallet(BlockchainTestTools):
                 "user_id": self.user_2_public_key,
             },
         )
-        self.assertEqual(json.loads(response.get_data())['BNB'], 50, msg=response.get_data())
+        self.assertEqual(
+            json.loads(response.get_data())["BNB"], 50, msg=response.get_data()
+        )
 
     def test_error(self):
         response = self._app.post("/transaction/new", json={})

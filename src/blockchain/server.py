@@ -386,9 +386,8 @@ def get_balance():
     if values is None or "user_id" not in values:
         return "Invalid request please specify user id", 400
 
-    if 'token' not in values:
+    if "token" not in values:
         balance = blockchain.get_balance(values["user_id"])
     else:
         balance = blockchain.get_balance_by_token(values["user_id"], values["token"])
     return jsonify(balance), 200
-

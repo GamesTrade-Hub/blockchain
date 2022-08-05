@@ -12,7 +12,7 @@ class TestNFTCreation(BlockchainTestTools):
 
     def test_nft_creation(self):
         token_name = "ETH"
-        
+
         response = self.app.post(
             "/create_nft",
             json={

@@ -75,9 +75,7 @@ def get_running_instances(ec2_client, ec2_resource):
             private_ip = instance["PrivateIpAddress"]
             print(f"{instance_id}, {instance_type}, {public_ip=}, {private_ip=}")
 
-    for status in ec2_resource.meta.app.describe_instance_status()[
-        "InstanceStatuses"
-    ]:
+    for status in ec2_resource.meta.app.describe_instance_status()["InstanceStatuses"]:
         print(status)
 
 

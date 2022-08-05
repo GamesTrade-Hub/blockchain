@@ -66,8 +66,17 @@ class BlockchainTestTools(unittest.TestCase):
         self.assertEqual(response.status_code, 201)
         self._app.post("/block/new", json={})
 
-    def new_transaction(self, sender, recipient, amount, token, private_key, smart_contract: Optional[dict] = None,
-                        check_block_created: bool = False, check_block_not_created: bool = False):
+    def new_transaction(
+        self,
+        sender,
+        recipient,
+        amount,
+        token,
+        private_key,
+        smart_contract: Optional[dict] = None,
+        check_block_created: bool = False,
+        check_block_not_created: bool = False,
+    ):
         response = self._app.post(
             "/transaction/new",
             json={

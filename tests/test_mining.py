@@ -32,7 +32,7 @@ class TestMining(BlockchainTestTools):
             amount=50,
             token="ETH",
             private_key=self.gth_private_key,
-            check_block_created=True
+            check_block_created=True,
         )
 
         response = self.app.get("/nodes/resolve", follow_redirects=True)

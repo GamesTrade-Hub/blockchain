@@ -32,7 +32,7 @@ class TestValidSmartContract(BlockchainTestTools):
                 "amount": 10,
                 "token": "snowy",
             },
-            check_block_not_created=True
+            check_block_not_created=True,
         )
 
         # Check if the balance is correct
@@ -53,7 +53,7 @@ class TestValidSmartContract(BlockchainTestTools):
                 "amount": 50,
                 "token": "snowy",
             },
-            check_block_created=True
+            check_block_created=True,
         )
 
         # Check if the balance is correct
@@ -85,7 +85,7 @@ class TestValidSmartContract(BlockchainTestTools):
                 "amount": 60,
                 "token": "snowy",
             },
-            check_block_not_created=True
+            check_block_not_created=True,
         )
 
         # Check if the balance is correct
@@ -106,7 +106,7 @@ class TestValidSmartContract(BlockchainTestTools):
                 "amount": 20,
                 "token": "snowy",
             },
-            check_block_created=True
+            check_block_created=True,
         )
 
         # Check if the balance is correct
