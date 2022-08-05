@@ -4,7 +4,7 @@
     <option name="INTERPRETER_OPTIONS" value="" />
     <option name="PARENT_ENVS" value="true" />
     <envs>
-      <env name="GTH_CONFIG" value="test.config.json" />
+      <env name="GTH_CONFIG" value="./configs/test.config.json" />
     </envs>
     <option name="SDK_HOME" value="$USER_HOME$/anaconda3/envs/blockchain-eip/bin/python3.8" />
     <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />

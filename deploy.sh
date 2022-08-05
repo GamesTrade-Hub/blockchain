@@ -3,9 +3,9 @@
 # Help section
 # Specify that the first argument is the config file name with config.json as default
 if [ $# -eq 0 ] || [ $1 == "-h" ] || [ $1 == "--help" ]; then
-    echo "Usage: $0 [config_file_name]"
-    echo "Example: $0 prod.config.json"
-    echo "Default config file name is config.json"
+    echo "Usage: $0 [config_file_name|config_file_path]"
+    echo "Example: $0 ./configs/prod.config.json"
+    echo "Default config file name is ./configs/config.json"
     exit 1
 fi
 
@@ -71,7 +71,7 @@ function contains() {
 if [ $# -eq 1 ] && contains "$1" "config.json"; then
     config_file=$1
 else
-    config_file="config.json"
+    config_file="./configs/config.json"
 fi
 
 echo "Using config file: $config_file"
