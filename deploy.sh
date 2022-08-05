@@ -1,5 +1,14 @@
 #!/bin/bash
 
+# Help section
+# Specify that the first argument is the config file name with config.json as default
+if [ $# -eq 0 ] || [ $1 == "-h" ] || [ $1 == "--help" ]; then
+    echo "Usage: $0 [config_file_name]"
+    echo "Example: $0 prod.config.json"
+    echo "Default config file name is config.json"
+    exit 1
+fi
+
 sudo apt-get install software-properties-common -y
 
 sudo add-apt-repository main -y
@@ -72,7 +81,7 @@ echo "Run app on 0.0.0.0: ..."
 GTH_CONFIG=$config_file ./prod_node/bin/gunicorn -b 0.0.0.0:5000 --workers=1 wsgi:app --daemon --log-file .gunicorn.logs --access-logfile .gunicorn_access.logs --error-logfile .gunicorn_errors.logs --log-level DEBUG
 #gunicorn -b 0.0.0.0:5000 --workers=1 wsgi:app
 
-echo "Check if running" --no-input
+echo "Check if running"
 ps aux | grep gunicorn
 
 #screen -R prod

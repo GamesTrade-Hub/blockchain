@@ -72,7 +72,7 @@ jobs:
           pass: ${{ secrets.VM_PWD }}
           first_ssh: |
             pwd ; ls -la ;
-            if test -f "chmod +x ${HOME}/blockchain/stop.sh ; ${HOME}/blockchain/stop.sh"; then ${HOME}/blockchain/stop.sh; fi ;
+            if test -f "chmod +x ${HOME}/blockchain/stop.sh ; ${HOME}/blockchain/stop.sh 5010"; then ${HOME}/blockchain/stop.sh; fi ;
             rm -rf ~/blockchain/ && mkdir -p ~/blockchain
           scp: |
             /home/runner/work/blockchain/blockchain/* => /home/gth_group/blockchain/
