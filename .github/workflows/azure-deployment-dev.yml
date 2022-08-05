@@ -75,7 +75,7 @@ jobs:
             if test -f "chmod +x ${HOME}/blockchain_dev/stop.sh ; ${HOME}/blockchain_dev/stop.sh 5010"; then ${HOME}/blockchain_dev/stop.sh; fi ;
             rm -rf ~/blockchain_dev/ && mkdir -p ~/blockchain_dev
           scp: |
-            /home/runner/work/blockchain/blockchain_dev/* => /home/gth_group/blockchain_dev/
+            /home/runner/work/blockchain/blockchain/* => /home/gth_group/blockchain_dev/
           last_ssh: |
             echo "Starting node" ; pwd ; ls -la ;
-            cd blockchain ; pwd ; ls -la ; chmod +x ./deploy.sh ; ./deploy.sh ./configs/dev.config.json && echo "Node started"
+            cd blockchain_dev ; pwd ; ls -la ; chmod +x ./deploy.sh ; ./deploy.sh ./configs/dev.config.json && echo "Node started"
