@@ -3,7 +3,10 @@ import json
 import hashlib
 import logging
 import requests
+import sys
 
+sys.path.append('../../')
+sys.path.append('../')
 from src.blockchain.keys import PrivateKey
 
 logger = logging.getLogger(__name__)
