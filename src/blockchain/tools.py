@@ -4,7 +4,7 @@ import hashlib
 import logging
 import requests
 
-from blockchain.keys import PrivateKey
+from keys import PrivateKey
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.DEBUG)
