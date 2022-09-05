@@ -13,8 +13,8 @@ if [ $# -eq 1 ] && [ "$1" = "start" ]; then
 elif [ $# -eq 1 ] && [ "$1" = "stop" ]; then
     echo "Stopping miner..."
 
-    screen -X -S auto_miner_dev quit
-    screen -X -S auto_miner_prod quit
+    screen -ls auto_miner_prod | grep -E '\s+[0-9]+\.' | awk -F ' ' '{print $1}' | while read s; do screen -XS $s quit; done
+    screen -ls auto_miner_dev | grep -E '\s+[0-9]+\.' | awk -F ' ' '{print $1}' | while read s; do screen -XS $s quit; done
 
 else
     echo "Usage: $0 [start|stop]"
