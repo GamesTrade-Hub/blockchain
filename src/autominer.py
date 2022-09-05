@@ -1,6 +1,6 @@
 import requests
 from time import sleep
-from src.blockchain.tools import get
+from blockchain.tools import get
 
 
 class AutoMiner:
