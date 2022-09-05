@@ -5,9 +5,10 @@ import logging
 import requests
 import sys
 
-sys.path.append('../../')
-sys.path.append('../')
-from src.blockchain.keys import PrivateKey
+try:
+    from src.blockchain.keys import PrivateKey
+except ModuleNotFoundError:
+    from blockchain.keys import PrivateKey
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.DEBUG)
