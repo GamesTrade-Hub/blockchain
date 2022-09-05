@@ -78,7 +78,13 @@ class SmartContract:
         self.related_tx_id = related_tx.id
         self._is_validated = False
 
-    def run(self, txs, prevent_self_check_id=None):
+    def run(self, txs, prevent_self_check_id=None) -> bool:
+        """
+        Run the smart contract
+        :param txs: Transactions to check against the smart contract
+        :param prevent_self_check_id: Transaction id not to check
+        :return: True if the smart contract is validated else False
+        """
         self.txs = txs
         if not self.related_tx.does_not_violate_the_portfolio():
             return False
@@ -119,11 +125,12 @@ class SmartContract:
             )
         )
 
-    def __check_txs(self, prevent_self_check_id):
+    def __check_txs(self, prevent_self_check_id: list) -> bool:
         """
         For type: Type.TX_CHECK
-        :param prevent_self_check_id:
-        :return:
+        Check if one of the transactions satisfies the smart contract requirements
+        :param prevent_self_check_id: transaction id not to check
+        :return: True if one of the transactions satisfies the smart contract requirements else False
         """
         for tx in self.txs.all(
             except_id=self.related_tx_id
@@ -135,9 +142,11 @@ class SmartContract:
         return False
 
     def reset_state(self):
+        """ Reset the state of the smart contract. i.e. set is_validated to False """
         self._is_validated = False
 
     def is_validated(self):
+        """ Check if the smart contract is validated """
         return self._is_validated
 
     def __check(self, prevent_self_check_id):
@@ -167,21 +176,11 @@ class SmartContract:
         return self.smartContract or {}
 
     @property
-    def contract_type(self):
+    def contract_type(self) -> Type:
         """
-        check if smart contract is valid
+        Assign a type to the contract if it is valid
 
-        ======= TEMPLATE =======
-            type: str that match one of the type
-            IF TYPE IS <CHECK>
-                IF TYPE IS <OTHER_TX_CHECK>
-                    recipient: str
-                    sender: str
-                    amount: double
-                    token: str
-        ========================
-
-        :return: True if contract is valid, false otherwise
+        :return: Type of the smart contract
         """
 
         # print("parse contract", self.smartContract)
@@ -190,9 +189,15 @@ class SmartContract:
         if "type" not in self.smartContract:
             return Type.INVALID
         if self.smartContract["type"].upper().replace(" ", "_") == "OTHER_TX_CHECK":
+            """
+            IF TYPE IS <CHECK>
+                IF TYPE IS <OTHER_TX_CHECK>
+                    recipient: str
+                    sender: str
+                    amount: double
+                    token: str
+            """
             type_ = Type.OTHER_TX_CHECK | Type.CHECK | Type.TX_CHECK
-            # print('type_', type_)
-            # print("SmartContract.requirements[type_]", SmartContract.requirements[type_])
             if any(
                 [i not in self.smartContract for i in SmartContract.requirements[type_]]
             ):  # Check if all requirements fields are present

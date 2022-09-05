@@ -1,7 +1,6 @@
 from argparse import ArgumentParser
 from src.blockchain.server import app, BlockchainManager
 from src.blockchain.config import NodeType, Host
-from time import sleep
 
 
 def debug_main():
