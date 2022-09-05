@@ -23,7 +23,7 @@
       </ENTRIES>
     </EXTENSION>
     <option name="SCRIPT_NAME" value="$PROJECT_DIR$/main.py" />
-    <option name="PARAMETERS" value="-p 5000 --type all -fc none" />
+    <option name="PARAMETERS" value="" />
     <option name="SHOW_COMMAND_LINE" value="false" />
     <option name="EMULATE_TERMINAL" value="false" />
     <option name="MODULE_MODE" value="false" />

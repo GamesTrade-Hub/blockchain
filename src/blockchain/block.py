@@ -1,5 +1,5 @@
 import sys
-from typing import List, Iterator, Optional
+from typing import List, Iterator, Optional, Tuple, Union
 
 from src.blockchain.config import Host
 from src.blockchain.keys import sign, has_valid_signature, PublicKey, Signature
@@ -64,6 +64,8 @@ class Block:
         hash_: Optional[str] = None,
     ):
         """
+        Class to handle blocks in the blockchain. Allows to serialize and deserialize blocks.
+
         :param index: index of the block in the chain
         :param transactions: transactions list included in the block (TransactionsList)
         :param previous_hash: hash of the previous block
@@ -92,14 +94,14 @@ class Block:
         if not self._nonce:
             self._nonce = proof_of_authority(self._hash)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.__dict__().__str__()
 
-    def __dict__(self):
+    def __dict__(self) -> dict:
         return {**self.__to_dict(full=True), **{"hash": self._hash}}
 
     @classmethod
-    def from_dict(cls, dictionary):
+    def from_dict(cls, dictionary: dict) -> Union["Block", Tuple[None, str]]:
         block = cls(
             index=dictionary["index"],
             transactions=TransactionsList.from_dict(dictionary["transactions"]),
@@ -114,15 +116,15 @@ class Block:
         return block
 
     @classmethod
-    def from_string(cls, string):
+    def from_string(cls, string: str) -> Union["Block", Tuple[None, str]]:
         return Block.from_dict(ast.literal_eval(string))
 
-    def __to_dict(self, full=True):
+    def __to_dict(self, full: bool = True) -> dict:
         """
         Make the block a dictionary
         # We must make sure that the Dictionary is Ordered, or we'll have inconsistent hashes
         :param full: if full includes nonce and pow_time
-        :return:
+        :return: block as a dictionary
         """
         d = {
             "index": self._index,
@@ -140,12 +142,12 @@ class Block:
             }
         return d
 
-    def __encode(self, full=True) -> str:
+    def __encode(self, full: bool = True) -> str:
         d = self.__to_dict(full=full)
         return d.__str__()
 
     @staticmethod
-    def valid_pow(block_hash, nonce):
+    def valid_pow(block_hash, nonce) -> bool:
         """
         Validates the Proof
         :return: <bool> True if correct, False if not.
@@ -156,7 +158,7 @@ class Block:
         return guess_hash[:4] == "0000"
 
     @staticmethod
-    def valid_poa(block_hash: str, nonce: Signature, validator: PublicKey):
+    def valid_poa(block_hash: str, nonce: Signature, validator: PublicKey) -> bool:
         """
         Validates the Proof
         :param block_hash: hash of the block
@@ -172,13 +174,13 @@ class Block:
             and validator.encode() in BlockchainManager().authorized_nodes_public_keys
         )
 
-    def valid_transactions(self):
+    def valid_transactions(self) -> bool:
         if not self._txs.valid():
             self.error = self._txs.error
             return False
         return True
 
-    def valid(self):
+    def valid(self) -> bool:
         if self._index == 1 and self._txs.__len__() == 0:
             return True
         # if not Block.valid_pow(self._hash, self._nonce):
@@ -194,7 +196,7 @@ class Block:
             return False
         return True
 
-    def confirm_selected_transactions(self):
+    def confirm_selected_transactions(self) -> None:
         """
         Update transactions in current block by changing their state from selected to in_chain.
         """
@@ -209,23 +211,23 @@ class Block:
         # self.__stop_mining()
 
     @property
-    def index(self):
+    def index(self) -> int:
         return self._index
 
     @property
-    def transactions(self):
+    def transactions(self) -> TransactionsList:
         return self._txs
 
     @property
-    def validator(self):
+    def validator(self) -> PublicKey:
         return self._validator
 
     @property
-    def nonce(self):
+    def nonce(self) -> Optional[Signature]:
         return self._nonce
 
     @property
-    def previous_hash(self):
+    def previous_hash(self) -> str:
         return self._previous_hash
 
     @property

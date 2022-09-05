@@ -1,8 +1,8 @@
-from typing import List, Optional
+from typing import List, Optional, Iterator
 
 from src.blockchain.chain import Chain
 from src.blockchain.tools import get_time, MetaSingleton, hash__
-from src.blockchain.transaction import TransactionsList, State
+from src.blockchain.transaction import TransactionsList, State, Transaction
 from src.blockchain.node import NodesList
 from src.blockchain.block import Block
 from src.blockchain.config import (
@@ -22,16 +22,20 @@ logger.setLevel(logging.DEBUG)
 # TODO when transaction are passed nodes to nodes int fields becomes string, this might create issues.
 
 
-def drop_duplicates(l_):
+def drop_duplicates(l_) -> list:
     return [dict(t) for t in {tuple(d.items()) for d in l_}]
 
 
-def get_authorized_nodes_public_keys():
+def get_authorized_nodes_public_keys() -> list:
     return conf.authorized_nodes_pbk
 
 
 class BlockchainManager(metaclass=MetaSingleton):
+    """Main blockchain class that allows to do all needed operations on the underlying blockchain"""
     def __init__(self):
+        """
+        Initialize the blockchain. Create genesis block.
+        """
         self._type: NodeType = NodeType.UNKNOWN
         self.txs: TransactionsList = TransactionsList()
         # Create the genesis block
@@ -54,7 +58,11 @@ class BlockchainManager(metaclass=MetaSingleton):
             str
         ] = get_authorized_nodes_public_keys()
 
-    def considered_transactions(self):
+    def considered_transactions(self) -> Iterator[Transaction]:
+        """
+        Return all transactions that are considered for the next block
+        :return: yield transactions one by one
+        """
         for tx in self.chain.transactions:
             yield tx
         for tx in self.txs.transactions(
@@ -63,11 +71,13 @@ class BlockchainManager(metaclass=MetaSingleton):
             yield tx
 
     @property
-    def type(self):
+    def type(self) -> NodeType:
+        """ Return the type of the node """
         return self._type
 
     @type.setter
-    def type(self, type_):
+    def type(self, type_) -> None:
+        """ Set the type of the node """
         if isinstance(type_, NodeType) and (
             self._type is None or self._type == NodeType.UNKNOWN
         ):
@@ -79,20 +89,22 @@ class BlockchainManager(metaclass=MetaSingleton):
             )
 
     @property
-    def chain_size(self):
+    def chain_size(self) -> int:
+        """ Return the size of the chain """
         return self.chain.__len__()
 
-    def get_connected_nodes(self):
+    def get_connected_nodes(self) -> NodesList:
+        """ Return the list of connected nodes """
         return self.nodes
 
-    def add_node(self, address, type_=None, register_back=False, spread=False):
+    def add_node(self, address: str, type_=None, register_back=False, spread=False) -> int:
         """
         Add a new node to the list of nodes
         :param address: Address of the node. Eg. 'http://192.168.0.5:5000'
         :param type_: Type of the node (optional)
         :param register_back: tell whether the node just registered received a call back to register the current node
         :param spread: spread new node info to other nodes
-        :return: True if the node was added, False if not
+        :return: 201 if the node was added, 400 if not
         """
 
         added = self.nodes.add_node(
@@ -103,7 +115,7 @@ class BlockchainManager(metaclass=MetaSingleton):
             return 400
         return 201
 
-    def resolve_conflicts(self):
+    def resolve_conflicts(self) -> bool:
         """
         This is our consensus algorithm, it resolves conflicts
         by replacing our chain with the longest one in the network.
@@ -118,7 +130,12 @@ class BlockchainManager(metaclass=MetaSingleton):
             rv = rv or self.replace_chain_if_better(chain)
         return rv
 
-    def replace_chain_if_better(self, chain):
+    def replace_chain_if_better(self, chain: Chain) -> bool:
+        """
+        If the chain is valid and longer than the current chain, replace it.
+        :param chain: check to compare with the current chain
+        :return: True if the chain was replaced, False if not
+        """
         logger.info(f"Replace chain if better")
         if chain and chain.__len__() > self.chain.__len__():
             # self.end_current_mining_process()
@@ -140,7 +157,12 @@ class BlockchainManager(metaclass=MetaSingleton):
                 return True
         return False
 
-    def replace_chain(self, chain):
+    def replace_chain(self, chain) -> None:
+        """
+        Replace the local chain with the one received from a peer node
+        :param chain: new chain to replace the current one
+        :return: None
+        """
         self.txs.update_state_cdt(
             from_=[State.IN_CHAIN, State.SELECTED, State.VALIDATED],
             to_=State.WAITING,
@@ -156,10 +178,10 @@ class BlockchainManager(metaclass=MetaSingleton):
         self.chain = chain
         logger.info("Chain replaced")
 
-    def new_authority_block(self, spread=False) -> (str, int):
+    def new_authority_block(self, spread: bool = False) -> (str, int):
         """
         Create a new Block in the Blockchain
-        :return: New Block
+        :return: string message and error code
         """
 
         logger.debug("New authority block")
@@ -197,12 +219,29 @@ class BlockchainManager(metaclass=MetaSingleton):
         return "New block created and spread", 200
 
     def get_balance(self, public_key) -> dict:
+        """
+        Return the balance of a public key
+        :param public_key: public key of the account
+        :return: dictionary with the balance for all the tokens
+        """
         return self.chain.get_balance(public_key)
 
     def get_balance_by_token(self, public_key, token) -> float:
+        """
+        Return the balance of a public key for a specific token
+        :param public_key: public key of the account
+        :param token: token to check the balance
+        :return: value of the balance for the token
+        """
         return self.chain.get_balance_by_token(public_key, token)
 
-    def create_transaction(self, tx, spread=False):
+    def create_transaction(self, tx, spread=False) -> (bool, str):
+        """
+        Create a new transaction to add to the next block
+        :param tx: transaction to add
+        :param spread: whether to spread the transaction to other nodes
+        :return: (True, "ok") if the transaction was added, (False, error_message) if not
+        """
         added, tx = self.txs.add_from_dict(tx, create=True)
 
         if not added:
@@ -213,7 +252,14 @@ class BlockchainManager(metaclass=MetaSingleton):
 
         return True, "ok"
 
-    def create_nft(self, token, nb, gth_private_key):
+    def create_nft(self, token, nb, gth_private_key) -> (bool, str):
+        """
+        Create a new NFT to add to the next block
+        :param token: name of the nft
+        :param nb: index of the nft
+        :param gth_private_key: GamesTrade Hub's private key
+        :return: (False, error_message) if the nft was not added, (True, nft id) if it was added
+        """
         added, tx = self.txs.create_add_transaction(
             id_=None,
             token=f"nft_{hash__(str(nb))}_{token}",
@@ -255,7 +301,7 @@ class BlockchainManager(metaclass=MetaSingleton):
 
         return "Mining step finished, block found", 200
 
-    def end_current_mining_process(self):
+    def end_current_mining_process(self) -> None:
         """
         DEPRECATED
         If a mining process is going on in this node, then end it.
@@ -265,18 +311,34 @@ class BlockchainManager(metaclass=MetaSingleton):
         self.current_block = None
 
     @staticmethod
-    def is_gth(public_key):
+    def is_gth(public_key) -> bool:
+        """
+        Check if a public key is the GamesTrade Hub's public key
+        :param public_key: public key to check
+        :return: True if it is the GTH's public key, False otherwise
+        """
         return str(public_key) == BlockchainManager.get_gth_public_key()
 
     @staticmethod
-    def get_gth_public_key():
+    def get_gth_public_key() -> str:
+        """
+        :return: the public key of the GTH account
+        """
         return "107586176969073111214138186621388472896166149958805892498797251438836201351897A74644521699183317518461259885566371696845701675874024848140772236522116872470"
 
     @staticmethod
-    def get_time():
+    def get_time() -> int:
+        """
+        :return: the current time in nanoseconds
+        """
         return get_time()
 
-    def nft_exists(self, token):
+    def nft_exists(self, token: str) -> bool:
+        """
+        Check if a nft exists
+        :param token: name of the nft to check
+        :return: True if it exists, False otherwise
+        """
         for tx in self.considered_transactions():
             if tx["token"] == token:
                 return True

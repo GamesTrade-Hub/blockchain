@@ -3,7 +3,6 @@ import json
 import hashlib
 import logging
 import requests
-from fastecdsa import ecdsa, curve
 
 from src.blockchain.keys import PrivateKey
 

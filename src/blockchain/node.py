@@ -1,5 +1,5 @@
 import time
-from typing import List
+from typing import List, Optional, Iterator, Union
 
 import threading
 
@@ -48,7 +48,15 @@ class NodesList:
         for node in self.nodes:
             node.send_transaction(tx)
 
-    def add_node(self, address, type_=None, register_back=False, spread=False):
+    def add_node(self, address: str, type_: Optional[str] = None, register_back: bool = False, spread: bool = False) -> bool:
+        """
+        Add a node to the list of nodes if valid and not already in the list.
+        :param address: address of the node such as "localhost:5000"
+        :param type_: type of the node such as "miner" or "manager"
+        :param register_back: whether to call back the node to register itself
+        :param spread: whether to spread the node to the other nodes
+        :return: True if the node was added, False otherwise
+        """
         host = self.parse_address(address)
         if host is None:
             logger.error("Host is None")
@@ -73,7 +81,7 @@ class NodesList:
             return True
         return True
 
-    def parse_address(self, address):
+    def parse_address(self, address: str) -> Optional[str]:
         parsed_url = urlparse(address)
         if parsed_url.netloc:
             host = parsed_url.netloc
@@ -87,7 +95,7 @@ class NodesList:
             return None
         return host
 
-    def others_chains(self):
+    def others_chains(self) -> Iterator[Union[Chain, int]]:
         for node in self.nodes:
             chain, length = node.get_chain()
             logger.debug(f"chain received {chain}")
