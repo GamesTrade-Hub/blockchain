@@ -4,7 +4,7 @@ import hashlib
 import logging
 import requests
 
-from keys import PrivateKey
+from src.blockchain.keys import PrivateKey
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.DEBUG)
