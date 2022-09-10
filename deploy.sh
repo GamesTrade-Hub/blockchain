@@ -80,7 +80,16 @@ echo "Using config file: $config_file"
 port=`./prod_node/bin/python3.8 -c "import json; print(json.load(open('$config_file'))['port'])"`
 
 echo "Run app on 0.0.0.0: ..."
-GTH_CONFIG=$config_file ./prod_node/bin/gunicorn -b 0.0.0.0:$port --workers=1 wsgi:app --daemon --log-file ~/.gth/.gunicorn_$port.logs --access-logfile ~/.gth/.gunicorn_access_$port.logs --error-logfile ~/.gth/.gunicorn_errors_$port.logs --log-level DEBUG --timeout 30
+GTH_CONFIG=$config_file ./prod_node/bin/gunicorn \
+  --bind 0.0.0.0:$port \
+  --workers=1 wsgi:app \
+  --daemon \
+  --log-file ~/.gth/.gunicorn_$port.logs \
+  --access-logfile ~/.gth/.gunicorn_access_$port.logs \
+  --error-logfile ~/.gth/.gunicorn_errors_$port.logs \
+  --log-level DEBUG \
+  --timeout 120
+
 #gunicorn -b 0.0.0.0:5000 --workers=1 wsgi:app
 
 echo "Check if running"
