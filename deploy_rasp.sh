@@ -17,17 +17,12 @@ sudo add-apt-repository restricted -y
 sudo add-apt-repository multiverse -y
 sudo apt update -y
 
-sudo apt-get install python3.8 -y
-sudo apt-get install python3-distutils python-setuptools python3.8-dev -y
-sudo apt-get install build-essential -y
-sudo apt-get install libgmp3-dev -y
-sudo apt-get install python3-pip -y
-sudo apt install gunicorn -y
+sudo apt-get install python3 python3-distutils python-setuptools python3-dev build-essential libgmp3-dev libgmp3-dev python3-pip gunicorn -y
 
 echo "Install venv ..."
 sudo apt-get install python3-virtualenv -y
-#/usr/bin/python3.8 -m pip install -U --force-reinstall virtualenv
-#/usr/bin/python3.8 -m pip install virtualenv
+#/usr/bin/python3 -m pip install -U --force-reinstall virtualenv
+#/usr/bin/python3 -m pip install virtualenv
 
 echo "Install nginx ..."
 sudo apt install nginx -y
@@ -49,10 +44,10 @@ echo "Create venv prod_node ..."
 
 
 echo "Update pip ..."
-./prod_node/bin/python3.8 -m pip install --upgrade pip --no-input
+./prod_node/bin/python3 -m pip install --upgrade pip --no-input
 
 echo "Install requirements ..."
-./prod_node/bin/python3.8 -m pip install -r requirements/prod.txt --no-input
+./prod_node/bin/python3 -m pip install -r requirements/prod.txt --no-input
 
 # function that return 0 if the string contains a substring and 1 otherwise
 function contains() {
@@ -77,7 +72,7 @@ fi
 echo "Using config file: $config_file"
 
 # Parse the json config file and save the values in bash variables
-port=`./prod_node/bin/python3.8 -c "import json; print(json.load(open('$config_file'))['port'])"`
+port=`./prod_node/bin/python3 -c "import json; print(json.load(open('$config_file'))['port'])"`
 
 echo "Run app on 0.0.0.0: ..."
 GTH_CONFIG=$config_file ./prod_node/bin/gunicorn \
