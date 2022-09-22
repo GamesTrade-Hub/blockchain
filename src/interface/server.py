@@ -7,7 +7,7 @@ import sys
 import signal
 import logging
 
-from interface.node_manager import NodesManager
+from src.interface.node_manager import NodesManager
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.DEBUG)
