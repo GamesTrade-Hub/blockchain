@@ -79,6 +79,8 @@ echo "Using config file: $config_file"
 # Parse the json config file and save the values in bash variables
 port=`./prod_node/bin/python3.8 -c "import json; print(json.load(open('$config_file'))['port'])"`
 
+mkdir -p foo ~/.gth
+
 echo "Run app on 0.0.0.0: ..."
 GTH_CONFIG=$config_file ./prod_node/bin/gunicorn \
   --bind 0.0.0.0:$port \
