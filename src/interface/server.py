@@ -25,10 +25,10 @@ logger.info("run blockchain/server.py")
 nodes_manager = NodesManager()
 
 # Instantiate the Node
-app = Flask(__name__)
+it_app = Flask(__name__)
 
 
-@app.route("/nodes/new", methods=["POST"])
+@it_app.route("/nodes/new", methods=["POST"])
 def new_node():
 
     values = request.get_json()
@@ -51,7 +51,7 @@ def new_node():
     return json.dumps(response), 200
 
 
-@app.route("/nodes/terminate", methods=["POST"])
+@it_app.route("/nodes/terminate", methods=["POST"])
 def terminate():
 
     response = {
@@ -69,7 +69,7 @@ def terminate():
     return json.dumps(response), 200
 
 
-@app.route("/nodes/terminate_all", methods=["POST"])
+@it_app.route("/nodes/terminate_all", methods=["POST"])
 def terminate_all():
 
     response = {
@@ -81,7 +81,7 @@ def terminate_all():
     return json.dumps(response), 200
 
 
-@app.route("/nodes/list", methods=["GET"])
+@it_app.route("/nodes/list", methods=["GET"])
 def list_nodes():
 
     response = nodes_manager.get_running_instances()
@@ -91,6 +91,6 @@ def list_nodes():
 
 
 if __name__ == '__main__':
-    app.run(
+    it_app.run(
         host="0.0.0.0", port=5020, debug=False
     )  # if debug is True server is started twice

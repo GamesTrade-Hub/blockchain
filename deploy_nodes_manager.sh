@@ -30,7 +30,7 @@ echo "Install requirements ..."
 echo "Run app on 0.0.0.0: ..."
 ./prod_node/bin/gunicorn \
   --bind 0.0.0.0:5020 \
-  --workers=1 wsgi:app \
+  --workers=1 wsgi:it_app \
   --daemon \
   --log-file ~/.gth/.gunicorn_5020.logs \
   --access-logfile ~/.gth/.gunicorn_access_5020.logs \
