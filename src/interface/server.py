@@ -1,9 +1,3 @@
-"""
-Flask API that allows the user to use route "new_node" to create a new node.
-It runs on port 5001.
-"""
-
-
 from uuid import uuid4
 import time
 import requests
@@ -13,10 +7,7 @@ import sys
 import signal
 import logging
 
-# from log import Log
-
-# log = Log().getLogger()
-from src.interface.autorunner import AutoRunner
+from interface.node_manager import NodesManager
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.DEBUG)
@@ -31,27 +22,37 @@ if __name__ != "__main__":
 
 logger.info("run blockchain/server.py")
 
-ar = AutoRunner()
+nodes_manager = NodesManager()
 
 # Instantiate the Node
 app = Flask(__name__)
 
 
-@app.route("/nodes/new", methods=["GET", "POST"])
-def consensus():
+@app.route("/nodes/new", methods=["POST"])
+def new_node():
+
+    values = request.get_json()
+    required = ["private_key"]
+
+    if not all(k in values for k in required):
+        return jsonify({"message": f'Missing value among {", ".join(required)}'}), 401
 
     response = {
         "message": "The new node is being created",
     }
-    values = request.get_json()
 
-    ar.create_node_instance(values["name"] if "name" in values else None)
-
+    try:
+        nodes_manager.create_node_instance(
+            values["private_key"],
+            values["region"] if "region" in values else "eu-west-3c"
+        )
+    except BaseException as e:
+        return json.dumps(e), 201
     return json.dumps(response), 200
 
 
-@app.route("/nodes/terminate", methods=["GET", "POST"])
-def consensus():
+@app.route("/nodes/terminate", methods=["POST"])
+def terminate():
 
     response = {
         "message": "node terminated",
@@ -63,18 +64,33 @@ def consensus():
     if not all(k in values for k in required):
         return jsonify({"message": f'Missing value among {", ".join(required)}'}), 400
 
-    ar.terminate_instance(values["id"])
+    nodes_manager.terminate_instance(values["id"])
 
     return json.dumps(response), 200
 
 
-@app.route("/nodes/terminate_all", methods=["GET", "POST"])
-def consensus():
+@app.route("/nodes/terminate_all", methods=["POST"])
+def terminate_all():
 
     response = {
         "message": "nodes terminated",
     }
 
-    ar.terminate_all_instances()
+    nodes_manager.terminate_all_instances()
 
     return json.dumps(response), 200
+
+
+@app.route("/nodes/list", methods=["GET"])
+def list_nodes():
+
+    response = nodes_manager.get_running_instances()
+
+    logger.debug(response)
+    return json.dumps(response), 200
+
+
+if __name__ == '__main__':
+    app.run(
+        host="0.0.0.0", port=5020, debug=False
+    )  # if debug is True server is started twice
