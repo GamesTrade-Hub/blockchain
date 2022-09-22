@@ -80,6 +80,7 @@ echo "Using config file: $config_file"
 port=`./prod_node/bin/python3.8 -c "import json; print(json.load(open('$config_file'))['port'])"`
 
 mkdir -p ~/.gth
+mkdir -p /root/.gth
 
 echo "Run app on 0.0.0.0: ..."
 GTH_CONFIG=$config_file ./prod_node/bin/gunicorn \
