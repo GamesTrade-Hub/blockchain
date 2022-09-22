@@ -37,3 +37,11 @@ To install it, run the following command:
 ```bash
 sudo apt-get install python3-sphinx
 ```
+
+### AWS config
+
+```bash
+aws configure  # default profile
+aws configure --profile "your username"  # Specific name in config files
+```
+
