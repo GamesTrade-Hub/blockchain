@@ -33,7 +33,8 @@ echo "Install nginx ..."
 sudo apt install nginx -y
 
 echo "Create venv prod_node ..."
-virtualenv prod_node
+virtualenv prod_node || /home/gth_group/.local/bin/virtualenv prod_node
+
 
 #echo "Setup nginx reverse-proxy ..."
 #sudo service nginx stop
