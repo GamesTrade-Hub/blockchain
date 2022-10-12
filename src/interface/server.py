@@ -47,7 +47,7 @@ def new_node():
             values["region"] if "region" in values else "eu-west-3c"
         )
     except BaseException as e:
-        return json.dumps(e), 201
+        return json.dumps(e), 402
     return json.dumps(response), 200
 
 

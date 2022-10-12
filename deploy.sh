@@ -11,10 +11,7 @@ fi
 
 sudo apt-get install software-properties-common -y
 
-sudo add-apt-repository main -y
-sudo add-apt-repository universe -y
-sudo add-apt-repository restricted -y
-sudo add-apt-repository multiverse -y
+sudo add-apt-repository main multiverse universe restricted -y
 sudo apt update -y
 
 sudo apt-get install python3.8 -y
