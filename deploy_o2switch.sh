@@ -42,7 +42,6 @@ echo "Using config file: $config_file"
 port=`/home2/krfu8777/virtualenv/blockchain/3.8/bin/python3.8 -c "import json; print(json.load(open('$config_file'))['port'])"`
 
 mkdir -p ~/.gth
-mkdir -p /root/.gth
 
 echo "Run app on 0.0.0.0: ..."
 GTH_CONFIG=$config_file /home2/krfu8777/virtualenv/blockchain/3.8/bin/gunicorn \
