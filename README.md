@@ -1,7 +1,6 @@
 # Blockchain
 
 This blockchain is used to manage items, nft and tokens of a game.
-Since the needed package fastecdsa is not available on Windows, the nodes cannot be run on windows.
 
 ### Start
 
