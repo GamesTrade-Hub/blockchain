@@ -2,7 +2,7 @@ from os.path import expanduser, join, exists
 from typing import Optional
 import configparser
 
-from src.blockchain.keys import PrivateKey, PublicKey, PublicKeyContainer
+from src.blockchain.keys import PrivateKey, PublicKeyContainer
 import logging
 
 logger = logging.getLogger(__name__)
@@ -24,7 +24,7 @@ credentials_file_path: Optional[str] = (
 logger.debug(f"{credentials_file_name} file path: {credentials_file_path}")
 
 private_key_from_config: Optional[PrivateKey] = None
-public_key_from_config: Optional[PublicKey] = None
+public_key_from_config: Optional[PublicKeyContainer] = None
 
 if credentials_file_path is not None:
     credentials_file = configparser.RawConfigParser()
@@ -48,5 +48,7 @@ if credentials_file_path is not None:
 
 # Generate keys if not found in credentials file
 PRIVATE_KEY: PrivateKey = private_key_from_config or PrivateKey.generate()
-PUBLIC_KEY: PublicKeyContainer = public_key_from_config or PublicKeyContainer.casual_from_private_key(PRIVATE_KEY)
+PUBLIC_KEY: PublicKeyContainer = (
+    public_key_from_config or PublicKeyContainer.casual_from_private_key(PRIVATE_KEY)
+)
 logger.info(f"Encoded Public Key: {PUBLIC_KEY.encode()}")

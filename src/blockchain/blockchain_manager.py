@@ -1,6 +1,6 @@
 from typing import List, Optional, Iterator
 
-from blockchain.keys import PublicKeyContainer, GTH_PUBLIC_KEY
+from src.blockchain.keys import PublicKeyContainer, GTH_PUBLIC_KEY
 from src.blockchain.chain import Chain
 from src.blockchain.tools import get_time, MetaSingleton, hash__
 from src.blockchain.transaction import TransactionsList, State, Transaction
