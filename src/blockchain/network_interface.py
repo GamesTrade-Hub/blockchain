@@ -1,7 +1,7 @@
 from src.blockchain.blockchain_manager import BlockchainManager
 from src.blockchain.blockchain_manager import Chain
 from src.blockchain.tools import BcEncoder, hash__
-from src.blockchain.keys import PublicKey, PrivateKey
+from src.blockchain.keys import PublicKey, PrivateKey, PublicKeyContainer
 from src.blockchain.config import Host, NodeType, conf, PUBLIC_KEY, config_file_path
 
 
@@ -46,17 +46,36 @@ class NetworkInterface:
 
     @staticmethod
     def get_private_key():
-        private_key = PrivateKey.generate(encoded=True)
+        private_key = PrivateKey.generate().encode()
         response = {"key": f"{private_key}"}
         return response, 201
 
     @staticmethod
-    def get_public_key(request_json):
+    def get_public_key_casual(request_json):
         values = request_json
         if values is None or "private_key" not in values:
             return "Error: Please supply a private key", 400
         private_key = PrivateKey(values.get("private_key"))
-        public_key = PublicKey.generate_from_private_key(private_key, encoded=True)
+        public_key = PublicKeyContainer.casual_from_private_key(private_key).encode()
+        response = {"key": f"{public_key}"}
+        return response, 201
+
+    @staticmethod
+    def get_public_key_admin(request_json):
+        values = request_json
+        if values is None or "private_key" not in values:
+            return "Error: Please supply a private key", 400
+
+        required = ["private_key", "token", "gth_private_key"]
+        if not all(k in values for k in required):
+            print("return", f'Missing value among {", ".join(required)}', 400)
+            return f'Missing value among {", ".join(required)}', 400
+
+        private_key = PrivateKey(values.get("private_key"))
+        token = values.get("token")
+        gth_private_key = PrivateKey(values.get("gth_private_key"))
+
+        public_key = PublicKeyContainer.from_gth_private_key_token(private_key, token, gth_private_key).encode()
         response = {"key": f"{public_key}"}
         return response, 201
 
@@ -127,6 +146,10 @@ class NetworkInterface:
 
         if not all(k in values for k in required):
             return {"message": f'Missing value among {", ".join(required)}'}, 400
+
+        if '_' in values['token']:
+            return {"message": f"token can't contain _"}, 400
+
         message = {
             "message": f"Item created, please use this token",
             "token": f'item_{hash__(str(values["nb"]) if "nb" in values else str(uuid4()))}_{values["token"]}',
@@ -240,11 +263,6 @@ class NetworkInterface:
         )
 
         logger.debug(f"response, code = {response, code}")
-        return response, code
-
-    def end_mining_process(self):
-        response, code = self.blockchain.update_mining_state()
-
         return response, code
 
     def chain_found(self, request_json):

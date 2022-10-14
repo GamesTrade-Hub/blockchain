@@ -111,10 +111,17 @@ def get_private_key():
     return jsonify(response), code
 
 
-@app.route("/get_new_public_key", methods=["GET"])
+@app.route("/get_new_public_key_casual", methods=["GET"])
 @network_interface.high_level_handler(invalid=[NodeType.MINER])
-def get_public_key():
-    response, code = network_interface.get_public_key(request_json=request.get_json())
+def get_public_key_casual():
+    response, code = network_interface.get_public_key_casual(request_json=request.get_json())
+    return jsonify(response), code
+
+
+@app.route("/get_new_public_key_admin", methods=["GET"])
+@network_interface.high_level_handler(invalid=[NodeType.MINER])
+def get_public_key_admin():
+    response, code = network_interface.get_public_key_admin(request_json=request.get_json())
     return jsonify(response), code
 
 
@@ -220,13 +227,6 @@ def get_nodes_list():
 @network_interface.high_level_handler(invalid=[NodeType.MANAGER])
 def new_block():
     response, code = network_interface.new_block(request_json=request.json)
-    return json.dumps(response), code
-
-
-@app.route("/private/__end_mining_process", methods=["GET"])
-@network_interface.high_level_handler(invalid=[NodeType.MANAGER])
-def end_mining_process():
-    response, code = network_interface.end_mining_process()
     return json.dumps(response), code
 
 

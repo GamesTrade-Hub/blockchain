@@ -4,7 +4,6 @@ import json
 from os.path import exists, join, expanduser
 from typing import Optional
 
-from src.blockchain.keys import PrivateKey, PublicKey
 from src.blockchain.tools import MetaSingleton
 from src.blockchain.credentials import PUBLIC_KEY, PRIVATE_KEY
 import sys

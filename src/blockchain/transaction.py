@@ -1,12 +1,11 @@
-from typing import List, Iterator
+from typing import List, Iterator, Optional
 
 from src.blockchain.tools import get_time, BcEncoder
 from src.blockchain.smart_contracts import SmartContract, Type
-from src.blockchain.keys import PublicKey, PrivateKey
+from src.blockchain.keys import PublicKey, PrivateKey, PublicKeyContainer, Signature
 
 import json
 from uuid import uuid4
-from fastecdsa import curve, ecdsa, keys, point
 from enum import IntEnum
 import requests
 import logging
@@ -55,9 +54,9 @@ class TransactionsList:
     def create_add_transaction(
         self,
         id_,
-        token,
-        sender,
-        recipient,
+        token: str,
+        sender: str,
+        recipient: str,
         amount,
         time_=None,
         sc_=None,
@@ -168,13 +167,13 @@ class Transaction:
         self,
         id_: str,
         token: str,
-        sender: PublicKey,
-        recipient: PublicKey,
+        sender: str,
+        recipient: str,
         amount: float,
         time_: int,
         sc_: SmartContract,
-        signature: tuple = None,
-        private_key: PrivateKey = None,
+        signature: str = None,
+        private_key: str = None,
         state: State = None,
     ):
         """
@@ -199,15 +198,16 @@ class Transaction:
         # # Raw transaction # #
         self._id = id_ or str(uuid4())
         self._token = token
-        self._sender: PublicKey = PublicKey(sender)
-        self._recipient: PublicKey = PublicKey(recipient)
+        logger.debug(f"sender id {sender}")
+        self._sender: PublicKeyContainer = PublicKeyContainer(sender)
+        self._recipient: PublicKeyContainer = PublicKeyContainer(recipient)
         self._amount: float = amount
         self._time: int = time_ or get_time()
         self._smart_contract: SmartContract = SmartContract(sc_, self) or SmartContract(
             None, self
         )
         # # =============== # #
-        self._signature: tuple = signature
+        self._signature: Optional[Signature] = Signature(signature) if signature is not None else None
         # ## ================ ## #
 
         if self._sender.key is None or self._recipient.key is None:
@@ -216,7 +216,7 @@ class Transaction:
             return
 
         if self._signature is None:
-            self.sign(private_key)
+            self.sign(PrivateKey(private_key))
 
         self.error = None
         self.state = state or State.WAITING
@@ -261,7 +261,7 @@ class Transaction:
 
         if (
             self._sender == self._recipient
-            and BlockchainManager.is_gth(self._sender) is False
+            and BlockchainManager.is_admin(self._sender) is False
         ):
             self.error = "Sender and recipient can't be the same"
             return False
@@ -282,10 +282,11 @@ class Transaction:
     def does_not_violate_the_portfolio(self):
         from src.blockchain.blockchain_manager import (
             BlockchainManager,
-        )  # You did not see that.
+        )
 
         if (
-            self.is_nft() and not BlockchainManager.is_gth(self._recipient)
+            self.is_nft()
+            and not BlockchainManager.is_admin_of_token(self._sender, self._token)
         ) and BlockchainManager().get_balance_by_token(
             self._sender.__str__(), self._token
         ) < self._amount:
@@ -294,8 +295,9 @@ class Transaction:
             )
             print("ERROR while adding transaction", self.error, "id", self._id)
             return False
+
         if (
-            BlockchainManager.is_gth(self._sender) is False
+            BlockchainManager.is_admin_of_token(self._sender, self._token) is False
             and BlockchainManager().get_balance_by_token(
                 self._sender.__str__(), self._token
             )
@@ -306,9 +308,10 @@ class Transaction:
             )
             print("ERROR while adding transaction", self.error, "id", self._id)
             return False
+
         if (
-            BlockchainManager.is_gth(self._recipient)
-            and BlockchainManager.is_gth(self._sender)
+            BlockchainManager.is_admin_of_token(self._recipient, self._token)
+            and BlockchainManager.is_admin_of_token(self._sender, self._token)
             and self.is_nft()
             and BlockchainManager().nft_exists(self._token)
         ):
@@ -321,13 +324,7 @@ class Transaction:
         if not bool(self._signature):
             self.error = "transaction not signed"
             return False
-        if not ecdsa.verify(
-            self._signature,
-            self.__encode(full=False),
-            self._sender.key,
-            curve.secp256k1,
-            ecdsa.sha256,
-        ):
+        if not self._sender.verify(self._signature, self.__encode(full=False)):
             self.error = "Invalid signature"
             return False
         return True
@@ -381,15 +378,12 @@ class Transaction:
         """
         return {
             **self.__to_dict(full=True),
-            **{"signature": self._signature, "state": self.state.encode()},
+            **{"signature": self._signature.encode(), "state": self.state.encode()},
         }
 
-    def sign(self, private_key):
-        private_key = PrivateKey(private_key).key
+    def sign(self, private_key: PrivateKey):
         try:
-            self._signature = ecdsa.sign(
-                self.__encode(full=False), private_key, curve.secp256k1, ecdsa.sha256
-            )
+            self._signature = private_key.sign(self.__encode(full=False))
         except BaseException as e:
             self.error = e
             logger.warning(f"Unable to sign transaction {e}")

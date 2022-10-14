@@ -1,5 +1,6 @@
 from typing import List, Optional, Iterator
 
+from blockchain.keys import PublicKeyContainer, GTH_PUBLIC_KEY
 from src.blockchain.chain import Chain
 from src.blockchain.tools import get_time, MetaSingleton, hash__
 from src.blockchain.transaction import TransactionsList, State, Transaction
@@ -32,6 +33,7 @@ def get_authorized_nodes_public_keys() -> list:
 
 class BlockchainManager(metaclass=MetaSingleton):
     """Main blockchain class that allows to do all needed operations on the underlying blockchain"""
+
     def __init__(self):
         """
         Initialize the blockchain. Create genesis block.
@@ -72,12 +74,12 @@ class BlockchainManager(metaclass=MetaSingleton):
 
     @property
     def type(self) -> NodeType:
-        """ Return the type of the node """
+        """Return the type of the node"""
         return self._type
 
     @type.setter
     def type(self, type_) -> None:
-        """ Set the type of the node """
+        """Set the type of the node"""
         if isinstance(type_, NodeType) and (
             self._type is None or self._type == NodeType.UNKNOWN
         ):
@@ -90,14 +92,16 @@ class BlockchainManager(metaclass=MetaSingleton):
 
     @property
     def chain_size(self) -> int:
-        """ Return the size of the chain """
+        """Return the size of the chain"""
         return self.chain.__len__()
 
     def get_connected_nodes(self) -> NodesList:
-        """ Return the list of connected nodes """
+        """Return the list of connected nodes"""
         return self.nodes
 
-    def add_node(self, address: str, type_=None, register_back=False, spread=False) -> int:
+    def add_node(
+        self, address: str, type_=None, register_back=False, spread=False
+    ) -> int:
         """
         Add a new node to the list of nodes
         :param address: Address of the node. Eg. 'http://192.168.0.5:5000'
@@ -252,7 +256,7 @@ class BlockchainManager(metaclass=MetaSingleton):
 
         return True, "ok"
 
-    def create_nft(self, token, nb, gth_private_key) -> (bool, str):
+    def create_nft(self, token: str, nb: str, gth_private_key: str) -> (bool, str):
         """
         Create a new NFT to add to the next block
         :param token: name of the nft
@@ -260,12 +264,15 @@ class BlockchainManager(metaclass=MetaSingleton):
         :param gth_private_key: GamesTrade Hub's private key
         :return: (False, error_message) if the nft was not added, (True, nft id) if it was added
         """
+        if '_' in token:
+            return False, "Token name cannot contain '_'"
+
         added, tx = self.txs.create_add_transaction(
             id_=None,
             token=f"nft_{hash__(str(nb))}_{token}",
-            sender=BlockchainManager.get_gth_public_key(),
+            sender=GTH_PUBLIC_KEY.encode(),
             private_key=gth_private_key,
-            recipient=BlockchainManager.get_gth_public_key(),
+            recipient=GTH_PUBLIC_KEY.encode(),
             amount=1,
             create=True,
         )
@@ -275,41 +282,6 @@ class BlockchainManager(metaclass=MetaSingleton):
 
         return True, tx["token"]
 
-    def update_mining_state(self):
-        """
-        DEPRECATED
-        used to check if this node has found the solution to the POW
-        :return:
-        """
-        logger.warning("update_mining_state is deprecated")
-        if not self.current_block:
-            logger.debug(f"current block? {self.current_block}")
-            return "No block mined", 400
-
-        if not self.current_block.pow_finished():
-            logger.info(f"pow not finished {self.current_block.pow_finished()}")
-            return "Pow not finished", 400
-
-        # Reset the current list of transactions
-        self.current_block.add_found_nonce_and_close_queues()
-        self.chain.add_block(self.current_block)
-        self.current_block = None
-
-        self.nodes.spread_chain(self.chain)
-        # If at some point, blockchain version is changed, check if these transactions are in, otherwise try to add them back.
-        # Also, transactions in the blockchain after 10+ blocks can be removed because we can be kind of sure that they are in the blockchain for ever
-
-        return "Mining step finished, block found", 200
-
-    def end_current_mining_process(self) -> None:
-        """
-        DEPRECATED
-        If a mining process is going on in this node, then end it.
-        Probably because a better chain has been received.
-        """
-        logger.warning("end_current_mining_process is deprecated")
-        self.current_block = None
-
     @staticmethod
     def is_gth(public_key) -> bool:
         """
@@ -317,14 +289,16 @@ class BlockchainManager(metaclass=MetaSingleton):
         :param public_key: public key to check
         :return: True if it is the GTH's public key, False otherwise
         """
-        return str(public_key) == BlockchainManager.get_gth_public_key()
+        return str(public_key) == GTH_PUBLIC_KEY.encode()
 
     @staticmethod
-    def get_gth_public_key() -> str:
+    def is_admin(public_key: PublicKeyContainer) -> bool:
         """
-        :return: the public key of the GTH account
+        Check if a public key is an admin's public key
+        :param public_key: public key to check
+        :return: True if it is an admin's public key, False otherwise
         """
-        return "107586176969073111214138186621388472896166149958805892498797251438836201351897A74644521699183317518461259885566371696845701675874024848140772236522116872470"
+        return public_key.key_is_valid() and public_key.is_casual()
 
     @staticmethod
     def get_time() -> int:
@@ -347,3 +321,7 @@ class BlockchainManager(metaclass=MetaSingleton):
     def __del__(self):
         logger.info("Blockchain.__del__: Informing other nodes of current exiting")
         self.nodes.remove_me()
+
+    @classmethod
+    def is_admin_of_token(cls, sender: PublicKeyContainer, token: str) -> bool:
+        return sender.data == token.split("_")[-1]

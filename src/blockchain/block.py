@@ -2,7 +2,7 @@ import sys
 from typing import List, Iterator, Optional, Tuple, Union
 
 from src.blockchain.config import Host
-from src.blockchain.keys import sign, has_valid_signature, PublicKey, Signature
+from src.blockchain.keys import PublicKeyContainer, Signature
 from src.blockchain.tools import BcEncoder, hash__, get
 from src.blockchain.transaction import TransactionsList, State, Transaction
 from src.blockchain.config import Host, PRIVATE_KEY
@@ -19,38 +19,13 @@ logging.basicConfig(level=logging.DEBUG)
 logger.setLevel(logging.DEBUG)
 
 
-def proof_of_work(block_hash, nonce_queue, cancel_queue, host):
-    """
-    DEPRECATED
-    Simple Proof of Work Algorithm:
-     - Find a number p' such that hash(pp') contains leading 5 zeroes
-     - Where p is the previous nonce, and p' is the new nonce
-
-    :return: <int>
-    """
-
-    nonce = 0
-    while Block.valid_pow(block_hash, nonce) is False:
-        if cancel_queue.qsize() and cancel_queue.get(block=False) == "cancel":
-            logger.info(f"Cancel received while doing POW")
-            sys.exit(0)
-        nonce += 1 + random()
-
-    sleep(1)
-    nonce_queue.put(nonce)
-    print("nonce found in subprocess", nonce)
-    get(f"{host}/private/__end_mining_process")
-    sys.exit(0)
-
-
-def proof_of_authority(block_hash) -> Signature:
+def proof_of_authority(block_hash: str) -> Signature:
     """
     Proof of Authority.
     :return: <int>
     """
 
-    signature = sign(block_hash, PRIVATE_KEY)
-    return Signature(signature)
+    return PRIVATE_KEY.sign(block_hash)
 
 
 class Block:
@@ -59,7 +34,7 @@ class Block:
         index: int,
         transactions: TransactionsList,
         previous_hash: str,
-        validator: PublicKey,
+        validator: PublicKeyContainer,
         nonce: Optional[Signature] = None,
         hash_: Optional[str] = None,
     ):
@@ -81,7 +56,7 @@ class Block:
         # ========= #
         self._hash: str = hash_ or hash__(self.__encode(full=False))
         self._nonce: Optional[Signature] = nonce
-        self._validator: PublicKey = validator
+        self._validator: PublicKeyContainer = validator
         ## ========== ##
 
         self.error = None
@@ -106,7 +81,7 @@ class Block:
             index=dictionary["index"],
             transactions=TransactionsList.from_dict(dictionary["transactions"]),
             previous_hash=dictionary["previous_hash"],
-            validator=PublicKey(dictionary["validator"]),
+            validator=PublicKeyContainer(dictionary["validator"]),
             nonce=Signature(dictionary["nonce"]),
             hash_=dictionary["hash"],
         )
@@ -158,7 +133,7 @@ class Block:
         return guess_hash[:4] == "0000"
 
     @staticmethod
-    def valid_poa(block_hash: str, nonce: Signature, validator: PublicKey) -> bool:
+    def valid_poa(block_hash: str, nonce: Signature, validator: PublicKeyContainer) -> bool:
         """
         Validates the Proof
         :param block_hash: hash of the block
@@ -168,9 +143,9 @@ class Block:
         """
         from src.blockchain.blockchain_manager import BlockchainManager
 
-        print(f"{nonce.signature=}", f"{block_hash=}", f"{validator=}")
+        logger.debug(f"{nonce.signature=}", f"{block_hash=}", f"{validator=}")
         return (
-            has_valid_signature(nonce.signature, block_hash, validator)
+            validator.verify(nonce, block_hash)
             and validator.encode() in BlockchainManager().authorized_nodes_public_keys
         )
 
@@ -219,7 +194,7 @@ class Block:
         return self._txs
 
     @property
-    def validator(self) -> PublicKey:
+    def validator(self) -> PublicKeyContainer:
         return self._validator
 
     @property
