@@ -22,9 +22,10 @@ a private key, without make the private key public, it is correct.
 Get keys encoded by GTH private key so that we can check with public key that the key
 is authentic. But still we need to integrate the token name in the public key.
 
+## Method
 
 The public key will now be in 2 parts :
 - The first part is a standard public key
-- The second part is the token name encoded with the private key of GTH
+- The second part is the token name + public key signed with the private key of GTH
   - For non-admin this part can be anything encoded with their own key. Such as a 
-    name or a random string.
+    name or a random string. "casual" keyword is used to denote non-admin keys.
