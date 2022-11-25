@@ -2,3 +2,4 @@ Flask==2.0.3
 requests==2.27.1
 click==8.0.4
 setuptools
+cryptography==38.0.3
