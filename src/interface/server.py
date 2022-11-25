@@ -40,11 +40,18 @@ def new_node():
         "message": "The new node is being created",
     }
 
+    # Print values["nodes"] type if exists in values
+    if "nodes" in values:
+        logger.debug(f"nodes type: {type(values['nodes'])}")
+    else:
+        logger.debug(f"nodes not in values")
+
     try:
         nodes_manager.create_node_instance(
             values["private_key"],
             values["public_key"],
-            values["region"] if "region" in values else "eu-west-3c"
+            values["region"] if "region" in values else "eu-west-3c",
+            values["nodes"] if "nodes" in values else [],
         )
     except BaseException as e:
         return json.dumps(e), 402

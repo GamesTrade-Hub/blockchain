@@ -140,10 +140,12 @@ class NodesManager:
             private_key,
             public_key,
             availability_zone="eu-west-3c",
-            instance_name=None
+            instance_name=None,
+            nodes=None
     ) -> Optional[Instance]:
         """
         Documentation: https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/ec2.html#EC2.ServiceResource.create_instances
+        :param nodes: ip of the node to connect to
         :param instance_name: name of the EC2 instance
         :return: the instance if created, None otherwise
         """
@@ -182,7 +184,7 @@ class NodesManager:
         logger.info(
             f"Created node instance: {instances[0].id}. ip: {get_public_ip(self.ec2_client_creator, instances[0].id)}"
         )
-        self.__run_blockchain_node_setup(instances[0], private_key, public_key)
+        self.__run_blockchain_node_setup(instances[0], private_key, public_key, nodes or [])
 
         return instances[0]
 
@@ -240,7 +242,7 @@ class NodesManager:
     def get_running_instances(self) -> List:
         return get_running_instances(self.ec2_client_creator, self.ec2_resource_creator)
 
-    def __run_blockchain_node_setup(self, instance, private_key, public_key):
+    def __run_blockchain_node_setup(self, instance, private_key, public_key, nodes):
         # https://github.com/GamesTrade-Hub/blockchain.git
 
         timeout = 10
@@ -261,7 +263,7 @@ class NodesManager:
                             "cd blockchain",
                             "git checkout new_encryption",
                             "git log -1",
-                            f"python update_miner_keys.py ./configs/prod.config.json {private_key} {public_key}",
+                            f"python3 update_miner_keys.py -cfg ./configs/prod.config.json -pvk {private_key} -pbk {public_key} -nds {' '.join(nodes)}",
                             "sudo ./deploy.sh ./configs/prod.config.json",
                         ],
                         "workingDirectory": ["/home/ubuntu"],
