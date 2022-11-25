@@ -13,7 +13,6 @@ logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.DEBUG)
 logger.setLevel(logging.DEBUG)
 
-
 if __name__ != "__main__":
     gunicorn_logger = logging.getLogger("gunicorn.error")
     gunicorn_logger.setLevel(logging.DEBUG)
@@ -92,6 +91,7 @@ def list_nodes():
 
 
 if __name__ == '__main__':
+    logger.info("run blockchain server interface")
     it_app.run(
         host="0.0.0.0", port=5020, debug=False
     )  # if debug is True server is started twice

@@ -258,9 +258,10 @@ class NodesManager:
                     Parameters={
                         "commands": [
                             "git clone https://github.com/GamesTrade-Hub/blockchain.git",
-                            "git checkout new_encryption",
-                            f"python update_miner_keys.py ./configs/prod.config.json {private_key} {public_key}",
                             "cd blockchain",
+                            "git checkout new_encryption",
+                            "git log -1",
+                            f"python update_miner_keys.py ./configs/prod.config.json {private_key} {public_key}",
                             "sudo ./deploy.sh ./configs/prod.config.json",
                         ],
                         "workingDirectory": ["/home/ubuntu"],
