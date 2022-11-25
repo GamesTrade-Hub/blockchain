@@ -263,7 +263,8 @@ class NodesManager:
                             "cd blockchain",
                             "git checkout new_encryption",
                             "git log -1",
-                            f"python3 update_miner_keys.py -cfg ./configs/prod.config.json -pvk {private_key} -pbk {public_key} -nds {' '.join(nodes)}",
+                            f"python3 update_miner_keys.py -cfg ./configs/prod.config.json -pvk {private_key} -pbk {public_key} -nds {' '.join(nodes)}" if len(nodes) > 0 else
+                            f"python3 update_miner_keys.py -cfg ./configs/prod.config.json -pvk {private_key} -pbk {public_key}",
                             "sudo ./deploy.sh ./configs/prod.config.json",
                         ],
                         "workingDirectory": ["/home/ubuntu"],
@@ -285,10 +286,10 @@ class NodesManager:
             output = self.ssm_client.get_command_invocation(
                 CommandId=command_id, InstanceId=instance.id
             )
-        logger.debug(f"run BC command output {output['StandardOutputContent']}")
-        logger.debug(f"run BC command error {output['StandardErrorContent']}")
-        logger.info(f"run blockchain node setup status: {output['Status']}")
-        logger.debug(f"StatusDetails {output['StatusDetails']}")
+        logger.debug(f"[run BC command std output]: {output['StandardOutputContent']}")
+        logger.debug(f"[run BC command err output]: {output['StandardErrorContent']}")
+        logger.info(f"[run blockchain node setup status]: {output['Status']}")
+        logger.debug(f"[StatusDetails]: {output['StatusDetails']}")
 
 
 if __name__ == "__main__":

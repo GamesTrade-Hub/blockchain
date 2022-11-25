@@ -1,10 +1,8 @@
 {
     "nodes": [
-        "ah oui",
-        "ok ok"
     ],
     "type": "all",
     "port": 5000,
-    "private_key": "pvk3",
-    "public_key": "pb"
+    "private_key": "pvk",
+    "public_key": "pbk"
 }
