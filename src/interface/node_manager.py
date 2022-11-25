@@ -138,6 +138,7 @@ class NodesManager:
     def create_node_instance(
             self,
             private_key,
+            public_key,
             availability_zone="eu-west-3c",
             instance_name=None
     ) -> Optional[Instance]:
@@ -181,7 +182,7 @@ class NodesManager:
         logger.info(
             f"Created node instance: {instances[0].id}. ip: {get_public_ip(self.ec2_client_creator, instances[0].id)}"
         )
-        self.__run_blockchain_node_setup(instances[0])
+        self.__run_blockchain_node_setup(instances[0], private_key, public_key)
 
         return instances[0]
 
@@ -239,7 +240,7 @@ class NodesManager:
     def get_running_instances(self) -> List:
         return get_running_instances(self.ec2_client_creator, self.ec2_resource_creator)
 
-    def __run_blockchain_node_setup(self, instance):
+    def __run_blockchain_node_setup(self, instance, private_key, public_key):
         # https://github.com/GamesTrade-Hub/blockchain.git
 
         timeout = 10
@@ -257,6 +258,8 @@ class NodesManager:
                     Parameters={
                         "commands": [
                             "git clone https://github.com/GamesTrade-Hub/blockchain.git",
+                            "git checkout new_encryption",
+                            f"python update_miner_keys.py ./configs/prod.config.json {private_key} {public_key}",
                             "cd blockchain",
                             "sudo ./deploy.sh ./configs/prod.config.json",
                         ],
@@ -289,3 +292,8 @@ if __name__ == "__main__":
     nodes_manager = NodesManager()
     nodes_manager.terminate_all_instances()
     # nodes_manager.create_node_instance()
+
+
+
+
+

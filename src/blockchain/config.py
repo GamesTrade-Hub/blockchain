@@ -4,8 +4,9 @@ import json
 from os.path import exists, join, expanduser
 from typing import Optional
 
+from blockchain.keys import PublicKeyContainer, PrivateKey
 from src.blockchain.tools import MetaSingleton
-from src.blockchain.credentials import PUBLIC_KEY, PRIVATE_KEY
+# from src.blockchain.credentials import PUBLIC_KEY, PRIVATE_KEY
 import sys
 from enum import Enum
 import logging
@@ -93,13 +94,22 @@ class Config:
     nodes: list
     type: NodeType
     port: int
-    authorized_nodes_pbk: list
+    public_key: PublicKeyContainer
+    private_key: PrivateKey
 
     @classmethod
     def from_file(cls, file):
         raw_cfg = json.load(open(file, "r"))
         raw_cfg["type"] = NodeType(raw_cfg["type"])
+        raw_cfg["public_key"] = PublicKeyContainer(raw_cfg["public_key"])
+        raw_cfg["private_key"] = PrivateKey(raw_cfg["private_key"])
         return cls(**raw_cfg)
 
 
 conf: Config = Config.from_file(config_file_path)
+PRIVATE_KEY: PrivateKey = conf.private_key
+PUBLIC_KEY: PublicKeyContainer = conf.public_key
+logger.debug(f"{PUBLIC_KEY.is_valid()=}")
+
+assert PUBLIC_KEY.is_valid(), "Invalid keys"
+

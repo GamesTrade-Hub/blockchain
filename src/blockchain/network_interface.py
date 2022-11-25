@@ -75,7 +75,25 @@ class NetworkInterface:
         token = values.get("token")
         gth_private_key = PrivateKey(values.get("gth_private_key"))
 
-        public_key = PublicKeyContainer.from_gth_private_key_token(private_key, token, gth_private_key).encode()
+        public_key = PublicKeyContainer.token_admin_from_private_key(private_key, token, gth_private_key).encode()
+        response = {"key": f"{public_key}"}
+        return response, 201
+
+    @staticmethod
+    def get_public_key_miner(request_json):
+        values = request_json
+        if values is None or "private_key" not in values:
+            return "Error: Please supply a private key", 400
+
+        required = ["private_key", "gth_private_key"]
+        if not all(k in values for k in required):
+            print("return", f'Missing value among {", ".join(required)}', 400)
+            return f'Missing value among {", ".join(required)}', 400
+
+        private_key = PrivateKey(values.get("private_key"))
+        gth_private_key = PrivateKey(values.get("gth_private_key"))
+
+        public_key = PublicKeyContainer.miner_from_private_key(private_key, gth_private_key).encode()
         response = {"key": f"{public_key}"}
         return response, 201
 

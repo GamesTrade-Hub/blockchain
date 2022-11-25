@@ -32,7 +32,7 @@ it_app = Flask(__name__)
 def new_node():
 
     values = request.get_json()
-    required = ["private_key"]
+    required = ["private_key", "public_key"]
 
     if not all(k in values for k in required):
         return jsonify({"message": f'Missing value among {", ".join(required)}'}), 401
@@ -44,6 +44,7 @@ def new_node():
     try:
         nodes_manager.create_node_instance(
             values["private_key"],
+            values["public_key"],
             values["region"] if "region" in values else "eu-west-3c"
         )
     except BaseException as e:

@@ -1,7 +1,6 @@
 from src.blockchain.blockchain_manager import BlockchainManager
 from src.blockchain.blockchain_manager import Chain
 from src.blockchain.network_interface import NetworkInterface
-from src.blockchain.tools import BcEncoder, hash__
 from src.blockchain.keys import PublicKey, PrivateKey
 from src.blockchain.config import Host, NodeType, conf, PUBLIC_KEY, config_file_path
 
@@ -122,6 +121,13 @@ def get_public_key_casual():
 @network_interface.high_level_handler(invalid=[NodeType.MINER])
 def get_public_key_admin():
     response, code = network_interface.get_public_key_admin(request_json=request.get_json())
+    return jsonify(response), code
+
+
+@app.route("/get_new_public_key_miner", methods=["GET"])
+@network_interface.high_level_handler(invalid=[NodeType.MINER])
+def get_public_key_miner():
+    response, code = network_interface.get_public_key_miner(request_json=request.get_json())
     return jsonify(response), code
 
 

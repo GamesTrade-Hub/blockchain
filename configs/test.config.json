@@ -1,6 +1,5 @@
 {
   "nodes": [],
   "type": "all",
-  "port": 5001,
-  "authorized_nodes_pbk": []
+  "port": 5001
 }

@@ -48,21 +48,6 @@ class PublicKeyContainer:
     def __str__(self) -> str:
         return self.encode()
 
-    @classmethod
-    def from_gth_private_key_token(
-            cls, private_key: "PrivateKey", data: str, gth_private_key: "PrivateKey"
-    ):
-        """
-        This method creates a PublicKeyToken from a public key and a token signed with the gth private key
-        :param private_key:
-        :param data:
-        :param gth_private_key:
-        :return:
-        """
-        public_key = PublicKey.from_private_key(private_key)
-        signature = gth_private_key.sign(public_key.encode() + data)
-        return cls(public_key.encode() + signature.encode() + data)
-
     @staticmethod
     def decode(key: str) -> Tuple["PublicKey", "Signature", str]:
         return (
@@ -74,7 +59,7 @@ class PublicKeyContainer:
     def verify(self, signature: "Signature", data: str) -> bool:
         return self.key.verify(signature, data)
 
-    def key_is_valid(self) -> bool:
+    def is_valid(self) -> bool:
         if self.is_casual():
             return self.key.verify(self.signature, self.key.encode() + self.data)
         return GTH_PUBLIC_KEY.verify(
@@ -83,13 +68,61 @@ class PublicKeyContainer:
 
     @classmethod
     def casual_from_private_key(cls, private_key):
+        """
+        Generate a casual public key from a private key
+        :param private_key:
+        :return:
+        """
         public_key = PublicKey.from_private_key(private_key)
         data = "casual"
         signature = private_key.sign(public_key.encode() + data)
-        return cls(public_key.encode() + signature.encode() + data)
+
+        key = public_key.encode() + signature.encode() + data
+        return cls(key)
+
+    @classmethod
+    def miner_from_private_key(cls, private_key, gth_private_key):
+        """
+        Generate a miner public key from a private key. A miner key is a key with
+        authority. This authority is given by the gth private key
+        :param private_key:
+        :param gth_private_key:
+        :return:
+        """
+        data = "miner"
+
+        public_key = PublicKey.from_private_key(private_key)
+        signature = gth_private_key.sign(public_key.encode() + data)  # Proof of authority through gth private key
+
+        key = public_key.encode() + signature.encode() + data
+        return cls(key)
+
+    @classmethod
+    def token_admin_from_private_key(
+            cls, private_key: "PrivateKey", data: str, gth_private_key: "PrivateKey"
+    ):
+        """
+        This method creates a PublicKeyToken from a public key and a token
+        signed with the gth private key
+        :param private_key:
+        :param data:
+        :param gth_private_key:
+        :return:
+        """
+        public_key = PublicKey.from_private_key(private_key)
+        signature = gth_private_key.sign(public_key.encode() + data)
+
+        key = public_key.encode() + signature.encode() + data
+        return cls(key)
 
     def is_casual(self) -> bool:
-        return self.data == "casual"
+        return self.data == "casual" and self.is_valid()
+
+    def is_miner(self):
+        return self.data == "miner" and self.is_valid()
+
+    def is_token_admin(self):
+        return not self.is_casual() and not self.is_miner() and self.is_valid()
 
 
 class PrivateKey:
@@ -256,11 +289,11 @@ if __name__ == "__main__":
     admin_token = "snowy"
 
     admin_private_key = PrivateKey.generate()
-    admin_public_key = PublicKeyContainer.from_gth_private_key_token(
+    admin_public_key = PublicKeyContainer.token_admin_from_private_key(
         admin_private_key, admin_token, GTH_private_key
     )
 
-    print("key_is_valid", admin_public_key.key_is_valid())
+    print("key_is_valid", admin_public_key.is_valid())
 
     # Print snowy information
     print("1", admin_public_key.encode())

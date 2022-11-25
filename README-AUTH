@@ -1,0 +1,15 @@
+
+Each node can create
+- miner keys -> needs gth key
+- token admin keys -> needs gth key
+- casual keys
+
+
+miner keys are used to for the proof of authority.
+token admin keys are used to create and manage tokens (client: admin).
+casual keys are used to send and receive tokens (users: players)
+
+
+
+
+

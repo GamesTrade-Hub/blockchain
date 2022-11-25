@@ -133,7 +133,7 @@ class Block:
         return guess_hash[:4] == "0000"
 
     @staticmethod
-    def valid_poa(block_hash: str, nonce: Signature, validator: PublicKeyContainer) -> bool:
+    def valid_proof_of_authority(block_hash: str, nonce: Signature, validator: PublicKeyContainer) -> bool:
         """
         Validates the Proof
         :param block_hash: hash of the block
@@ -145,8 +145,8 @@ class Block:
 
         logger.debug(f"{nonce.signature=}", f"{block_hash=}", f"{validator=}")
         return (
-            validator.verify(nonce, block_hash)
-            and validator.encode() in BlockchainManager().authorized_nodes_public_keys
+            validator.verify(nonce, block_hash) and
+            validator.is_miner()
         )
 
     def valid_transactions(self) -> bool:
@@ -162,7 +162,7 @@ class Block:
         #     self.error = f'Invalid POW nonce: {self._nonce}, hash: {self._hash}'
         #     logger.warning(f'Invalid block {self.error}')
         #     return False
-        if not Block.valid_poa(self._hash, self._nonce, self._validator):
+        if not Block.valid_proof_of_authority(self._hash, self._nonce, self._validator):
             self.error = f"Invalid POA: {self._nonce}, hash: {self._hash}"
             logger.warning(f"Invalid block {self.error}")
             return False

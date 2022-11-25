@@ -27,10 +27,6 @@ def drop_duplicates(l_) -> list:
     return [dict(t) for t in {tuple(d.items()) for d in l_}]
 
 
-def get_authorized_nodes_public_keys() -> list:
-    return conf.authorized_nodes_pbk
-
-
 class BlockchainManager(metaclass=MetaSingleton):
     """Main blockchain class that allows to do all needed operations on the underlying blockchain"""
 
@@ -55,10 +51,6 @@ class BlockchainManager(metaclass=MetaSingleton):
 
         self.mining_process = None
         self.mining_process_queue = None
-
-        self.authorized_nodes_public_keys: List[
-            str
-        ] = get_authorized_nodes_public_keys()
 
     def considered_transactions(self) -> Iterator[Transaction]:
         """
@@ -298,7 +290,7 @@ class BlockchainManager(metaclass=MetaSingleton):
         :param public_key: public key to check
         :return: True if it is an admin's public key, False otherwise
         """
-        return public_key.key_is_valid() and public_key.is_casual()
+        return public_key.is_valid() and public_key.is_token_admin()
 
     @staticmethod
     def get_time() -> int:
