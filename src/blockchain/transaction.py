@@ -293,7 +293,7 @@ class Transaction:
             self.error = (
                 f"User does not have nft {self._token} to proceed the transaction"
             )
-            print("ERROR while adding transaction", self.error, "id", self._id)
+            logger.info(f"ERROR while adding transaction {self.error=} {self.id=}")
             return False
 
         if (
@@ -306,7 +306,8 @@ class Transaction:
             self.error = (
                 f"User does not have enough {self._token} to proceed the transaction"
             )
-            print("ERROR while adding transaction", self.error, "id", self._id)
+            logger.info(f"ERROR while adding transaction {self.error=} {self.id=}")
+
             return False
 
         if (
@@ -316,7 +317,8 @@ class Transaction:
             and BlockchainManager().nft_exists(self._token)
         ):
             self.error = "NFT with this id already exists"
-            print("ERROR while adding transaction", self.error, "id", self._id)
+            logger.info(f"ERROR while adding transaction {self.error=} {self.id=}")
+
             return False
         return True
 

@@ -211,8 +211,8 @@ def unregister():
 @app.route("/get_type", methods=["GET"])
 @network_interface.high_level_handler()
 def get_type():
-    response, code = network_interface.get_type()
-    return response, code
+    response = network_interface.get_type()
+    return response, 200
 
 
 @app.route("/nodes/resolve", methods=["GET"])
