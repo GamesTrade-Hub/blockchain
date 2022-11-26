@@ -4,10 +4,8 @@ import json
 from os.path import exists, join, expanduser
 from typing import Optional
 
-from blockchain.keys import PublicKeyContainer, PrivateKey
+from src.blockchain.keys import PublicKeyContainer, PrivateKey
 from src.blockchain.tools import MetaSingleton
-# from src.blockchain.credentials import PUBLIC_KEY, PRIVATE_KEY
-import sys
 from enum import Enum
 import logging
 

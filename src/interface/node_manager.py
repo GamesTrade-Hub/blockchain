@@ -257,6 +257,10 @@ class NodesManager:
                 response = self.ssm_client.send_command(
                     InstanceIds=[instance.id],
                     DocumentName="AWS-RunShellScript",
+                    # OutputS3Region='eu-west-3',
+                    OutputS3BucketName='gth-commands-output',
+                    # OutputS3KeyPrefix='commands-output/',
+                    OutputS3KeyPrefix='commands-output/',
                     Parameters={
                         "commands": [
                             "git clone https://github.com/GamesTrade-Hub/blockchain.git",
@@ -266,6 +270,7 @@ class NodesManager:
                             f"python3 update_miner_keys.py -cfg ./configs/prod.config.json -pvk {private_key} -pbk {public_key} -nds {' '.join(nodes)}" if len(nodes) > 0 else
                             f"python3 update_miner_keys.py -cfg ./configs/prod.config.json -pvk {private_key} -pbk {public_key}",
                             "sudo ./deploy.sh ./configs/prod.config.json",
+                            "sleep 5s", "sudo tail -n 100 /root/.gth/.gunicorn_errors_5000.logs"
                         ],
                         "workingDirectory": ["/home/ubuntu"],
                     },
