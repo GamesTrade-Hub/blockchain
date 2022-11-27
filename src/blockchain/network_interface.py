@@ -115,6 +115,7 @@ class NetworkInterface:
 
     def new_transactions(self, request_json):
         values = request_json
+        logger.debug(f"Received transaction {values}")
 
         # Check that the required fields are in the POST'ed data
         required = ["sender", "recipient", "amount", "private_key", "token"]
@@ -138,7 +139,7 @@ class NetworkInterface:
         """
 
         values = request_json
-        required = ["token", "gth_private_key"]
+        required = ["token", "adm_public_key", "adm_private_key"]
 
         if not all(k in values for k in required):
             return {"message": f'Missing value among {", ".join(required)}'}, 401
@@ -146,7 +147,8 @@ class NetworkInterface:
         created, msg = self.blockchain.create_nft(
             token=values["token"],
             nb=str(values["nb"]) if "nb" in values else str(uuid4()),
-            gth_private_key=values["gth_private_key"],
+            adm_private_key=values["adm_private_key"],
+            adm_public_key=values["adm_public_key"],
         )
         if not created:
             return f"Transaction can't be created, Reason: {msg}", 401

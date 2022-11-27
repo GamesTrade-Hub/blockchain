@@ -165,6 +165,8 @@ def new_transaction():
 @network_interface.high_level_handler(invalid=[NodeType.MINER])
 def create_nft():
     response, code = network_interface.create_nft(request_json=request.get_json())
+    if code == 201:
+        network_interface.new_block({'spread': True})
     return jsonify(response), code
 
 

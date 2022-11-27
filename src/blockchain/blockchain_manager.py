@@ -1,24 +1,23 @@
-from typing import List, Optional, Iterator
+import logging
+from typing import Optional, Iterator
 
-from src.blockchain.keys import PublicKeyContainer, GTH_PUBLIC_KEY
-from src.blockchain.chain import Chain
-from src.blockchain.tools import get_time, MetaSingleton, hash__
-from src.blockchain.transaction import TransactionsList, State, Transaction
-from src.blockchain.node import NodesList
 from src.blockchain.block import Block
+from src.blockchain.chain import Chain
 from src.blockchain.config import (
     Host,
     NodeType,
-    conf,
-    PRIVATE_KEY,
     PUBLIC_KEY,
     LIMIT_TRANSACTIONS_BLOCK,
 )
-import logging
+from src.blockchain.keys import PublicKeyContainer, GTH_PUBLIC_KEY
+from src.blockchain.node import NodesList
+from src.blockchain.tools import get_time, MetaSingleton, hash__
+from src.blockchain.transaction import TransactionsList, State, Transaction
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
+
 
 # TODO when transaction are passed nodes to nodes int fields becomes string, this might create issues.
 
@@ -60,7 +59,7 @@ class BlockchainManager(metaclass=MetaSingleton):
         for tx in self.chain.transactions:
             yield tx
         for tx in self.txs.transactions(
-            min_state=State.SELECTED, max_state=State.SELECTED
+                min_state=State.SELECTED, max_state=State.SELECTED
         ):
             yield tx
 
@@ -73,7 +72,7 @@ class BlockchainManager(metaclass=MetaSingleton):
     def type(self, type_) -> None:
         """Set the type of the node"""
         if isinstance(type_, NodeType) and (
-            self._type is None or self._type == NodeType.UNKNOWN
+                self._type is None or self._type == NodeType.UNKNOWN
         ):
             Host().type = type_
             self._type = type_
@@ -92,7 +91,7 @@ class BlockchainManager(metaclass=MetaSingleton):
         return self.nodes
 
     def add_node(
-        self, address: str, type_=None, register_back=False, spread=False
+            self, address: str, type_=None, register_back=False, spread=False
     ) -> int:
         """
         Add a new node to the list of nodes
@@ -248,12 +247,16 @@ class BlockchainManager(metaclass=MetaSingleton):
 
         return True, "ok"
 
-    def create_nft(self, token: str, nb: str, gth_private_key: str) -> (bool, str):
+    def create_nft(self, token: str,
+                   nb: str,
+                   adm_private_key: str,
+                   adm_public_key: str,
+                   ) -> (bool, str):
         """
         Create a new NFT to add to the next block
         :param token: name of the nft
         :param nb: index of the nft
-        :param gth_private_key: GamesTrade Hub's private key
+        :param adm_private_key: Token Admin private key
         :return: (False, error_message) if the nft was not added, (True, nft id) if it was added
         """
         if '_' in token:
@@ -262,9 +265,9 @@ class BlockchainManager(metaclass=MetaSingleton):
         added, tx = self.txs.create_add_transaction(
             id_=None,
             token=f"nft_{hash__(str(nb))}_{token}",
-            sender=GTH_PUBLIC_KEY.encode(),
-            private_key=gth_private_key,
-            recipient=GTH_PUBLIC_KEY.encode(),
+            sender=adm_public_key,
+            private_key=adm_private_key,
+            recipient=adm_public_key,
             amount=1,
             create=True,
         )
