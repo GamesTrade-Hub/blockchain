@@ -324,7 +324,7 @@ class Transaction:
 
     def has_valid_signature(self):
         if not bool(self._signature):
-            self.error = "transaction not signed"
+            self.error = "Transaction not signed"
             return False
         if not self._sender.verify(self._signature, self.__encode(full=False)):
             self.error = "Invalid signature"
@@ -333,7 +333,7 @@ class Transaction:
 
     def valid(self, create=False):
         if not self.has_valid_signature() or not self.has_valid_attrs():
-            print("Invalid transaction", self.error)
+            logger.warning(f"Invalid transaction Reason: {self.error}")
             return False
         return True
 

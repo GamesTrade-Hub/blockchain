@@ -158,10 +158,6 @@ class Block:
     def valid(self) -> bool:
         if self._index == 1 and self._txs.__len__() == 0:
             return True
-        # if not Block.valid_pow(self._hash, self._nonce):
-        #     self.error = f'Invalid POW nonce: {self._nonce}, hash: {self._hash}'
-        #     logger.warning(f'Invalid block {self.error}')
-        #     return False
         if not Block.valid_proof_of_authority(self._hash, self._nonce, self._validator):
             self.error = f"Invalid POA: {self._nonce}, hash: {self._hash}"
             logger.warning(f"Invalid block {self.error}")

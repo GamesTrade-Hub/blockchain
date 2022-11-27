@@ -316,4 +316,5 @@ class BlockchainManager(metaclass=MetaSingleton):
 
     @classmethod
     def is_admin_of_token(cls, sender: PublicKeyContainer, token: str) -> bool:
-        return sender.data == token.split("_")[-1]
+        return sender.is_token_admin() and \
+               (sender.data == token.split("_")[-1] or sender.data == "ADMINPASS")

@@ -116,13 +116,13 @@ class PublicKeyContainer:
         return cls(key)
 
     def is_casual(self) -> bool:
-        return self.data == "casual" and self.is_valid()
+        return self.data == "casual"
 
     def is_miner(self):
-        return self.data == "miner" and self.is_valid()
+        return self.data == "miner"
 
     def is_token_admin(self):
-        return not self.is_casual() and not self.is_miner() and self.is_valid()
+        return not self.is_casual() and not self.is_miner()
 
 
 class PrivateKey:

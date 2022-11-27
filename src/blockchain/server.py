@@ -156,6 +156,8 @@ def status():
 @network_interface.high_level_handler(invalid=[NodeType.MINER])
 def new_transaction():
     response, code = network_interface.new_transactions(request_json=request.get_json())
+    if code == 201:
+        network_interface.new_block({'spread': True})
     return jsonify(response), code
 
 
