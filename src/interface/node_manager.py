@@ -265,7 +265,7 @@ class NodesManager:
                         "commands": [
                             "git clone https://github.com/GamesTrade-Hub/blockchain.git",
                             "cd blockchain",
-                            "git checkout new_encryption",
+                            "git checkout main",
                             "git log -1",
                             f"python3 update_miner_keys.py -cfg ./configs/prod.config.json -pvk {private_key} -pbk {public_key} -nds {' '.join(nodes)}" if len(nodes) > 0 else
                             f"python3 update_miner_keys.py -cfg ./configs/prod.config.json -pvk {private_key} -pbk {public_key}",
