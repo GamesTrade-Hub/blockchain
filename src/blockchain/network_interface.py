@@ -41,7 +41,7 @@ class NetworkInterface:
         Host().port = conf.port
         for n in conf.nodes:
             logger.debug(f"add node {n}")
-            self.blockchain.add_node(n, register_back=True)
+            logger.debug(f"Node return value {self.blockchain.add_node(n, register_back=True)}")
         self.replaced = self.blockchain.resolve_conflicts()
 
     @staticmethod
@@ -203,7 +203,7 @@ class NetworkInterface:
         return ("ok", 200) if rv else ("node not found", 400)
 
     def get_type(self):
-        return {"type": self.host.type.value}
+        return {"type": self.host.type.value}, 200
 
     def consensus(self):
         self.replaced = self.blockchain.resolve_conflicts()
