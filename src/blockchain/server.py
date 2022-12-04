@@ -1,4 +1,4 @@
-from blockchain.rq_tools import get
+from src.blockchain.rq_tools import get
 from src.blockchain.blockchain_manager import BlockchainManager
 from src.blockchain.blockchain_manager import Chain
 from src.blockchain.network_interface import NetworkInterface
