@@ -182,7 +182,7 @@ class Node:
                 f"Not sending block creation request to {self.__repr__()} since is NodeType.MANAGER"
             )
             return
-        response = get(f"http://{self.host}/block/new")  # TODO add route to new_block
+        response = get(f"http://{self.host}/block/new", timeout=0.0001)  # TODO add route to new_block
 
         if response and response.status_code != 200:
             logger.error(

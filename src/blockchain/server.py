@@ -1,3 +1,4 @@
+from blockchain.rq_tools import get
 from src.blockchain.blockchain_manager import BlockchainManager
 from src.blockchain.blockchain_manager import Chain
 from src.blockchain.network_interface import NetworkInterface
@@ -157,7 +158,8 @@ def status():
 def new_transaction():
     response, code = network_interface.new_transactions(request_json=request.get_json())
     if code == 201:
-        network_interface.new_block({'spread': True})
+        get(f"http://127.0.0.1:{Host().port}/block/new", data={'spread': True}, timeout=0.0001)
+        # network_interface.new_block({'spread': True})
     return jsonify(response), code
 
 
@@ -166,7 +168,7 @@ def new_transaction():
 def create_nft():
     response, code = network_interface.create_nft(request_json=request.get_json())
     if code == 201:
-        network_interface.new_block({'spread': True})
+        get(f"http://127.0.0.1:{Host().port}/block/new", data={'spread': True}, timeout=0.0001)
     return jsonify(response), code
 
 

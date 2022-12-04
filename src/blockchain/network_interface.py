@@ -276,7 +276,7 @@ class NetworkInterface:
         values = request_json
 
         logger.debug(
-            "blockchain.new_authority_block(spread=values and 'spread' in values and values['spread'])"
+            f"blockchain.new_authority_block(spread=values and 'spread' in values and values['spread']) spread: {values and 'spread' in values and values['spread']}"
         )
         response, code = self.blockchain.new_authority_block(
             spread=values and "spread" in values and values["spread"]
