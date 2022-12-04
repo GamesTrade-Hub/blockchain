@@ -28,6 +28,7 @@ if __name__ != "__main__":
     logger.handlers = gunicorn_logger.handlers
     logger.setLevel(gunicorn_logger.level)
 
+
 logger.info("run blockchain/server.py")
 logger.debug(f"Config file path: {config_file_path}")
 

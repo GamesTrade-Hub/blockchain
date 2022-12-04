@@ -6,6 +6,13 @@ logging.basicConfig(level=logging.DEBUG)
 logger.setLevel(logging.DEBUG)
 
 
+if __name__ != "__main__":
+    gunicorn_logger = logging.getLogger("gunicorn.error")
+    gunicorn_logger.setLevel(logging.DEBUG)
+    logger.handlers = gunicorn_logger.handlers
+    logger.setLevel(gunicorn_logger.level)
+
+
 def post(rq, json_=None, headers=None, data=None):
     try:
         logger.info(f"-> POST {rq}")

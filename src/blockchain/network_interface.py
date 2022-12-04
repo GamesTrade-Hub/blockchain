@@ -146,7 +146,7 @@ class NetworkInterface:
 
         created, msg = self.blockchain.create_nft(
             token=values["token"],
-            nb=str(values["nb"]) if "nb" in values else str(uuid4()),
+            nb=str(uuid4()),
             adm_private_key=values["adm_private_key"],
             adm_public_key=values["adm_public_key"],
         )
