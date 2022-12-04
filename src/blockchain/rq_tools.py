@@ -33,7 +33,7 @@ def post(rq, json_=None, headers=None, data=None):
 def get(rq, json_=None, headers=None, data=None, timeout=4):
     try:
         logger.info(f"-> GET {rq}")
-        response = requests.get(rq, json=json_, headers=headers, data=data, timeout=4)
+        response = requests.get(rq, json=json_, headers=headers, data=data, timeout=timeout)
         logger.info(f"Response {response} received to {rq}")
         return response
     except ConnectionRefusedError as e:
