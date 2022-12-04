@@ -37,11 +37,11 @@ class PublicKeyContainer:
         gth private key to ensure that the token belongs to public key owner
         :param key: main key of the public key container
         """
-        logger.debug(f"Creating public key container with key {key}")
+        # logger.debug(f"Creating public key container with key {key}")
 
         self.key, self.signature, self.data = self.decode(key)
 
-        logger.debug(f"key details {self.key}, {self.signature}, {self.data}")
+        # logger.debug(f"key details {self.key}, {self.signature}, {self.data}")
 
         assert (
                 len(self.signature.encode()) == SIGN_SIZE
