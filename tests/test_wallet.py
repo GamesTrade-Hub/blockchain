@@ -11,11 +11,11 @@ class TestWallet(BlockchainTestTools):
         super(TestWallet, self).setUp()
 
         self.new_transaction(
-            sender=self.gth_public_key,
+            sender=self.token_admin_pb,
             recipient=self.user_2_public_key,
             amount=50,
             token="BNB",
-            private_key=self.gth_private_key,
+            private_key=self.token_admin_pv,
             check_block_created=True,
         )
 

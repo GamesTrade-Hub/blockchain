@@ -16,9 +16,8 @@ class TestNFTCreation(BlockchainTestTools):
         response = self.app.post(
             "/create_nft",
             json={
-                "recipient": self.user_1_public_key,
-                "sender": self.gth_public_key,
-                "gth_private_key": self.gth_private_key,
+                "adm_public_key": self.token_admin_pb,
+                "adm_private_key": self.token_admin_pv,
                 "token": token_name,
             },
         )

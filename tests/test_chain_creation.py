@@ -1,4 +1,6 @@
 import unittest
+import sys
+sys.path.insert(0, '../src')
 from src.blockchain.blockchain_manager import BlockchainManager
 
 

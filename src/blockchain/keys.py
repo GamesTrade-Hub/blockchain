@@ -27,9 +27,7 @@ class PublicKeyContainer:
         """
         This class allow to manage public keys with tokens that contains the key and a token encrypted with the
         gth private key to ensure that the token belongs to public key owner
-        :param key:
-        :param token:
-        :param gth_private_key:
+        :param key: main key of the public key container
         """
         logger.debug(f"Creating public key container with key {key}")
 
