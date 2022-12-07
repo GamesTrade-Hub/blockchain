@@ -1,4 +1,3 @@
-import requests
 from time import sleep
 from blockchain.tools import get
 

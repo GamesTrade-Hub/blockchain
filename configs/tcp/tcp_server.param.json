@@ -1,0 +1,10 @@
+{
+    "protocols": {
+        "http": true,
+        "tcp_server": true,
+        "tcp_client": false
+    },
+    "tcp_server": {
+        "port": 5002
+    }
+}

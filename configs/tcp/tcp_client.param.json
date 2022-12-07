@@ -1,0 +1,13 @@
+{
+    "protocols": {
+        "http": true,
+        "tcp_server": false,
+        "tcp_client": true
+    },
+    "tcp_client": {
+        "work": true,
+        "ip": "127.0.0.1",
+        "port": 5002,
+        "nodes": [""]
+    }
+}

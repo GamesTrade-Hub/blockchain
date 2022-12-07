@@ -7,7 +7,6 @@ from src.blockchain.keys import PublicKey, PrivateKey, PublicKeyContainer, Signa
 import json
 from uuid import uuid4
 from enum import IntEnum
-import requests
 import logging
 
 logging.basicConfig(level=logging.DEBUG)

@@ -104,6 +104,7 @@ class Config:
         return cls(**raw_cfg)
 
 
+print(config_file_path)
 conf: Config = Config.from_file(config_file_path)
 PRIVATE_KEY: PrivateKey = conf.private_key
 PUBLIC_KEY: PublicKeyContainer = conf.public_key

@@ -10,7 +10,6 @@ from urllib.parse import urlparse
 from uuid import uuid4
 from flask import jsonify, request
 import time
-import requests
 import json
 import sys
 import signal
@@ -35,6 +34,7 @@ logger.info(conf)
 
 class NetworkInterface:
     def __init__(self):
+        print("NetworkInterface initialisation")
         self.blockchain = BlockchainManager()
         self.blockchain.type = conf.type
         self.host = Host()

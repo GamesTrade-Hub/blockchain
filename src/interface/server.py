@@ -1,10 +1,6 @@
 from uuid import uuid4
-import time
-import requests
 from flask import Flask, jsonify, request
 import json
-import sys
-import signal
 import logging
 
 from src.interface.node_manager import NodesManager

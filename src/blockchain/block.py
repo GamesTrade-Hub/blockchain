@@ -10,7 +10,6 @@ from random import random
 from multiprocessing import Process, Queue
 import json
 import ast
-import requests
 from time import sleep
 import logging
 

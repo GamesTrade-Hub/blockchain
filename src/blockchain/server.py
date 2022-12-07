@@ -8,7 +8,6 @@ import uuid
 from urllib.parse import urlparse
 from uuid import uuid4
 import time
-import requests
 from flask import Flask, jsonify, request
 import json
 import sys
