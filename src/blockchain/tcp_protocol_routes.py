@@ -153,16 +153,3 @@ class GetBalance(BaseRoute):
     def post(self, request_json, client):
         response, code = network_interface.get_balance(request_json=request_json["payload"])
         return {"type": "response", "code": code, "message": response}
-
-
-{
-    "nodes": [
-        "http://e50d20e0-ec74-4b9d-9215-70baf28d81b4:5001"
-    ]
-}
-
-{
-    "nodes": [
-        "http://5693e8da-c23e-4607-87fe-e5b57aad976a"
-    ]
-}
