@@ -36,7 +36,7 @@ def post(rq, json_=None, headers=None, data=None):
             resp = tcp_client.post(route=path, json_obj=json_)
             print("ET LA REPONSE : ", resp, "\n\n\n\n\n")
             return ResponseCustom(resp)
-    except ValueError:
+    except ValueError or AttributeError:
         try:
             logger.info(f"-> POST {rq}")
             response = requests.post(rq, json=json_, headers=headers, data=data, timeout=4)
@@ -55,7 +55,7 @@ def post(rq, json_=None, headers=None, data=None):
 
 def get(rq, json_=None, headers=None, data=None):
     from src.TCPServer.tmp_test_impl import tcp_client, tcp_server
-    print("\n\n\n\n\nCECI EST LA REQUESTS GET ->", rq, tcp_server, tcp_client, "\n\n\n\n\n")
+    # print("\n\n\n\n\nCECI EST LA REQUESTS GET ->", rq, tcp_server, tcp_client, "\n\n\n\n\n")
     try:
         print(rq.split('/', 3))
         path = "/" + rq.split('/', 3)[3]
@@ -70,7 +70,7 @@ def get(rq, json_=None, headers=None, data=None):
             resp = tcp_client.get(route=path, json_obj=json_)
             print("ET LA REPONSE : ", resp, "\n\n\n\n\n")
             return ResponseCustom(resp)
-    except ValueError:
+    except ValueError or AttributeError:
         try:
             logger.info(f"-> GET {rq}")
             response = requests.get(rq, json=json_, headers=headers, data=data, timeout=4)
